@@ -1,0 +1,191 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+apiVersion: nuvolaris.org/v1
+kind: Whisk
+metadata:
+  name: controller
+  namespace: nuvolaris
+spec:
+  nuvolaris:
+    password: nuvpassw0rd 
+  components:
+    # start openwhisk controller
+    openwhisk: true
+    # start openwhisk invoker
+    invoker: true    
+    # start couchdb
+    couchdb: true
+    # start kafka
+    kafka: true
+    # start mongodb
+    mongodb: false
+    # start redis
+    redis: false
+    # start cron based action parser
+    cron: false
+    # activate tls support
+    tls: false
+    # minio enabled or not
+    minio: false    
+    # zookeeper enabled or not
+    zookeeper: true
+    # minio static enabled or not
+    static: false
+    # prometheus monitoring enabled or not
+    monitoring: false 
+    # postgres enabled or not
+    postgres: false            
+  openwhisk:
+    namespaces:
+      whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
+      nuvolaris: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP      
+  couchdb:
+    host: couchdb
+    port: 5984
+    volume-size: 10
+    admin:
+      user: whisk_admin
+      password: some_passw0rd
+    controller:
+      user: invoker_admin
+      password: s0meP@ass1
+    invoker:
+      user: controller_admin
+      password: s0meP@ass2
+  kafka:
+    host: kafka
+    volume-size: 5
+  controller:
+    protocol: "http"
+    host : "controller"
+    port: "3233"
+    image: "ghcr.io/nuvolaris/openwhisk-controller"
+    tag: "0.3.0-morpheus.22122609"
+  invoker:
+    protocol: "http"
+    host : "invoker"
+    port: "8080"
+    image: "ghcr.io/nuvolaris/openwhisk-invoker"
+    tag: "0.3.0-morpheus.22122609"    
+  scheduler:
+    schedule: "* * * * *"
+  zookeeper:
+    host: zookeeper
+    data-volume-size: 5
+    log-volume-size: 2
+  configs:
+    limits:
+      actions:
+        sequence-maxLength: 50
+        invokes-perMinute: 999
+        invokes-concurrent: 250
+      triggers: 
+        fires-perMinute: 999
+      time:
+        limit-min: 100ms
+        limit-std: 1min
+        limit-max: 5min
+      memory:
+        limit-min: "128m"
+        limit-std: "256m"
+        limit-max: "2048m"
+      concurrency:
+        limit-min: 1
+        limit-std: 1
+        limit-max: 1
+      loadbalancer:
+        blackbox-fraction : "10%"
+        timeout-factor: 2
+    controller:
+      javaOpts: "-Xmx2048M"
+      loggingLevel: "INFO"
+      #resources:
+        #cpu-req: "500m"
+        #cpu-lim: "1"
+        #mem-req: "1G"
+        #mem-lim: "2G"
+    invoker:
+      javaOpts: "-Xmx2048M"
+      loggingLevel: "INFO"
+      containerPool:
+        userMemory: "8192m"
+      #resources:
+        #cpu-req: "500m"
+        #cpu-lim: "1"
+        #mem-req: "1G"
+        #mem-lim: "2G"
+    #couchdb:
+      #resources:
+        #cpu-req: "500m"
+        #cpu-lim: "1"
+        #mem-req: "512M"
+        #mem-lim: "1G"         
+  redis:
+    volume-size: 5
+    default:
+      password: s0meP@ass3
+    nuvolaris:
+      prefix: nuvolaris      
+      password: s0meP@ass3
+  mongodb:
+    host: mongodb
+    volume-size: 10
+    admin: 
+      user: whisk_admin
+      password: 0therPa55
+    nuvolaris:
+      user: nuvolaris
+      password: s0meP@ass3
+    exposedExternally: False
+    useOperator: False
+  minio:
+    volume-size: 10
+    admin:
+      user: minioadmin
+      password: minioadmin    
+    nuvolaris:
+      user: nuvolaris
+      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG        
+  monitoring:
+    prometheus:
+      volume-size: 10
+    alert-manager:
+      enabled: true
+      volume-size: 2
+      slack:        
+        enabled: true
+        default: true 
+        slack_channel_name: '#monitoring-nuvolaris'
+        slack_api_url: ${SLACK_API_URL}
+      gmail:       
+        enabled: true
+        default: false
+        from: ${ALERT_EMAIL_FROM}
+        to: ${ALERT_EMAIL_TO}
+        username: ${GMAIL_USERNAME}
+        password: ${GMAIL_PASSWORD}
+  postgres:    
+    volume-size: 5
+    replicas: 2
+    admin:      
+      password: 0therPa55
+      replica-password: 0therPa55RR
+    nuvolaris:
+      password: s0meP@ass3         
+
+

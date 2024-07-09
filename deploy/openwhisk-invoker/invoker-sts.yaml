@@ -1,0 +1,277 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+---
+# Source: openwhisk/templates/invoker-pod.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: invoker
+  namespace: nuvolaris
+  labels:
+    name: invoker
+    app: invoker
+spec:
+  serviceName: invoker
+  podManagementPolicy: "Parallel"
+  replicas: 1
+  selector:
+    matchLabels:
+      name: invoker
+  template:
+    metadata:
+      labels:
+        name: invoker
+        app: invoker        
+    spec:
+      serviceAccountName: openwhisk-invoker
+      restartPolicy: Always
+      initContainers:
+      - name: check-kafka
+        image: busybox:1.36.0
+        command: ['sh', '-c', "until nslookup kafka.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for kafka; sleep 2; done"]       
+      containers:
+      - name: invoker
+        image: "ghcr.io/nuvolaris/openwhisk-invoker:0.3.0-morpheus.22122609"
+        imagePullPolicy: "IfNotPresent"
+        command: [ "/bin/bash", "-c", "/init.sh --uniqueName $INVOKER_NAME" ]
+        env:
+
+          - name:  "CONFIG_whisk_info_date"
+            value:  "01-01-2023"
+
+          - name: "CONFIG_whisk_info_buildNo"
+            value: "development-unknown"
+
+          - name: "PORT"
+            value: "8080"
+
+          - name: "WHISK_API_HOST_PROTO"
+            value: "http"
+          - name: "WHISK_API_HOST_PORT"
+            value: "3233"
+          - name: "WHISK_API_HOST_NAME"
+            value: "controller.nuvolaris.svc.cluster.local"
+
+          # Needed by invoker to configure the container factory & container pool
+          - name: "CONFIG_whisk_docker_containerFactory_useRunc"
+            value: "false"
+          - name: "CONFIG_whisk_containerPool_userMemory"
+            value: "2048m"
+          - name: "CONFIG_whisk_containerFactory_containerArgs_network"
+            value: "bridge"
+
+          - name: "CONFIG_whisk_containerFactory_containerArgs_extraEnvVars_0"
+            value: "__OW_ALLOW_CONCURRENT=false"
+
+          - name: "CONFIG_whisk_containerFactory_runtimesRegistry_url"
+            value: ""
+
+          # Invoker name is the name of the node (DaemonSet) or pod (StatefulSet)
+          - name: "INVOKER_NAME"
+            valueFrom:
+              fieldRef:
+                fieldPath:  metadata.name 
+
+          # Java options
+          - name: "JAVA_OPTS"
+            value: "-Xmx512M "
+
+          # Invoker options
+          - name: "INVOKER_OPTS"
+            value: " -Dkubernetes.master=https://$KUBERNETES_SERVICE_HOST -Dwhisk.spi.ContainerFactoryProvider=org.apache.openwhisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider"
+
+          # action runtimes
+          - name: "RUNTIMES_MANIFEST"
+            valueFrom:   
+              configMapKeyRef:                 
+                name: openwhisk-runtimes              
+                key: runtimes.json
+              
+          # Action limits
+          - name: "LIMITS_ACTIONS_INVOKES_PERMINUTE"
+            value: "60"
+          - name: "LIMITS_ACTIONS_INVOKES_CONCURRENT"
+            value: "30"
+          - name: "LIMITS_TRIGGERS_FIRES_PERMINUTE"
+            value: "60"
+          - name: "LIMITS_ACTIONS_SEQUENCE_MAXLENGTH"
+            value: "50"
+          - name: "CONFIG_whisk_timeLimit_min"
+            value: "100ms"
+          - name: "CONFIG_whisk_timeLimit_max"
+            value: "5m"
+          - name: "CONFIG_whisk_timeLimit_std"
+            value: "1m"
+          - name: "CONFIG_whisk_memory_min"
+            value: "128m"
+          - name: "CONFIG_whisk_memory_max"
+            value: "512m"
+          - name: "CONFIG_whisk_memory_std"
+            value: "256m"
+          - name: "CONFIG_whisk_concurrencyLimit_min"
+            value: "1"
+          - name: "CONFIG_whisk_concurrencyLimit_max"
+            value: "1"
+          - name: "CONFIG_whisk_concurrencyLimit_std"
+            value: "1"
+          - name: "CONFIG_whisk_logLimit_min"
+            value: "0m"
+          - name: "CONFIG_whisk_logLimit_max"
+            value: "10m"
+          - name: "CONFIG_whisk_logLimit_std"
+            value: "10m"
+          - name: "CONFIG_whisk_activation_payload_max"
+            value: "1048576"
+
+          # Default to empty logs dir. This is because logs should go to stdout
+          - name: "WHISK_LOGS_DIR"
+            value: ""
+
+          # this version is the day it is deployed,
+          #- name:  "CONFIG_whisk_info_date"
+          #  valueFrom:
+          #    configMapKeyRef:
+          #      name: openwhisk-whisk.config
+          #      key: whisk_info_date
+          
+          # TODO to be fixed in community edition 1st
+          # properties for DB connection
+          #- name: "CONFIG_whisk_couchdb_username"
+          #  valueFrom:
+          #    secretKeyRef:
+          #      name: couchdb-auth
+          #      key: db_username
+          #- name: "CONFIG_whisk_couchdb_password"
+          #  valueFrom:
+          #    secretKeyRef:
+          #      name: couchdb-auth
+          #      key: db_password
+
+          - name: "CONFIG_whisk_couchdb_username"
+            value: "whisk_admin"
+          - name: "CONFIG_whisk_couchdb_password"
+            value: "some_passw0rd"          
+          - name: "CONFIG_whisk_couchdb_port"
+            value: "5984"
+          - name: "CONFIG_whisk_couchdb_protocol"
+            value: "http"
+          - name: "CONFIG_whisk_couchdb_host"
+            value: "couchdb"
+          - name: "CONFIG_whisk_couchdb_provider"
+            value: "CouchDB"
+          - name: "CONFIG_whisk_couchdb_databases_WhiskActivation"
+            value: "nuvolaris_activations"
+          - name: "CONFIG_whisk_couchdb_databases_WhiskEntity"
+            value: "nuvolaris_whisks"
+          - name: "CONFIG_whisk_couchdb_databases_WhiskAuth"
+            value: "nuvolaris_subjects"
+
+
+          - name: "CONFIG_whisk_couchdb_invoker_username"
+            value: "invoker_admin"
+          - name: "CONFIG_whisk_couchdb_invoker_password"
+            value: "s0meP@ass1"
+
+          # properties for kafka connection
+          - name: "KAFKA_HOSTS"
+            value: "kafka:9092"
+
+          - name: "CONFIG_whisk_kafka_replicationFactor"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_prefix"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_cacheInvalidation_retentionBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_cacheInvalidation_retentionMs"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_cacheInvalidation_segmentBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_completed_retentionBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_completed_retentionMs"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_completed_segmentBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_events_retentionBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_events_retentionMs"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_events_segmentBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_health_retentionBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_health_retentionMs"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_health_segmentBytes"
+            value: ""
+          
+          - name: "CONFIG_whisk_kafka_topics_invoker_retentionBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_invoker_retentionMs"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_invoker_segmentBytes"
+            value: ""
+          
+          - name: "CONFIG_whisk_kafka_topics_scheduler_retentionBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_scheduler_retentionMs"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_scheduler_segmentBytes"
+            value: ""
+          
+          - name: "CONFIG_whisk_kafka_topics_creationAck_retentionBytes"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_creationAck_retentionMs"
+            value: ""
+          - name: "CONFIG_whisk_kafka_topics_creationAck_segmentBytes"
+            value: ""
+
+          # properties for zookeeper connection
+          - name: "ZOOKEEPER_HOSTS"
+            value: "zookeeper:2181"
+
+          - name: "CONFIG_logback_log_level"
+            value: "INFO"
+
+          - name: "CONFIG_akka_coordinatedShutdown_phases_actorSystemTerminate_timeout"
+            value: "30 s"
+          - name: "CONFIG_whisk_runtime_delete_timeout"
+            value: "30 seconds"
+
+          # apparently this is needed for the invoker
+          - name: "CONFIG_whisk_helm_release"
+            value: "helm_nuvolaris"
+
+          # kubernetes
+          - name: "CONFIG_whisk_kubernetes_timeouts_run"
+            value: "1 minute"                    
+
+          - name: "CONFIG_whisk_kubernetes_timeouts_logs"
+            value: "1 minute" 
+
+          - name: "CONFIG_whisk_kubernetes_userPodNodeAffinity_enabled"
+            value: false 
+
+          - name: "CONFIG_whisk_kubernetes_portForwardingEnabled"
+            value: false
+
+          - name: "CONFIG_whisk_kubernetes_actionNamespace"
+            value: "nuvolaris"                         
+        ports:
+        - name: invoker
+          containerPort: 8080

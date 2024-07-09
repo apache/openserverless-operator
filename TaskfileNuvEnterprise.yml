@@ -1,0 +1,91 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+version: '3'
+
+tasks:
+  devcluster:delete:
+    - nuv ent setup devcluster --uninstall
+
+  devcluster:
+    - nuv ent config enable --prometheus --slack --quota
+    - nuv ent config slack --apiurl=$SLACK_API_URL --channel=#nuvolaris-monitoring
+    - nuv ent config license nuvolaris --registry=registry.hub.docker.com --username=$DOCKER_HUB_USER --token=$DOCKER_HUB_TOKEN
+    - nuv ent config controller --javaopts=2 --replicas=1 --loglevel=INFO
+    - nuv ent config invoker --javaopts=2 --poolmemory=4 --timeoutsrun=5 --timeoutslogs=1 --replicas=1 --loglevel=INFO
+    - nuv ent config postgres --backup --schedule='30 * * * *' --replicas=2
+    - nuv ent config minio --s3 --console
+    - nuv ent setup devcluster
+
+  devcluster:full:
+    - nuv config reset    
+    - nuv config enable --all
+    - task: devcluster
+
+  devcluster:minimal:
+    - nuv config reset    
+    - nuv config disable --all
+    - task: devcluster
+
+  gc-deploy:
+    - nuv ent config controller --javaopts=-Xmx2048M
+    - nuv ent config invoker --javaopts=-Xmx2048M --poolmemory=8192m
+    - nuv ent config volumes --couchdb=30 --kafka=30 --database=50 --storage=50 --alerting=20
+    - nuv ent config storage --class=rook-ceph-block --provisioner=rook-ceph.rbd.csi.ceph.com
+    - nuv ent config enable --prometheus --slack
+    - nuv ent config slack --apiurl=$SLACK_API_URL --channel=#nuvolaris-monitoring
+    - nuv ent config license nuvolaris --registry=registry.hub.docker.com --username=$DOCKER_HUB_USER --token=$DOCKER_HUB_TOKEN
+    - nuv ent setup cluster    
+
+  saas1:minimal:
+    - nuv config reset
+    - nuv config disable --all
+    - nuv config apihost 146.148.119.191
+    - task: gc-deploy
+
+  saas1:full:
+    - nuv config reset
+    - nuv config enable --all
+    - nuv config apihost 146.148.119.191
+    - task: gc-deploy  
+
+  nuvolaris-app:minimal:
+    - nuv config reset
+    - nuv config disable --all
+    - nuv config apihost 35.242.186.170
+    - task: gc-deploy
+
+  nuvolaris-app:full:
+    - nuv config reset
+    - nuv config enable --all
+    - nuv config apihost 35.242.186.170
+    - task: gc-deploy 
+
+  gc-cluster-kube:
+    - nuv ent saas admin gc-kubeconfig {{.N}}  
+
+  gc-prepare:
+    - nuv ent saas gcloud vpc-create app-vpc  
+    - nuv ent saas config gcloud --ent_name=app --ent_domain=nuvolaris.app --gc_region=europe-west2 --gc_zone=europe-west2-a
+
+  gc-cluster-delete:
+    - nuv ent saas admin gc-cluster-delete {{.N}}
+
+  gc-cluster-create:
+    - nuv ent saas admin gc-cluster-create {{.N}} --token=$GITHUB_OLARIS_CLONE_TOKEN    
+
+

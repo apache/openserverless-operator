@@ -1,0 +1,115 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-static-conf-cm
+  namespace: nuvolaris
+data:
+  default.conf: |
+    server {
+      listen       8080;
+      server_name  localhost;
+
+      client_max_body_size 1000M;
+
+      #access_log  /var/log/nginx/host.access.log  main;
+
+      #location / {
+      #    root   /usr/share/nginx/html;
+      #    index  index.html index.htm;
+      #}
+
+      location / {          
+          rewrite ^/$ ${request_uri}index.html break;          
+          rewrite ^([^.]*[^/])$ $1/;
+          rewrite (.*)/$ $1/index.html;                    
+
+          proxy_hide_header     x-amz-id-2;
+          proxy_hide_header     x-amz-meta-etag;
+          proxy_hide_header     x-amz-request-id;
+          proxy_hide_header     x-amz-meta-server-side-encryption;
+          proxy_hide_header     x-amz-server-side-encryption;        
+          proxy_set_header Host $http_host;
+
+          proxy_pass {{storage_url}}/;
+          
+          error_page 301 404 = @spa;
+          proxy_intercept_errors on;   
+          proxy_redirect     off;
+      }  
+
+      location @spa {
+        rewrite /(.*?)/ /$1/index.html;
+        proxy_pass {{storage_url}};
+        error_page 404 = /404.html;
+        proxy_intercept_errors on;
+      }           
+
+      error_page  404              /404.html;
+
+      location = /404.html {
+          root   /usr/share/nginx/html;
+      }
+
+      # redirect server error pages to the static page /50x.html
+      #
+      error_page   500 502 503 504  /50x.html;
+      location = /50x.html {
+          root   /usr/share/nginx/html;
+      }
+
+    }
+  
+  nginx.conf: |
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log notice;
+    pid        /tmp/nginx.pid;
+
+    events {
+        worker_connections  1024;
+    }
+
+    http {
+        proxy_temp_path /tmp/proxy_temp;
+        client_body_temp_path /tmp/client_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
+        
+        client_max_body_size 1000M;
+
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for" - "$http_host"';
+
+        access_log  /var/log/nginx/access.log  main;
+
+        sendfile        on;
+        #tcp_nopush     on;
+
+        keepalive_timeout  65;
+
+        #gzip  on;
+
+        include /etc/nginx/conf.d/*.conf;
+    }      

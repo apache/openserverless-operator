@@ -1,0 +1,62 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+import nuvolaris.config as cfg
+
+cfg.clean()
+assert(len(cfg.getall("")) == 0)
+assert(cfg.configure({"a": {"b": 1, "c":  { "d": 2 , "e": 3}, "f": 4}, "g": 5 }  )  )
+
+assert(not cfg.exists("a"))
+assert(not cfg.get("a"))
+assert(cfg.exists("g"))
+assert(cfg.get("g") == 5)
+
+assert(len(cfg.getall("a")) == 4)
+assert(len(cfg.getall("a.c")) == 2)
+assert(len(cfg.keys()) == 6)
+assert(len(cfg.keys("a.c")) == 2)
+
+
+assert(cfg.configure({"a":1}))
+assert(cfg.get("a") == 1 )
+labels = [{"nuvolaris.io/hello": "world", "something": "else" }, {}, {"nothing":"here"}]
+cfg.put("nuvolaris.kube","auto")
+cfg.detect_labels(labels)
+assert(cfg.get("nuvolaris.hello") == "world")
+assert(cfg.get("nuvolaris.kube") == "generic")
+
+assert(len(cfg.getall("")) == 3)
+
+assert(cfg.put("a", 2))
+assert(cfg.get("a") == 2)
+assert(cfg.put("b", 3))
+assert(len(cfg.getall("")) == 4)
+ 
+#kubectl("get", "nodes", jsonpath='{.items[].metadata.labels}')
+
+import os
+os.environ["Y"] = "2"
+
+assert(not cfg.get("x"))
+assert(cfg.get("x", "Y") == "2")
+assert(not cfg.get("x", "X"))
+assert(cfg.get("x", "X", "3") == "3")
+
+
+

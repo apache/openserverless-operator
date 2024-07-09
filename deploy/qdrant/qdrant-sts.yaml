@@ -1,0 +1,141 @@
+# Source: openwhisk/templates/couchdb-pod.yaml
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nuvolaris-qdrant
+  labels:
+    helm.sh/chart: qdrant-0.9.2
+    app: qdrant
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/instance: nuvolaris-qdrant
+    app.kubernetes.io/version: "v1.9.5"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qdrant
+      app.kubernetes.io/name: qdrant
+      app.kubernetes.io/instance: nuvolaris-qdrant
+  serviceName: nuvolaris-qdrant-headless
+  template:
+    metadata:
+      annotations:
+        checksum/config: 33ac3ce10060649fc5af9fd81289a09a645ecb5547ff9a7f14468923c717c94d
+      labels:
+        app: qdrant
+        app.kubernetes.io/name: qdrant
+        app.kubernetes.io/instance: nuvolaris-qdrant
+    spec:
+      initContainers:
+      - name: ensure-dir-ownership
+        image: "docker.io/qdrant/qdrant:v1.9.5"
+        command:
+          - chown
+          - -R
+          - 1000:3000
+          - /qdrant/storage
+          - /qdrant/snapshots
+        volumeMounts:
+          - name: nuvolaris-qdrant-storage
+            mountPath: /qdrant/storage
+          - name: qdrant-snapshots
+            mountPath: /qdrant/snapshots
+      containers:
+        - name: qdrant
+          image: "docker.io/qdrant/qdrant:v1.9.5"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: QDRANT_INIT_FILE_PATH
+              value: /qdrant/init/.qdrant-initialized
+          command: ["/bin/bash", "-c"]
+          args:
+          - ./config/initialize.sh
+          ports:
+            - name: http
+              containerPort: 6333
+              protocol: TCP
+            - name: grpc
+              containerPort: 6334
+              protocol: TCP
+            - name: p2p
+              containerPort: 6335
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: "/readyz"
+              port: 6333
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          resources:
+            {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 1000
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - sleep
+                - "3"
+          volumeMounts:
+          - name: nuvolaris-qdrant-storage
+            mountPath: /qdrant/storage
+          - name: qdrant-config
+            mountPath: /qdrant/config/initialize.sh
+            subPath: initialize.sh
+          - name: qdrant-config
+            mountPath: /qdrant/config/production.yaml
+            subPath: production.yaml
+          - name: qdrant-snapshots
+            mountPath: /qdrant/snapshots
+          - name: qdrant-init
+            mountPath: /qdrant/init
+      securityContext:
+        fsGroup: 3000
+        fsGroupChangePolicy: Always
+      volumes:
+        - name: qdrant-config
+          configMap:
+            name: nuvolaris-qdrant
+            defaultMode: 0755
+        - name: qdrant-snapshots
+          emptyDir: {}
+        - name: qdrant-init
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: nuvolaris-qdrant-storage
+        labels:
+          app: qdrant
+      spec:
+        storageClassName: 
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "10Gi"
