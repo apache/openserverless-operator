@@ -1,0 +1,87 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+  namespace: nuvolaris
+  labels:
+    name: zookeeper
+    app: zookeeper
+spec:
+  serviceName: zookeeper
+  podManagementPolicy: "Parallel"
+  replicas: 1
+  selector:
+    matchLabels:
+      name: zookeeper
+  template:
+    metadata:
+      labels:
+        name: zookeeper
+        app: zookeeper
+    spec:
+      restartPolicy: "Always"
+
+      volumes:
+        - name: zk-config
+          configMap:
+            name: zookeeper         
+        - name: "zookeeper-pvc-data"
+          persistentVolumeClaim:
+            claimName: "zookeeper-pvc-data"
+        - name: "zookeeper-pvc-datalog"
+          persistentVolumeClaim:
+            claimName: "zookeeper-pvc-datalog"
+      
+      containers:
+      - name: zookeeper
+        image: "ghcr.io/nuvolaris/zookeeper:3.4.14"
+        imagePullPolicy: "IfNotPresent"
+        command: ["/bin/bash", "-c", "hostname -s | awk -F '-' '{print $NF}'> /data/myid; cat /data/myid; cat /conf/zoo.cfg; zkServer.sh start-foreground"]
+        ports:
+        - name: zookeeper
+          containerPort: 2181
+        - name: server
+          containerPort: 2888
+        - name: leader-election
+          containerPort: 3888
+
+        livenessProbe:
+          tcpSocket:
+            port: 2181
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - "echo ruok | nc -w 1 localhost 2181 | grep imok"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /conf
+          name: zk-config         
+        - mountPath: /data
+          name: "zookeeper-pvc-data"
+        - mountPath: /datalog
+          name: "zookeeper-pvc-datalog"
+---

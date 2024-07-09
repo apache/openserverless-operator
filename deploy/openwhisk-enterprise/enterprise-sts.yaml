@@ -1,0 +1,211 @@
+---
+# Source: openwhisk/templates/controller-pod.yaml
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: controller
+  namespace: nuvolaris
+  labels:
+    name: controller
+    app: controller
+spec:
+  serviceName: controller
+  podManagementPolicy: "Parallel"
+  replicas: 1
+  selector:
+    matchLabels:
+      name: controller
+  template:
+    metadata:
+      labels:
+        name: controller
+        app: controller
+    spec:
+      serviceAccountName: openwhisk-core
+      restartPolicy: Always
+      initContainers:
+      - name: check-kafka
+        image: busybox:1.36.0
+        command: ['sh', '-c', "until nslookup kafka.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for kafka; sleep 2; done"]           
+      containers:
+      - name: controller
+        imagePullPolicy: "IfNotPresent"
+        image: "ghcr.io/nuvolaris/openwhisk-controller:0.3.0-morpheus.22122609"       
+        command: ["/bin/bash", "-c", "/init.sh `hostname | awk -F '-' '{print $NF}'`"]     
+        ports:
+        - name: controller
+          containerPort: 8080        
+        - name: akka-remoting
+          containerPort: 25520
+        - name: akka-mgmt-http
+          containerPort: 19999
+
+        livenessProbe:
+          httpGet:
+            path: "/ping"
+            port: 8080
+            scheme: "HTTP"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: "/ping"
+            port: 8080
+            scheme: "HTTP"
+          initialDelaySeconds: 10        
+          periodSeconds: 10
+          timeoutSeconds: 1
+        env:
+
+        - name: "PORT"
+          value: "8080"
+
+        - name: "TZ"
+          value: "UTC"
+
+        - name: "POD_IP"
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+
+        #- name:  "CONFIG_whisk_info_date"
+        #  valueFrom:
+        #    configMapKeyRef:
+        #      name: openwhisk-whisk.config
+        #      key: whisk_info_date
+        #- name: "CONFIG_whisk_info_buildNo"
+        #  valueFrom:
+        #    configMapKeyRef:
+        #      name: openwhisk-whisk.config
+        #      key: whisk_info_buildNo
+
+        # Java options
+        - name: "JAVA_OPTS"
+          value: "-Xmx1024M "
+
+        # specific controller arguments
+        - name: "CONTROLLER_OPTS"
+          value: " "
+
+        # action runtimes
+        - name: "RUNTIMES_MANIFEST"
+          valueFrom:   
+            configMapKeyRef:                 
+              name: openwhisk-runtimes              
+              key: runtimes.json
+              
+        # Action limits
+
+        - name:  "CONFIG_whisk_info_date"
+          value:  "01-01-2023"
+
+        - name: "CONFIG_whisk_info_buildNo"
+          value: "development-unknown"
+
+        - name: "LIMITS_ACTIONS_INVOKES_PERMINUTE"
+          value: "60"
+        - name: "LIMITS_ACTIONS_INVOKES_CONCURRENT"
+          value: "30"
+        - name: "LIMITS_TRIGGERS_FIRES_PERMINUTE"
+          value: "60"
+        - name: "LIMITS_ACTIONS_SEQUENCE_MAXLENGTH"
+          value: "50"
+        - name: "CONFIG_whisk_timeLimit_min"
+          value: "100ms"
+        - name: "CONFIG_whisk_timeLimit_max"
+          value: "5m"
+        - name: "CONFIG_whisk_timeLimit_std"
+          value: "1m"
+        - name: "CONFIG_whisk_memory_min"
+          value: "128m"
+        - name: "CONFIG_whisk_memory_max"
+          value: "512m"
+        - name: "CONFIG_whisk_memory_std"
+          value: "256m"
+        - name: "CONFIG_whisk_concurrencyLimit_min"
+          value: "1"
+        - name: "CONFIG_whisk_concurrencyLimit_max"
+          value: "1"
+        - name: "CONFIG_whisk_concurrencyLimit_std"
+          value: "1"
+        - name: "CONFIG_whisk_logLimit_min"
+          value: "0m"
+        - name: "CONFIG_whisk_logLimit_max"
+          value: "10m"
+        - name: "CONFIG_whisk_logLimit_std"
+          value: "10m"
+        - name: "CONFIG_whisk_activation_payload_max"
+          value: "1048576"
+
+        - name: "CONFIG_whisk_loadbalancer_blackboxFraction"
+          value: "10%"
+
+        - name: "CONFIG_whisk_loadbalancer_timeoutFactor"
+          value: "2"
+
+        # Kafka properties
+        - name: "KAFKA_HOSTS"
+          value: "kafka:9092"
+        # etcd properties
+
+        # to be fixed
+        # properties for DB connection
+        #- name: "CONFIG_whisk_couchdb_username"
+        #  valueFrom:
+        #    secretKeyRef:
+        #      name: couchdb-auth
+        #      key: db_username
+        #- name: "CONFIG_whisk_couchdb_password"
+        #  valueFrom:
+        #    secretKeyRef:
+        #      name: couchdb-auth
+        #      key: db_password
+
+        - name: "CONFIG_whisk_couchdb_username"
+          value: "whisk_admin"
+        - name: "CONFIG_whisk_couchdb_password"
+          value: "some_passw0rd"          
+        - name: "CONFIG_whisk_couchdb_port"
+          value: "5984"
+        - name: "CONFIG_whisk_couchdb_protocol"
+          value: "http"
+        - name: "CONFIG_whisk_couchdb_host"
+          value: "couchdb"
+        - name: "CONFIG_whisk_couchdb_provider"
+          value: "CouchDB"
+        - name: "CONFIG_whisk_couchdb_databases_WhiskActivation"
+          value: "nuvolaris_activations"
+        - name: "CONFIG_whisk_couchdb_databases_WhiskEntity"
+          value: "nuvolaris_whisks"
+        - name: "CONFIG_whisk_couchdb_databases_WhiskAuth"
+          value: "nuvolaris_subjects"
+
+        - name: "CONFIG_whisk_couchdb_controller_username"
+          value: "controller_admin"
+        - name: "CONFIG_whisk_couchdb_controller_password"
+          value: "s0meP@ass2"          
+
+        - name: "CONTROLLER_INSTANCES"
+          value: "1"
+        - name: "CONFIG_akka_cluster_seedNodes_0"
+          value: "akka://controller-actor-system@$(POD_IP):25520"
+        - name: "CONFIG_logback_log_level"
+          value: "INFO"

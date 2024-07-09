@@ -1,0 +1,33 @@
+AUTH {{redis_password}}
+{% if mode == 'create'%}
+ACL SETUSER {{namespace}}
+ACL SETUSER {{namespace}} ON >{{password}}
+ACL SETUSER {{namespace}} +@all ~{{prefix}}*
+{% endif %}
+
+{% if mode == 'delete'%}
+ACL DELUSER {{namespace}}
+{% endif %}
+
+{% if mode == 'readonly'%}
+ACL SETUSER {{namespace}} -@all ~{{prefix}}*
+ACL SETUSER {{namespace}} +@read ~{{prefix}}*
+ACL SETUSER {{namespace}} +info ~{{prefix}}*
+ACL SETUSER {{namespace}} +del ~{{prefix}}*
+{% endif %}
+
+{% if mode == 'create_readonly'%}
+ACL SETUSER {{namespace}}
+ACL SETUSER {{namespace}} ON >{{password}}
+ACL SETUSER {{namespace}} -@all ~{{prefix}}*
+ACL SETUSER {{namespace}} +@read ~{{prefix}}*
+ACL SETUSER {{namespace}} +info ~{{prefix}}*
+ACL SETUSER {{namespace}} +del ~{{prefix}}*
+{% endif %}
+
+{% if mode == 'readandwrite'%}
+ACL SETUSER {{namespace}} -@read ~{{prefix}}*
+ACL SETUSER {{namespace}} -info ~{{prefix}}*
+ACL SETUSER {{namespace}} -del ~{{prefix}}*
+ACL SETUSER {{namespace}} +@all ~{{prefix}}*
+{% endif %}

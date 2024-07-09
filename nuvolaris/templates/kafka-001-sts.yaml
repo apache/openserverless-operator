@@ -1,0 +1,109 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: nuvolaris
+  labels:
+    name: kafka
+    app: kafka
+spec:
+  serviceName: kafka
+  podManagementPolicy: "Parallel"
+  replicas: 1
+  selector:
+    matchLabels:
+      name: kafka
+  template:
+    metadata:
+      labels:
+        name: kafka
+        app: kafka
+      annotations:
+        whisks.nuvolaris.org/annotate-version: "true"         
+    spec:
+      restartPolicy: Always
+      volumes:
+      - name: "kafka-pvc"
+        persistentVolumeClaim:
+          claimName: "kafka-pvc-data"
+
+      initContainers:
+      - name: "wait-for-zookeeper"
+        image: "busybox:latest"
+        imagePullPolicy: "IfNotPresent"
+        command: ["sh", "-c", 'result=1; until [ $result -eq 0 ]; do OK=$(echo ruok | nc -w 1 {{zookeeper_host}} {{zookeeper_port}}); if [ "$OK" == "imok" ]; then result=0; echo "zookeeper returned imok!"; else echo waiting for zookeeper to be ready; sleep 1; fi; done; echo "Success: zookeeper is up"']
+      
+      containers:
+      - name: kafka
+        image: "ghcr.io/nuvolaris/kafka:2.3.1.2311011621"
+        imagePullPolicy: "IfNotPresent"
+        command: ["/bin/bash", "-c", "export KAFKA_BROKER_ID=`hostname | awk -F '-' '{print $NF}'`; export KAFKA_OPTS=-javaagent:/usr/app/jmx_prometheus_javaagent.jar=9071:/usr/app/prometheus-jmx-agent-config.yml; /usr/bin/start-kafka.sh"]
+        env:
+        - name: "HOSTNAME_COMMAND"
+          value: "hostname -f"
+        - name: "KAFKA_ADVERTISED_PORT"
+          value: "9092"
+        - name: "KAFKA_PORT"
+          value: "9092"
+        - name: "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP"
+          value: "EXTERNAL:PLAINTEXT"
+        - name: "KAFKA_LISTENERS"
+          value: "EXTERNAL://:9092"
+        - name: "KAFKA_ADVERTISED_LISTENERS"
+          value: "EXTERNAL://_{HOSTNAME_COMMAND}:9092"
+        - name: "KAFKA_INTER_BROKER_LISTENER_NAME"
+          value: "EXTERNAL"          
+        - name: "KAFKA_ZOOKEEPER_CONNECT"
+          value: "{{zookeeper_url}}"        
+        volumeMounts:
+        - mountPath: /kafka
+          name: "kafka-pvc"
+        ports:
+        - containerPort: 9092
+          name: kafka
+        - containerPort: 9071
+          name: metrics
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          timeoutSeconds: 30
+        readinessProbe:
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 30
+          exec:
+            command:
+            - /opt/kafka/bin/kafka-topics.sh
+            - localhost:9092
+            - --version
+      - name: volume-exporter
+        image: "ghcr.io/nuvolaris/volume_exporter:1.0.0.2311032017"
+        imagePullPolicy: "IfNotPresent"
+        args:
+          - --volume-dir=kafka-volume:/kafka
+        ports:
+        - name: metrics-volume
+          containerPort: 9888
+        volumeMounts:
+        - mountPath: /kafka
+          name: "kafka-pvc"
+          readOnly: true             
