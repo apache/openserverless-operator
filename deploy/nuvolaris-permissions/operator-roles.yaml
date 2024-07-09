@@ -87,15 +87,6 @@ rules:
   resources: ["kubegres","kubegres/status","kubegres/finalizers"]
   verbs: ["get","patch","list","update","watch","create","delete"]
 
-# required for rook managed bucket under nuvolaris namespace
-- apiGroups: ["objectbucket.io"]
-  resources: ["objectbucketclaims"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-
-- apiGroups: ["ceph.rook.io"]
-  resources: ["cephobjectstoreusers"]
-  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]    
-
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

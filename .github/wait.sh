@@ -1,3 +1,4 @@
+#!/bin/bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,27 +16,12 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  annotations:
-    #cert-manager.io/cluster-issuer: letsencrypt-issuer
-    kubernetes.io/ingress.class: public
-  name: monitoring
-  namespace: nuvolaris
-spec:
-  rules:
-  - host: monitoring.44.203.144.96.nip.io
-    http:
-      paths:
-      - backend:
-          service:
-            name: nuvolaris-prometheus-server
-            port:
-              number: 9999
-        path: /
-        pathType: Prefix
-  #tls:
-  #- hosts:
-  #  - monitoring.44.203.144.96.nip.io
-  #  secretName: monitoring-letsencrypt-secret
+echo "You have an hour to debug this build"
+echo 'do "touch /tmp/continue" to stop the wait'
+for i in $(seq 1 60) 
+do echo $i
+    sleep 60
+    if test -e /tmp/continue
+    then break
+    fi
+done

@@ -33,7 +33,6 @@ import nuvolaris.operator_util as operator_util
 import nuvolaris.runtimes_preloader as preloader
 import nuvolaris.invoker as invoker
 import nuvolaris.quota_checker_job as quota
-import nuvolaris.ceph_cos as cosi
 
 def patch_preloader(owner: None):
     try:
@@ -142,10 +141,6 @@ def patch(diff, status, owner=None, name=None):
         minio.patch(status,what_to_do['minio'], owner)
         components_updated = True 
 
-    if "cosi" in what_to_do:
-        cosi.patch(status,what_to_do['cosi'], owner)
-        components_updated = True         
-
     if "static" in what_to_do:
         static.patch(status,what_to_do['static'], owner)
         components_updated = True
@@ -166,9 +161,6 @@ def patch(diff, status, owner=None, name=None):
 
     if "minio-ingresses" in what_to_do and what_to_do['minio-ingresses'] == "update":
         minio.patch_ingresses(status,what_to_do['minio-ingresses'], owner)
-
-    if "cosi-ingresses" in what_to_do and what_to_do['cosi-ingresses'] == "update":
-        cosi.patch_ingresses(status,what_to_do['minio-ingresses'], owner)        
 
     if components_updated:
         operator_util.whisk_post_create(name)

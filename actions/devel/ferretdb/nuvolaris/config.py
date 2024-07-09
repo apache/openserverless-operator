@@ -174,6 +174,61 @@ def detect_storage(storages=None):
             pass
     return res
 
+def detect_object_storage(object_storages=None):
+    """
+    Detect the basic Object Store setup if enabled
+    """
+    res = {}
+    if not object_storages:
+        import nuvolaris.util as util
+
+        try:
+            detect_object_store = True
+            detect_object_store_rgw_srv_name = True
+            detect_object_store_rgw_srv_port = True
+
+            # skips autodetection if cephobjectstore is not active
+            if not exists('components.cosi') or not get('components.cosi'):
+                logging.info(f"*** cephobjectstore support is not requested skipping auto configuration check")
+                return res
+
+            # skips autodetection if already provided
+            if exists('cosi.bucket_storageclass') and get('cosi.bucket_storageclass') != 'auto':
+                logging.info(f"*** configuration provided already a cosi.bucket_storageclass={get('cosi.bucket_storageclass')}")
+                detect_object_store = False
+
+            if exists('cosi.rgwservice_name') and get('cosi.rgwservice_name') != 'auto':
+                logging.info(f"*** configuration provided already a cosi.rgwservice_name={get('cosi.rgwservice_name')}")
+                detect_object_store_rgw_srv_name = False
+
+            if exists('cosi.rgwservice_port') and get('cosi.rgwservice_port') != 'auto':
+                logging.info(f"*** configuration provided already a cosi.rgwservice_port={get('cosi.rgwservice_port')}")
+                detect_object_store_rgw_srv_port = False                
+
+            if not detect_object_store and not detect_object_store_rgw_srv_name and not detect_object_store_rgw_srv_port:
+                return res    
+
+            if detect_object_store:
+                storage_class = util.get_object_storage_class()
+                if storage_class:
+                    res['cosi.bucket_storageclass'] = storage_class
+                    _config['cosi.bucket_storageclass'] = storage_class
+            
+            if detect_object_store_rgw_srv_name:
+                rgwsrv = util.get_object_storage_rgw_srv_name()
+                if(rgwsrv):
+                    res['cosi.rgwservice_name'] = rgwsrv
+                    _config['cosi.rgwservice_name'] = rgwsrv
+
+            if detect_object_store_rgw_srv_port:
+                rgwport = util.get_object_storage_rgw_srv_http_port()
+                if(rgwport):
+                    res['cosi.rgwservice_port'] = rgwport
+                    _config['cosi.rgwservice_port'] = rgwport                   
+        except:
+            pass
+    return res  
+
 def detect_env():
     _config['operator.image'] = os.environ.get("OPERATOR_IMAGE", "missing-OPERATOR_IMAGE")
     _config['operator.tag'] = os.environ.get("OPERATOR_TAG", "missing-OPERATOR_TAG")
@@ -195,6 +250,7 @@ def detect():
     detect_storage()
     detect_labels()
     detect_env()
+    detect_object_storage()
 
 def dump_config():
     import nuvolaris.config as cfg

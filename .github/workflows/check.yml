@@ -1,0 +1,80 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: openserverless-operator
+on: 
+  push:
+    tags-ignore:
+       - '*'
+
+jobs:
+  check:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: License   
+        uses: apache/skywalking-eyes@main
+        continue-on-error: true
+      - name: Make envfile
+        if:  ${{ env.GITHUB_USER != 'nuvolaris'}}
+        uses: SpicyPizza/create-envfile@v1.3
+        with:
+          envkey_MY_OPERATOR_IMAGE: ${{ secrets.MY_OPERATOR_IMAGE }}
+          file_name: .env
+          fail_on_empty: false        
+      - name: Kind
+        uses: helm/kind-action@v1.2.0
+        with:
+          cluster_name: nuvolaris
+          config: .github/kind.yaml
+      - name: Setup
+        run: bash .github/cisetup.sh
+      - name: Install
+        run: task setup
+      - name: BuildAndLoad
+        run: task build-and-load
+      - name: AddIngress
+        run: task kind:ingress        
+      - name: Test
+        run: task test
+        continue-on-error: true
+      - name: Ngrok
+        if: ${{ env.NGROK == 'on' }}
+        run: bash .github/debug-github-actions.sh
+        env:
+          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+          USER_PASS: ${{ secrets.USER_PASS }}
+      - name: Wait
+        if: ${{ env.NGROK == 'on' }}
+        run: bash .github/wait.sh

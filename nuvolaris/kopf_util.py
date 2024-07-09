@@ -73,14 +73,6 @@ def check_minio_ingresses(response: dict, item: dict):
         if(item['new']):
             response["minio-ingresses"]="update"
 
-def check_cosi_ingresses(response: dict, item: dict):
-    """
-    Forces an update of cosi-ingresses if needed
-    """
-    if item['path']=='spec.cosi.ingress.s3-enabled':
-        if(item['new']):
-            response["cosi-ingresses"]="update"            
-
 def evaluate_differences(response: dict, differences: list):
     """
     Iterate over the difference list to find which components the
@@ -100,7 +92,6 @@ def evaluate_differences(response: dict, differences: list):
         openwhisk(response, d)           
         endpoint(response, d)
         check_minio_ingresses(response, d)
-        check_cosi_ingresses(response,d)
         
 def detect_component_changes(kopf_diff):
     """
