@@ -57,9 +57,7 @@ includes:
     dir: clusters
   mik:
     taskfile: clusters/microk8s.yml
-    dir: clusters
-  ent:
-    taskfile: TaskfileEnterprise.yml    
+    dir: clusters 
   k3s:
     taskfile: clusters/k3s.yml
     dir: clusters
@@ -71,9 +69,7 @@ includes:
     dir: actions
   talos:
     taskfile: clusters/talos-gcp.yml
-    dir: clusters 
-  nuvent:
-    taskfile: TaskfileNuvEnterprise.yml     
+    dir: clusters  
 
 tasks:
 

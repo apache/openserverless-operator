@@ -127,6 +127,12 @@ class CouchDB:
     r = self.db_session.put(url, data=data) 
     return r.status_code == 200
 
+  def enable_db_compaction(self,db_name):    
+    url = f"{self.db_url}/_node/_local/_config/compactions/{self.db_prefix}{db_name}"    
+    data = '[{db_fragmentation, \"60%\"}, {view_fragmentation, \"60%\"}]'
+    r = self.db_session.put(url, json=data)
+    return r.status_code == 200   
+
   def add_user(self, username: str, password: str):
     userpass = {"name": username, "password": password, "roles": [], "type": "user"}
     url = f"{self.db_url}/_users/org.couchdb.user:{username}"

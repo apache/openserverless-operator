@@ -39,7 +39,6 @@ import nuvolaris.postgres_operator as postgres
 import nuvolaris.runtimes_preloader as preloader
 import nuvolaris.monitoring as monitoring
 import nuvolaris.quota_checker_job as quota
-import nuvolaris.ceph_cos as cosi
 
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, **_):
@@ -78,13 +77,8 @@ def whisk_create(spec, name, **kwargs):
         "minio": "?", # Minio configuration
         "static": "?", # Minio static endpoint provider
         "zookeeper": "?", #Zookeeper configuration
-        "quota":"?" ,#Quota configuration
-        "cosi":"?" #Ceph Object Store support active
+        "quota":"?" #Quota configuration
     }
-
-    if cfg.get('components.minio') and cfg.get('components.cosi'):
-        state['controller']= "NotValid"
-        raise kopf.PermanentError("Storage support for MINIO and CEPH BUCKET could not be activated simultaneously.")
 
     runtime = cfg.get('nuvolaris.kube')
     logging.info(f"kubernetes engine in use={runtime}")
@@ -155,13 +149,6 @@ def whisk_create(spec, name, **kwargs):
         state['minio'] = "on"
     else:
         state['minio'] = "off"
-
-    if cfg.get('components.cosi'):
-        msg = cosi.create(owner)
-        logging.info(msg)
-        state['cosi'] = "on"
-    else:
-        state['cosi'] = "off"        
 
     if cfg.get('components.static'):
         msg = static.create(owner)
@@ -307,10 +294,6 @@ def whisk_delete(spec, **kwargs):
     if cfg.get("components.minio"):
         msg = minio.delete()
         logging.info(msg)
-
-    if cfg.get("components.cosi"):
-        msg = cosi.delete()
-        logging.info(msg)         
 
     if cfg.get('components.postgres'):
         msg = postgres.delete()
