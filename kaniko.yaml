@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kaniko
+  namespace: default
+spec:
+  containers:
+  - name: kaniko
+    #image: busybox
+    #command:
+    #- sleep
+    #- inf
+    image: gcr.io/kaniko-project/executor:latest
+    args: 
+      - --context=dir:///context/"
+      - --destination=docker-registry:5000/openserverless/operator:latest
+      - --insecure
+      - --insecure-registry=docker-registry
+    volumeMounts:
+    - name: config-volume
+      mountPath: /context
+  restartPolicy: Never
+  volumes:
+  - name: config-volume
+    configMap:
+      name: dockerfile-configmap
