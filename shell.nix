@@ -6,6 +6,7 @@ in
 pkgs.mkShellNoCC {
   packages = with pkgs; [
    python3
-
+   kubernetes-helm
   ];
+
 }

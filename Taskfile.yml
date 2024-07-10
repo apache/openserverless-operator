@@ -1,0 +1,11 @@
+version: 3
+
+tasks:
+
+  install-registry:
+    - helm repo add twuni https://helm.twun.io
+    - helm install docker-registry twuni/docker-registry --namespace default
+
+  build-dockerfile:
+    - kubectl -n default create configmap dockerfile-configmap --from-file=Dockerfile
+    - kubectl apply -f kaniko.yaml
