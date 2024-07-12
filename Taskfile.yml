@@ -37,12 +37,12 @@ tasks:
       TAG: "{{.TAG}}"
     cmds:
     - test -n "$GITHUB_USER" || true "did you configure your .env?"
-    - envsubst  <kaniko.yaml >_kaniko.yaml
-    - cat _kaniko.yaml
-    - kubectl -n default delete pod/kaniko || true
-    - kubectl apply -f _kaniko.yaml
+    - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
+    - kubectl -n default delete pod/kaniko-build || true
+    - kubectl apply -f _kaniko-build.yaml
 
   build:
     - task: install-registry
     - task: tag-commit-push
     - task: kaniko-build
+    - kubectl -n default logs kaniko-build -f
