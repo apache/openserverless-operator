@@ -45,7 +45,7 @@ tasks:
     cmds:
     - test -n "$GITHUB_USER" || true "did you configure your .env?"
     - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
-    - kubectl -n default delete pod/kaniko-build || true
+    #- kubectl -n default delete pod/kaniko-build || true
     - kubectl apply -f _kaniko-build.yaml
     - kubectl wait --for=condition=ready pod/kaniko-build -n default --timeout=600s
 
