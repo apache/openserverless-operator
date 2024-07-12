@@ -9,7 +9,7 @@ spec:
       containers:
       - name: kaniko
         image: gcr.io/kaniko-project/executor:latest
-        label:
+        labels:
           app: kaniko-build
         args: 
           - --context=git://github.com/${GITHUB_USER}/openserverless-operator
