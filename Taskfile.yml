@@ -9,14 +9,18 @@ dotenv:
 
 tasks:
 
+  default: task -l
+
   tag: 
     silent: true
+    desc: generate a new tag based on the current time 
     cmds:
     - git tag -d $(git tag) 
     - git tag -f {{.BASETAG}}.$(date +%y%m%d%H%M)
     - env PAGER= git tag
 
   install-registry:
+    desc: install a local registry
     cmds:
     - helm repo add twuni https://helm.twun.io
     - helm install docker-registry twuni/docker-registry --namespace default
@@ -24,11 +28,11 @@ tasks:
     - kubectl -n default get po -l app=docker-registry
 
   tag-commit-push:
-  - task tag
+  - task: tag
   - git commit -m "{{.TAG}}" -a
   - git push
 
-  build:
+  kaniko-build:
     env:
       TAG: "{{.TAG}}"
     cmds:
