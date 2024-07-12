@@ -33,8 +33,8 @@ tasks:
     desc: tag, commit and push to your default upstream repo (see README.md)
     cmds:
     - task: tag
-    - git commit -m "{{.TAG}}" -a
-    - git push
+    - git commit -m "{{.TAG}}" -a || true
+    - git push || true
 
   kaniko-build:
     desc: build in current kubernetes with Kaniko
