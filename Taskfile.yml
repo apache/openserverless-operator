@@ -23,9 +23,13 @@ tasks:
     desc: install a local registry
     cmds:
     - helm repo add twuni https://helm.twun.io
-    - helm install docker-registry twuni/docker-registry --namespace default
+    - >
+      helm install docker-registry twuni/docker-registry 
+      --namespace default 
+      --set service.type=NodePort
+      --set service.nodePort=30050
     status:
-    - kubectl -n default get po -l app=docker-registry
+    - kubectl -n default get po -l app=docker-registry | grep docker-registry
 
   tag-commit-push:
     desc: tag, commit and push to your default upstream repo (see README.md)
