@@ -1,0 +1,5 @@
+mirrors:
+  ghcr.io:
+    endpoint:
+      - "http://localhost:30050"
+
