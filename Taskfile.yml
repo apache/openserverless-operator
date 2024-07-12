@@ -2,7 +2,7 @@ version: 3
 vars:
  BASETAG: 0.1-dev
  TAG:
-    sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
+    
 
 dotenv: 
   - .env
@@ -25,7 +25,12 @@ tasks:
     - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
     - sudo systemctl restart k3s
     - helm repo add twuni https://helm.twun.io
-    - helm install docker-registry twuni/docker-registry --namespace kube-system 
+    - > 
+      helm install docker-registry twuni/docker-registry 
+      --namespace kube-system  
+      --set image.tag=2.8.3
+      --set service.type=NodePort
+      --set service.nodePort=30050
     status:
     - kubectl -n kube-system get po -l app=docker-registry | grep docker-registry
 
@@ -39,7 +44,8 @@ tasks:
   kaniko-build:
     desc: build in current kubernetes with Kaniko
     env:
-      TAG: "{{.TAG}}"
+      TAG: 
+        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
     - test -n "$GITHUB_USER" || true "did you configure your .env?"
     - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
@@ -63,7 +69,8 @@ tasks:
   deploy:
     desc: deploy the current operator image
     env:
-      TAG: "{{.TAG}}"
+      TAG: 
+        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
     - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
     - kubectl apply -f _operator-deploy.yaml
