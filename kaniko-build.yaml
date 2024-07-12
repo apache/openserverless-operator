@@ -5,12 +5,13 @@ metadata:
   namespace: default
 spec:
   template:
+    metadata:
+      labels:
+        app: kaniko-build
     spec:
       containers:
       - name: kaniko
         image: gcr.io/kaniko-project/executor:latest
-        labels:
-          app: kaniko-build
         args: 
           - --context=git://github.com/${GITHUB_USER}/openserverless-operator
           - --destination=docker-registry:5000/openserverless/operator:${TAG}
