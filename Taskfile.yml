@@ -39,5 +39,10 @@ tasks:
     - test -n "$GITHUB_USER" || true "did you configure your .env?"
     - envsubst  <kaniko.yaml >_kaniko.yaml
     - cat _kaniko.yaml
-    #- kubectl -n default create configmap dockerfile-configmap --from-file=Dockerfile
-    #- kubectl apply -f kaniko.yaml
+    - kubectl -n default delete pod/kaniko || true
+    - kubectl apply -f _kaniko.yaml
+
+  build:
+    - task: install-registry
+    - task: tag-commit-push
+    - task: kaniko-build
