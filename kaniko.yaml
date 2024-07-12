@@ -12,8 +12,8 @@ spec:
     #- inf
     image: gcr.io/kaniko-project/executor:latest
     args: 
-      - --context=dir:///context/"
-      - --destination=docker-registry:5000/openserverless/operator:latest
+      - --context=git://github.com/${GITHUB_USER}/openserverless-operator
+      - --destination=docker-registry:5000/openserverless/operator:${TAG}
       - --insecure
       - --insecure-registry=docker-registry
     volumeMounts:
