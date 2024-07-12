@@ -51,7 +51,7 @@ tasks:
     - kubectl apply -f _kaniko-build.yaml
     - kubectl wait po --for=condition=ready -l app=kaniko-build -n default 
 
-  kaniko-logs:
+  build-logs:
     desc: show logs of the build
     cmds:
     - kubectl -n default logs -l app=kaniko-build -f
