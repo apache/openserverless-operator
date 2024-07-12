@@ -15,7 +15,7 @@ tasks:
     silent: true
     desc: generate a new tag based on the current time 
     cmds:
-    - git tag -d $(git tag) 
+    - git tag -d $(git tag) || true
     - git tag -f {{.BASETAG}}.$(date +%y%m%d%H%M)
     - env PAGER= git tag
 
