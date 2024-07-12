@@ -52,7 +52,7 @@ tasks:
   kaniko-logs:
     desc: show logs of the build
     cmds:
-    - kubectl -n default logs kaniko-build -f
+    - kubectl -n default logs -l app=kaniko-build -f
 
   build:
     desc: build the operator image
