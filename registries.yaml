@@ -1,5 +1,5 @@
 mirrors:
   ghcr.io:
     endpoint:
-      - "http://localhost:30050"
+      - "http://docker-registry.kube-system.svc.cluster.local:5000"
 

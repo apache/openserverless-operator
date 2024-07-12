@@ -25,13 +25,9 @@ tasks:
     - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
     - sudo systemctl restart k3s
     - helm repo add twuni https://helm.twun.io
-    - >
-      helm install docker-registry twuni/docker-registry 
-      --namespace default 
-      --set service.type=NodePort
-      --set service.nodePort=30050
+    - helm install docker-registry twuni/docker-registry --namespace kube-system 
     status:
-    - kubectl -n default get po -l app=docker-registry | grep docker-registry
+    - kubectl -n kube-system get po -l app=docker-registry | grep docker-registry
 
   tag-commit-push:
     desc: tag, commit and push to your default upstream repo (see README.md)
