@@ -32,4 +32,5 @@ Note you need write access to a github repository repository.
 
 The task build will commit and push all your changes and then build the operator from the public sources in your local k3s.
 
+Build your operator with: `task build`
 

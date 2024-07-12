@@ -57,3 +57,11 @@ tasks:
     - task: tag-commit-push
     - task: kaniko-build
     - task: kaniko-logs
+
+  deploy:
+    desc: deploy the current operator image
+    env:
+      TAG: "{{.TAG}}"
+    cmds:
+    - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
+    - kubectl apply -f _operator-deploy.yaml
