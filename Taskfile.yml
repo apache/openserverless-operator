@@ -74,3 +74,4 @@ tasks:
     cmds:
     - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
     - kubectl apply -f _operator-deploy.yaml
+

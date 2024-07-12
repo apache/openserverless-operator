@@ -1,7 +1,28 @@
 # Apache OpenServerless Operator
 
-In this readme there are informations for developer, please refer to the [website](https://openserverless.apache.org) for more informations.
+In this readme there are informations for developers. 
 
+We describe how to build and test the operator in our development environment
+
+Please refer to the [website](https://openserverless.apache.org) for user informations.
+
+## How to build and use an operator image
+
+Ensure you have satified the prerequisites below. Most notably, you need to use our development virtual machine and you need write access to a github repository repository.
+
+Once you have satisfied the prerequisites, you can build an image you can use in the development machine.
+
+Build an image with `task build`. 
+
+Please note the it will build the image locally and push in an internal registry, even if it is name is `ghcr.io/${GITHUB_USER}/openserverless-operator`.
+
+To be able to build, the task `build` will commit and push all your changes and then build the operator from the public sources in your local k3s.
+
+It will also generate
+
+You can then deploy it with `task deploy`.
+
+Once you have finished  with development you can create a publici image with `task publish` that will publish the tag and trigger a creation of the image.
 
 ## Prerequisites
 
@@ -23,14 +44,4 @@ git branch -u https://github.com/<GITHUB_USERNAME>/openserverless-operator
 ```
 
 That's it. Now you can use `task build` to build the image
-
-## How to build and use an operator image
-
-Ensure you have satified the prerequisites.
-
-Note you need write access to a github repository repository.
-
-The task build will commit and push all your changes and then build the operator from the public sources in your local k3s.
-
-Build your operator with: `task build`
 

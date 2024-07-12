@@ -6,4 +6,5 @@ metadata:
 spec:
   containers:
   - name: dummy-operator
-    image: ghcr.io/apache/openserverless-operator:$TAG
+    #image: ghcr.io/${GITHUB_USER}/openserverless-operator:$TAG
+    image: 
