@@ -22,6 +22,8 @@ tasks:
   install-registry:
     desc: install a local registry
     cmds:
+    - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
+    - sudo systemctl restart k3s
     - helm repo add twuni https://helm.twun.io
     - >
       helm install docker-registry twuni/docker-registry 
