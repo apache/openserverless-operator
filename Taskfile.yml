@@ -52,7 +52,7 @@ tasks:
     - kubectl wait po --for=condition=ready -l app=kaniko-build -n default 
 
   build-logs:
-    desc: show logs of the build
+    desc: show logs of the latest build
     cmds:
     - kubectl -n default logs -l app=kaniko-build -f
 
@@ -62,7 +62,7 @@ tasks:
     - task: install-registry
     - task: tag-commit-push
     - task: kaniko-build
-    - task: kaniko-logs
+    - task: build-logs
 
   deploy:
     desc: deploy the current operator image
