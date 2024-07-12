@@ -28,11 +28,14 @@ tasks:
     - kubectl -n default get po -l app=docker-registry
 
   tag-commit-push:
-  - task: tag
-  - git commit -m "{{.TAG}}" -a
-  - git push
+    desc: tag, commit and push to your default upstream repo (see README.md)
+    cmds:
+    - task: tag
+    - git commit -m "{{.TAG}}" -a
+    - git push
 
   kaniko-build:
+    desc: build in current kubernetes with Kaniko
     env:
       TAG: "{{.TAG}}"
     cmds:
@@ -40,9 +43,17 @@ tasks:
     - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
     - kubectl -n default delete pod/kaniko-build || true
     - kubectl apply -f _kaniko-build.yaml
+    - kubectl wait --for=condition=ready pod/kaniko-build -n default --timeout=600s
+
+  kaniko-logs:
+    desc: show logs of the build
+    cmds:
+    - kubectl -n default logs kaniko-build -f
 
   build:
+    desc: build the operator image
+    cmds: 
     - task: install-registry
     - task: tag-commit-push
     - task: kaniko-build
-    - kubectl -n default logs kaniko-build -f
+    - task: kaniko-logs
