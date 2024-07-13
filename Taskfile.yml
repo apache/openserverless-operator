@@ -336,9 +336,13 @@ tasks:
     env:
       TAG: "{{.TAG}}"
     cmds:
+    - kubectl delete pod/kaniko
+    - kubectl delete cm/dockerfile-configmap
     - test -n "$GITHUB_USER" || true "did you configure your .env?"
     - envsubst  <kaniko.yaml >_kaniko.yaml
     - cat _kaniko.yaml
+    - kubectl -n default create configmap dockerfile-configmap --from-file=Dockerfile
+    - kubectl apply -f _kaniko.yaml
 
   shell:
     - kubectl -n nuvolaris exec --stdin --tty {{.POD}} -- /bin/bash
