@@ -22,19 +22,17 @@ metadata:
   namespace: nuvolaris
 spec:
   nuvolaris:
-      password: nuvpassw0rd 
-      apihost: 146.148.119.191
-      storageclass: rook-ceph-block
-      provisioner: rook-ceph.rbd.csi.ceph.com
+      apihost: localhost
+      password: nuvpassw0rd
   components:
     # start openwhisk controller
     openwhisk: true
     # start openwhisk invoker
-    invoker: false    
+    invoker: true    
     # start couchdb
     couchdb: true
     # start kafka
-    kafka: false
+    kafka: true
     # start mongodb
     mongodb: true
     # start redis
@@ -46,11 +44,11 @@ spec:
     # minio enabled or not
     minio: true 
     # zookeeper enabled or not
-    zookeeper: false
+    zookeeper: true
     # minio static enabled or not
     static: true  
     # monitoring enabled or not
-    monitoring: false
+    monitoring: true
     # postgres enabled or not
     postgres: true              
   openwhisk:
@@ -155,7 +153,7 @@ spec:
       slack:        
         enabled: true
         default: true 
-        slack_channel_name: '#monitoring-nuvolaris'
+        slack_channel_name: '#monitoring-openserverless'
         slack_api_url: ${SLACK_API_URL}
       gmail:       
         enabled: true

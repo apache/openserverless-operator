@@ -17,188 +17,59 @@
   ~ under the License.
   ~
 -->
-# Apache OpenServerless Operator 
+# Apache OpenServerless Operator
 
-This is the Kubernetes Operator of the [bit.ly/nuvolaris](Apache OpenServerless project).
+In this readme there are informations for developers. 
 
-If you are interested in developing it, please read the [design document](DESIGN.md). Please also read the [development environment document](https://github.com/nuvolaris/nuvolaris/blob/main/docs/DEVEL.md) to learn how to setup it.
+We describe how to build and test the operator in our development environment
 
-If you wonder what are the strange subfolders, here is an explanation:
+Please refer to the [website](https://openserverless.apache.org) for user informations.
 
-- `nuvolaris` are python modules, and implements the operator logic, coded in Python.
+## How to build and use an operator image
 
-So you generally build the `nuvolaris` operator as a docker image and publishi, build the `nuv` CLI and use the `olaris` tasks to install and manage it...
+Ensure you have satified the prerequisites below. Most notably, you need to use our development virtual machine and you need write access to a github repository repository.
 
-## Developer notes
+Once you have satisfied the prerequisites, you can build an image you can use in the development machine.
 
-The operator is built in Python with [kopf](https://kopf.readthedocs.io/en/stable/). You can find some [examples here](https://github.com/nolar/kopf/tree/main/examples).
+Build an image with `task build`. 
 
-The operator uses under the hood [kustomize](https://kustomize.io/) and [kubectl](https://kubernetes.io/docs/reference/kubectl/) to interact with Kubernetes.
+Please note the it will build the image locally and push in an internal registry, even if it is name is `ghcr.io/${GITHUB_USER}/openserverless-operator`.
 
-Let's discuss how to:
+To be able to build, the task `build` will commit and push all your changes and then build the operator from the public sources in your local k3s.
 
-- Select the Kubernetes cluster to use
-- Develop interactively (cli and tests)
-- Run it without deploying
-- Test it in a local cluster without pushing an image to a registry
-- Push it to a public registry to use with external Kubernetes
+It will also generate
 
-## Selecting the Kubernetes Clusters
+You can then deploy it with `task deploy`.
 
-You have to run the operator against multiple clusters for test. So the operator has a provision to selection one to use and work with.
+Once you have finished  with development you can create a publici image with `task publish` that will publish the tag and trigger a creation of the image.
 
-You can use other clusters for testing and development.  You should place all the configurations for the other clusters in the folder `clusters`, with extension `.kubeconfig`. See [below](#creating-a-new-cluster) for informations about this.
+## Prerequisites
 
-If you use the development environment, using Docker and VSCode, you have available a Kind cluster ready for test.  Use the task `task kind:config` to copy the configuration in the `clusters` folder if you plan to change cluster.
+1. Please setup and use a development VM [as described here](https://github.com/apache/openserverless)
 
-In order to test the operator against different clusters, you can list all the cluster configurations available with `task` and then select one with `task N` where N is the number of the configuration in the list shown.
+2. With VSCode, access to the development VM, open the workspace `openserverless/openserverless.code-orkspace` and then open a terminal with `operator` subproject e enabling the nix enviroment with direnv (the vm provides those). 
 
-Example:
+3. Create a fork of `githbub.com/apache/openserverless-operator`
 
-```
-$ task
-*** current: kind
-1 clusters/aks.kubeconfig
-2 clusters/eks.kubeconfig
-3 clusters/kind.kubeconfig
-4 clusters/microk8s.kubeconfig
-*** select with 'task #'
-$ task 2
-task: [2] task use N=2
-cluster: eks
-Kubeconfig user entry is using deprecated API version client.authentication.k8s.io/v1alpha1. Run 'aws eks update-kubeconfig' to update.
-NAME                                              STATUS   ROLES    AGE   VERSION
-ip-192-168-42-140.eu-central-1.compute.internal   Ready    <none>   49d   v1.22.6-eks-7d68063
-```
+4. Copy .env.dist in .env and put your github username in it
 
-## Developing the operator interactively
+5. Since the build requires you push your sources in your repo, you need the credentials to access it. The fastest way is to [create a personal token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) 
 
-Start coding with `task cli`.
-
-You can then develop some code experimentally interacting with a python interpreter with  the same libraries and some useful imports and configuration ready (most notably the autoreload).
-
-You can then execute some tests.
-
-- `task utest`: unit tests 
-- `task itest`: integration tests
-
-This will run all the tests. You can select which test to run with `tast itest T=xxx` or `task utest T=xxx`. It will then execute all the tests whose file starts with `xxx`.
-
-## Developing the operator without deploying it
-
-You can then start the whole operator without having to deploy it. Start it with `task run`.
-
-Once you started the operarto pen another terminal and Use `task instance` to apply a crd instance depending on the current clusters.
-
-The crd instance used it is defined by the type of kubernetes custer you are using. The script './detect.sh' tries to detect it. The configuration used is under `tests/<detected>/whisk.yaml`
-
-If you have not changed the cluster the default cluster is 'kind' so it will apply the configuration `tests/kind/whisk.yaml`
-
-You can change the configuration passing the `WHISK` parameter (without the .yaml).  So if you are running an `eks` cluster and you want to use your configuration `custom` the command `task instance WHISK=custom` will use `tests/eks/custom.yaml`
-
-Other useful tasks:
-
-- `task watch` starts watching deployed pods servics and nodes - useful to see what happens when you deploy 
-- `task destroy` removes the instance but not the operator so you can recreate the cluster with `task instance` maybe with different parameters
-- `task clean` removes everything including the operator and pvc
-- If something get stuck and the cleanup does not complete `task defin` can help removing incomplete finalizers (you need to open another terminal to run it)
-
-## Testing the operator deploying it locally
-
-First and before all, you need a tag.
-
-Execute `task image-tag`. This command will delete all the other tag and generate a tag in the format `x.y.z-milestone.timestamp`. This tag is essential to identify your operator.
-
-When you are confident you can try the operator, in kind, use `task build-and-load`. This will build an instance and load it in the local kind. This step does not require you publish it to a public registry.
-
-You can then proceed deploying it with `task operator` to deploy it.
-
-You can then use `task instance` to deploy a crd instance, and finally `task actions` to test whisk running a few actions
-
-## Publishing the operator
-
-Once the operator is ready, you can build and test it a against a kubernetes cluster.
-
-First, generate a new image tag with `task image-tag`.
-
-You can test locally using the kind cluster (provided by default by the development environment) with  `build-and-load`. 
-
-To test it against other clusters, you need to publish it to a public repository. 
-
-If you have push access to Nuvolaris repository just push the tag and it will trigger the build using the tag to tag the repository and it will be published in the nuvolaris package registry on GitHub.
-
-You can also publish an image to your own github repository for testing purposes. To do this, add to your `.env` the following variables:
-
+6. Now setup a remote to access your repo and set it as your default upstream branch.
 
 ```
-MY_CONTROLLER_IMAGE=<your-user>/<your-name>
-GITHUB_USER=<your-user>
-GITHUB_TOKEN=<your-access-token>
+git remote add fork https://<GITHUB_USERNAME>:<GITHUB_TOKEN>@github.com/<GITHUB_USERNAME>/openserverless-operator
+git branch -u https://github.com/<GITHUB_USERNAME>/openserverless-operator
 ```
 
-You cannot override the tag of the operator you have to generate a git tag: `task image-tag`. Note the tag is unique for the current hour (it embeds: YYMMDDhh).
+That's it. Now you can use `task build` to build the image
 
-If you set those variables you can use 
-- `task b:docker-login` to log to the current docker registry
-- `task b:build-and-push` to build for one single architecture (faster but limited to your architecture)
-- `task buildx-and-push` to build for all the architectues (slower, used by the GitHub action)
+7. Deploy the operator
+Execute the command
 
-Remember that for GitHub Containter Registry you have to make public the image you are using to tlet it to be accessible by other Kubernetes
+```shell
+task all
+```
 
-### Running tests
-
-Once you have choosen the Kubernetes cluster and published the images on a public registry you can test it with  `task dtest`, that will run a complete deployment in the current Kubernetes cluster.
-
-If you want to run all the tests (u, i, d) aginst the current cluster use `task test`
-
-Finally if you want to run the tests against all the configured kubernetes use `task all-kubes -- <target>`.
-
-This targes runs a group of tests against all the available clusters, so you can run all the tests against all the kubes with `task all-kubes -- test`
-
-# Reference
-
-- `use` (default task) lists all the clusters; 
-- `1`, `2`...`9` selects the corresponding entry
-- `operator`: deploys the operator in the current cluster.
-- `instance`: deploy an instance of the configuration to build an actual cluster.
-- `destroy`: destroy the current deployment
-- `clean`: remove everything - if you get stuck use `defin`
-- `defin`:  remove finalizer for the controller, useful if `clean` does not complete
-- `config`: once it is deployed, extracts the current configuration to use `wsk`
-- `actions`: deploy and run test actions
-- `utest` runs unit tests, filter with `T=<xxx>`
-- `itest` runs integration tests, filter with `T=<xxx>`
-- `iclean`: remote temp files generated by the tests
-- `dtest` deployment test
-- `hello`: runs a simple hello world test
-- `ping`: runs a ping test of redis
-- `all-kubes -- <target>`: execute the `<target>` against all the configured kubes
-
-Build targets
-
-- `b:buildx-and-push`: build and push the operator in multiple architectectures (slow)
-- `b:build-and-load`: build and load the operator in the kind cluster
-- `b:docker-login`: login into the github docker registry 
-- `b:build-and-push`: build and push the operator in the current architecture
-
-Currently the following clusters, with respective suffix are supported (note not all the clusters are fully implemented, and you may need to edit and set manually variables - see the Taskfiles for reference).
-
-- Kubernetes Kind: `kind` 
-- Amazon EKS: `eks`
-- Azure AKS: `aks`
-- Google GKE: `gke`
-- Ubuntu MicroK8s: `m8s`
-- Rancher K3S: `k3s`
-- RedHat OpenShift: `osh`
-
-See below for creating clusters and configurations. All the configuration for the available clusters are expected to be in `clusters/*.kubeconfig`
-
-Available commands for the cluster `xxx` (not always and not for all the cases):
-
-- `xxx:list`: list existing clusters
-- `xxx:create`: create a test cluster
-- `xxx:destroy`: destroy a test cluster
-- `xxx:config`: set the kubeconfig to the current cluster
-
-Note that `kind` is available in the development environment by defaut. You may want to use `task kind:config` to extract the configuration to be able to switch back to the local clusters.
+it will deploy the openserverless-operator applying `/test/k3s/whisk.yaml` which will deploy a complete configuration but TLS and MONITORING.
 
