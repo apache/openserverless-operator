@@ -65,11 +65,12 @@ git branch -u https://github.com/<GITHUB_USERNAME>/openserverless-operator
 That's it. Now you can use `task build` to build the image
 
 7. Deploy the operator
-Execute the command
+
+To deploy a testing configuration of the OpenServerless operator execute the command
 
 ```shell
 task all
 ```
 
-it will deploy the openserverless-operator applying `/test/k3s/whisk.yaml` which will deploy a complete configuration but TLS and MONITORING.
+The operator instance will be configured applying the `test/k3s/whisk.yaml` template. All the components are activated except TLS and MONITORING.
 
