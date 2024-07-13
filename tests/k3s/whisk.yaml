@@ -48,7 +48,7 @@ spec:
     # minio static enabled or not
     static: true  
     # monitoring enabled or not
-    monitoring: true
+    monitoring: false
     # postgres enabled or not
     postgres: true              
   openwhisk:

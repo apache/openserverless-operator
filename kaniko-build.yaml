@@ -15,11 +15,25 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
+apiVersion: batch/v1
+kind: Job
 metadata:
-  namespace: nuvolaris
-  name: franztt-static-ingress-add-prefix
+  name: kaniko-build
+  namespace: default
 spec:
-  addPrefix:
-    prefix: /franztt-web
+  template:
+    metadata:
+      labels:
+        app: kaniko-build
+    spec:
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args: 
+          - --context=git://github.com/${GITHUB_USER}/openserverless-operator
+          - --destination=docker-registry.kube-system.svc.cluster.local:5000/${GITHUB_USER}/openserverless-operator:${TAG}
+          - --insecure
+          - --insecure-registry=docker-registry
+          - --build-arg=OPERATOR_IMAGE_DEFAULT=ghcr.io/${GITHUB_USER}/openserverless-operator
+          - --build-arg=OPERATOR_TAG_DEFAULT=${TAG}
+      restartPolicy: Never      

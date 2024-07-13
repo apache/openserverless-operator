@@ -28,7 +28,6 @@ vars:
   NS: "nuvolaris"
   PREFIX: ""
   TAG:
-    sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
 
 dotenv:
   - .env
@@ -170,6 +169,7 @@ tasks:
   defin:
     - task: d:defin
 
+  # old., to be removed
   image-tag:
     - git tag -d $(git tag) 
     - git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)
@@ -328,21 +328,71 @@ tasks:
   docker-login:
     - task: b:docker-login
 
+  # openserverless-operator sction
+  tag: 
+    silent: true
+    desc: generate a new tag based on the current time 
+    cmds:
+    - git tag -d $(git tag) || true
+    - git tag -f {{.BASETAG}}.$(date +%y%m%d%H%M)
+    - env PAGER= git tag 
+
   install-registry:
+    desc: install a local registry
+    cmds:
+    - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
+    - sudo systemctl restart k3s
     - helm repo add twuni https://helm.twun.io
-    - helm install docker-registry twuni/docker-registry --namespace default
+    - > 
+      helm install docker-registry twuni/docker-registry 
+      --namespace kube-system  
+      --set image.tag=2.8.3
+      --set service.type=NodePort
+      --set service.nodePort=30050
+    status:
+    - kubectl -n kube-system get po -l app=docker-registry | grep docker-registry
+
+  tag-commit-push:
+    desc: tag, commit and push to your default upstream repo (see README.md)
+    cmds:
+    - task: tag
+    - git commit -m "{{.TAG}}" -a || true
+    - git push || true
+
+  kaniko-build:
+    desc: build in current kubernetes with Kaniko
+    env:
+      TAG: 
+        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
+    cmds:
+    - test -n "$GITHUB_USER" || true "did you configure your .env?"
+    - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
+    - kubectl -n default delete job/kaniko-build || true
+    - kubectl -n default apply -f _kaniko-build.yaml
+    - kubectl wait po --for=condition=ready -l app=kaniko-build -n default 
+
+  build-logs:
+    desc: show logs of the latest build
+    cmds:
+    - kubectl -n default logs -l app=kaniko-build -f
 
   build:
+    desc: build the operator image
+    cmds: 
+    - task: install-registry
+    - task: tag-commit-push
+    - task: kaniko-build
+    - task: build-logs
+
+  deploy:
+    desc: deploy the current operator image
     env:
-      TAG: "{{.TAG}}"
+      TAG: 
+        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
-    - kubectl delete pod/kaniko
-    - kubectl delete cm/dockerfile-configmap
-    - test -n "$GITHUB_USER" || true "did you configure your .env?"
-    - envsubst  <kaniko.yaml >_kaniko.yaml
-    - cat _kaniko.yaml
-    - kubectl -n default create configmap dockerfile-configmap --from-file=Dockerfile
-    - kubectl apply -f _kaniko.yaml
+    - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
+    - kubectl apply -f _operator-deploy.yaml
+        
 
   shell:
     - kubectl -n nuvolaris exec --stdin --tty {{.POD}} -- /bin/bash
