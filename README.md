@@ -1,3 +1,6 @@
+# Warning: DO NOT USE YET - migration in Progress 
+Please do not try to use this code until this notice is removed.
+
 # Apache OpenServerless Operator
 
 In this readme there are informations for developers. 
