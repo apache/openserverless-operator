@@ -37,7 +37,7 @@ psycopg = "^3.1.18"
 redis = "^5.0.4"
 
 [tool.poetry.dev-dependencies]
-ipython = "^7.31.0"
+ipython = "^8.10.0"
 
 [tool.poetry.scripts]
 dbinit = "nuvolaris.couchdb:init"
