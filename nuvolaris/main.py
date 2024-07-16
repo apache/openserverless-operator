@@ -339,13 +339,11 @@ def whisk_update(spec, status, namespace, diff, name, **kwargs):
     owner = kube.get(f"wsk/{name}")
 
     patcher.patch(diff, status, owner, name)
-    status['controller']= "Updated"
 
 @kopf.on.resume('nuvolaris.org', 'v1', 'whisks')
 def whisk_resume(spec, status, name, **kwargs):   
     operator_util.config_from_spec(spec, handler_type="on_resume")
     operator_util.whisk_post_resume(name)
-    status['controller']='Resumed'
 
 def runtimes_filter(name, type, **kwargs):
     return name == 'openwhisk-runtimes' and type == 'MODIFIED'  
