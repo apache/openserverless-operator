@@ -81,7 +81,7 @@ def check_pg_quota(pg_client:PostgresClient, pg_dbsize_list, pg_wsku, check_ferr
         quota_annotation = check_ferretdb and FERRRET_DB_QUOTA_ANNOTATION or POSTGRES_DB_QUOTA_ANNOTATION
         quota_applied = "false"
 
-        pg_db= check_ferretdb and f"spec['mongodb']['database']_ferretdb" or spec['postgres']['database']
+        pg_db= check_ferretdb and f"{spec['mongodb']['database']}_ferretdb" or spec['postgres']['database']
         pg_db_quota = check_ferretdb and int(spec['mongodb']['quota'])*1014*1024 or int(spec['postgres']['quota'])*1024*1024
 
         # Check if the quota annotations has been already applied
