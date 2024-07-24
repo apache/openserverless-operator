@@ -37,6 +37,8 @@ on:
     - '[0-9]*'
     branches-ignore:
     - '*'
+  pull_request:
+    branches: [main]    
 
 jobs:
   image:
@@ -52,7 +54,15 @@ jobs:
         with:
           submodules: recursive
       - name: License
-        uses: apache/skywalking-eyes@main      
+        uses: apache/skywalking-eyes@main
+      - name: Assign TAG from pull request
+        if:  ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "IMG_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+      - name: Assign TAG from push
+        if:  ${{ github.event_name != 'pull_request' }}
+        run: |
+          echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"              
       - name: Registry login
         uses: docker/login-action@v3
         with:
@@ -68,4 +78,4 @@ jobs:
         with:
           version: latest
       - name: Image
-        run: task buildx-and-push
+        run: task buildx-and-push TAG="$IMG_TAG"
