@@ -73,9 +73,9 @@ jobs:
         run: bash .github/cisetup.sh
       - name: Install
         run: poetry install
-      - name: Buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          version: latest
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3 
       - name: Image
         run: task buildx-and-push TAG="$IMG_TAG"
