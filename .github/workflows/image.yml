@@ -29,7 +29,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Build Image
+name: Build Openserverless-operator Image
 
 on:
   push:
@@ -37,6 +37,8 @@ on:
     - '[0-9]*'
     branches-ignore:
     - '*'
+  pull_request:
+    branches: [main]    
 
 jobs:
   image:
@@ -53,53 +55,27 @@ jobs:
           submodules: recursive
       - name: License
         uses: apache/skywalking-eyes@main
-      - name: Make envfile
-        if:  ${{ github.repository_owner != 'nuvolaris'}}
-        uses: SpicyPizza/create-envfile@v1.3
+      - name: Assign TAG from pull request
+        if:  ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "IMG_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+      - name: Assign TAG from push
+        if:  ${{ github.event_name != 'pull_request' }}
+        run: |
+          echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"              
+      - name: Registry login
+        uses: docker/login-action@v3
         with:
-          envkey_MY_OPERATOR_IMAGE: ${{ secrets.MY_OPERATOR_IMAGE }}
-          envkey_GITHUB_TOKEN: ${{ secrets.GT_TOKEN }}
-          envkey_GITHUB_USER: ${{ secrets.GT_USER }}
-          file_name: .env
-          fail_on_empty: false        
-      - name: Registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}   
+          registry: registry.hub.docker.com
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}   
       - name: Setup
         run: bash .github/cisetup.sh
-      - name: Kind
-        uses: helm/kind-action@v1.2.0
-        with:
-            cluster_name: nuvolaris
-            config: .github/kind.yaml
       - name: Install
         run: poetry install
-      #- name: Tag
-      #  run: task image-tag          
-      #- name: BuildAndLoad
-      #  run: task build-and-load
-      #- name: Ngrok
-      #  if: ${{ env.NGROK == 'on' }}
-      #  run: bash .github/debug-github-actions.sh
-      #  env:
-      #    NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
-      #    USER_PASS: ${{ secrets.USER_PASS }}
-      #- name: Wait
-      #  if: ${{ env.NGROK == 'on' }}
-      #  run: bash .github/wait.sh
-      #- name: AddIngress
-      #  run: task kind:ingress         
-      #- name: Test
-      #  run:  task test
-      - name: DockerLogin
-        if:  ${{ github.repository_owner != 'nuvolaris'}}
-        run: task docker-login             
-      - name: Buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          version: latest
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3 
       - name: Image
-        run: task buildx-and-push
+        run: task buildx-and-push TAG="$IMG_TAG"
