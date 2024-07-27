@@ -152,10 +152,10 @@ def call_ow_action(url, parameters, ow_auth):
     try:
         response = None
         if(len(parameters)>0):
-            response = req.post(url, auth=(ow_auth['username'],ow_auth['password']), headers=headers, data=json.dumps(parameters))
-        else:
-            #If the body is empty Content-Type must be not provided otherwise OpenWhisk api returns a 400 error    
-            response = req.post(url, auth=(ow_auth['username'],ow_auth['password']))
+            logging.info("calling an action with %s parameters",len(parameters))
+        
+        # OpenWhisk passes automatically the registered parameters, so this cron executor does not need to pass them.
+        response = req.post(url, auth=(ow_auth['username'],ow_auth['password']))
 
         if (response.status_code in [200,202]):
             logging.info(f"call to {url} succeeded with {response.status_code}. Body {response.text}")
