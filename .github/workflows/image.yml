@@ -67,12 +67,14 @@ jobs:
         if:  ${{ github.repository_owner != 'apache'}}
         run: |
           echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"
-      - name: Registry login
-        uses: docker/login-action@v3
-        with:
-          registry: registry.hub.docker.com
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}   
+      - name: Use non ASF docker hub repo
+        if:  ${{ github.repository_owner != 'apache'}}
+        run: |
+            echo "BASE_REPO=sciabarracom" >> "$GITHUB_ENV"        
+      - name: Use ASF docker hub repo
+        if:  ${{ github.repository_owner == 'apache'}}
+        run: |
+            echo "BASE_REPO=apache" >> "$GITHUB_ENV"           
       - name: Setup
         run: bash .github/cisetup.sh
       - name: Install
@@ -80,6 +82,21 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3 
-      - name: Image
-        run: task buildx-and-push TAG="$IMG_TAG"
+        uses: docker/setup-buildx-action@v3
+      - name: Registry login
+        uses: docker/login-action@v3
+        with:
+          registry: registry.hub.docker.com
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}           
+      #- name: Image
+      #  run: task buildx-and-push TAG="$IMG_TAG"
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ env.BASE_REPO }}/openserverless-operator:${{ env.IMG_TAG }}
+          # For pull requests, export results to the build cache.
+          # Otherwise, push to a registry.
+          outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry,push=true' }}       
