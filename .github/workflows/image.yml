@@ -67,10 +67,7 @@ jobs:
         if:  ${{ github.repository_owner != 'apache'}}
         run: |
           echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"
-      - name: Use non ASF docker hub repo
-        if:  ${{ github.repository_owner != 'apache'}}
-        run: |
-            echo "BASE_REPO=sciabarracom" >> "$GITHUB_ENV"        
+          echo "BASE_REPO=sciabarracom" >> "$GITHUB_ENV"
       - name: Use ASF docker hub repo
         if:  ${{ github.repository_owner == 'apache'}}
         run: |
@@ -79,16 +76,16 @@ jobs:
         run: bash .github/cisetup.sh
       - name: Install
         run: poetry install
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
       - name: Registry login
         uses: docker/login-action@v3
         with:
           registry: registry.hub.docker.com
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}           
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       #- name: Image
       #  run: task buildx-and-push TAG="$IMG_TAG"
       - name: Build and push
