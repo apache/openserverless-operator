@@ -22,6 +22,7 @@ import nuvolaris.config as cfg
 import nuvolaris.util as util
 import nuvolaris.apihost_util as apihost_util
 import nuvolaris.endpoint as endpoint
+import nuvolaris.openwhisk as openwhisk
 
 from nuvolaris.ingress_data import IngressData
 from nuvolaris.route_data import RouteData
@@ -169,10 +170,20 @@ def create_minio_ingresses(data, owner=None):
     if data['minio_s3_ingress_enabled']:
         s3_hostname_url = get_minio_ingress_hostname(runtime, apihost_url,"s3",data['minio_s3_ingress_hostname'])
         res += create_s3_ingress_endpoint(data, runtime, s3_hostname_url, owner)
+
+        if res:
+            openwhisk.annotate(f"s3_api_url={s3_hostname_url}")
     
     if data['minio_console_ingress_enabled']:
         minio_hostname_url = get_minio_ingress_hostname(runtime, apihost_url,"minio",data['minio_console_ingress_hostname'])
         res += create_console_ingress_endpoint(data, runtime, minio_hostname_url, owner)
+
+        if res:
+            openwhisk.annotate(f"s3_console_url={minio_hostname_url}")
+
+    # force he s3 API to be localhost:9000 on Kind based deployment.
+    if runtime in ["kind"]:
+        openwhisk.annotate(f"s3_api_url=http://localhost:9000")
 
     return res
 

@@ -49,11 +49,16 @@ def _add_miniouser_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
             user_metadata.add_metadata("S3_ACCESS_KEY",access_key)
             user_metadata.add_metadata("S3_SECRET_KEY",secret_key)
 
+            user_metadata.add_safely_from_cm("S3_API_URL", '{.metadata.annotations.s3_api_url}')
+            user_metadata.add_safely_from_cm("S3_CONSOLE_URL", '{.metadata.annotations.s3_console_url}')
+
             ports = list(minio_service['spec']['ports'])
             for port in ports:
                 if(port['name']=='minio-api'):
                     user_metadata.add_metadata("MINIO_PORT",port['port'])
                     user_metadata.add_metadata("S3_PORT",port['port'])
+
+
         return None
     except Exception as e:
         logging.error(f"failed to build MINIO metadata for {ucfg.get('namespace')}: {e}")
