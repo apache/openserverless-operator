@@ -17,6 +17,8 @@
 #
 import json
 import logging
+import nuvolaris.util as util
+
 from nuvolaris.user_config import UserConfig
 
 class UserMetadata:
@@ -62,5 +64,13 @@ class UserMetadata:
 
     def get_metadata(self):
         return self._data
+    
+    def add_safely_from_cm(self,metadata_key,json_path):
+        try: 
+            value = util.get_value_from_config_map("nuvolaris", json_path)
+            if value:
+                self.add_metadata(metadata_key, value)
+        except Exception as e:
+            logging.warn(e)     
     
 
