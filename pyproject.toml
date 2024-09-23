@@ -17,9 +17,9 @@
 #
 [tool.poetry]
 name = "nuvolaris"
-version = "1.3.0"
-description = "Nuvolaris operator"
-authors = ["Michele Sciabarra <michele@sciabarra.com>"]
+version = "2.0.0"
+description = "Apache OpenServerless operator"
+authors = ["Michele Sciabarra <michele@sciabarra.com>","Francesco Timperi Tiberi <francesco@nuvolaris.io>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
