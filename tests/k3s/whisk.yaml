@@ -137,6 +137,11 @@ spec:
     exposedExternally: False
     useOperator: False
   minio:
+    ingress:
+      s3-enabled: true
+      s3-hostname: auto
+      console-enabled: false
+      console-hostname: auto      
     volume-size: 10
     admin:
       user: minioadmin
