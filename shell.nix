@@ -85,6 +85,7 @@ pkgs.mkShellNoCC {
    unzip
    minio-client
    wsk
+   kustomize
   ];
 
 }

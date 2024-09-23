@@ -29,7 +29,7 @@ from nuvolaris.user_config import UserConfig
 from nuvolaris.user_metadata import UserMetadata
 from nuvolaris.minio_util import MinioClient
 
-def _add_miniouser_metadata(ucfg: UserConfig, user_metadata:UserMe  tadata):
+def _add_miniouser_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
     """
     adds entries for minio connectivity MINIO_ENDPOINT, MINIO_PORT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
     this is becasue MINIO
