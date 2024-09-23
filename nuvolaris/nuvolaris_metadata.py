@@ -69,6 +69,8 @@ class NuvolarisMetadata:
         self._store_safely_from_cm("S3_BUCKET_STATIC", '{.metadata.annotations.s3_bucket_static}')
         self._store_safely_from_cm("S3_BUCKET_DATA", '{.metadata.annotations.s3_bucket_data}')
         self._store_safely_from_cm("S3_PROVIDER", '{.metadata.annotations.s3_provider}')
+        self._store_safely_from_cm("S3_API_URL", '{.metadata.annotations.s3_api_url}')
+        self._store_safely_from_cm("S3_CONSOLE_URL", '{.metadata.annotations.s3_console_url}')
                 
 
     def dump(self):
