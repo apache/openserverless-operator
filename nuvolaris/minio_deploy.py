@@ -94,7 +94,7 @@ def create(owner=None):
 
 def _annotate_nuv_metadata(data):
     """
-    annotate nuvolaris configmap with entries for minio connectivity MINIO_ENDPOINT, MINIO_PORT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+    annotate nuvolaris configmap with entries for minio connectivity S3_ENDPOINT, S3_PORT, S3_ACCESS_KEY, S3_SECRET_KEY
     this is becasue MINIO
     """ 
     try:
@@ -103,9 +103,6 @@ def _annotate_nuv_metadata(data):
             minio_host = f"{minio_service['metadata']['name']}.{minio_service['metadata']['namespace']}.svc.cluster.local"
             access_key = data["minio_nuv_user"]
             secret_key = data["minio_nuv_password"]
-            openwhisk.annotate(f"minio_host={minio_host}")
-            openwhisk.annotate(f"minio_access_key={access_key}")
-            openwhisk.annotate(f"minio_secret_key={secret_key}")
             openwhisk.annotate(f"s3_host={minio_host}")
             openwhisk.annotate(f"s3_access_key={access_key}")
             openwhisk.annotate(f"s3_secret_key={secret_key}")
@@ -114,7 +111,6 @@ def _annotate_nuv_metadata(data):
             ports = list(minio_service['spec']['ports'])
             for port in ports:
                 if(port['name']=='minio-api'):
-                    openwhisk.annotate(f"minio_port={port['port']}")
                     openwhisk.annotate(f"s3_port={port['port']}")                  
         return None
     except Exception as e:
