@@ -204,3 +204,4 @@ def deploy_whisk_system_action():
         return result
     except Exception as e:
         logging.error("Error detected when deploying system actions", e)
+        return False
