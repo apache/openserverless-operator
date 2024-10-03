@@ -94,9 +94,11 @@ def whisk_post_resume(name):
     sysres = system.deploy_whisk_system_action()
 
     if sysres:
+        openwhisk.annotate(f"system_action_status=created")
         logging.info("system action redeployed after operator restart")
-    else:    
-        logging.warn("system action deploy issues after operator restart. Checl logs for further details")
+    else:
+        openwhisk.annotate(f"system_action_status=failed")    
+        logging.warn("system action deploy issues after operator restart. Checl logs for further details")        
 
 def config_from_spec(spec, handler_type = "on_create"):
     """
