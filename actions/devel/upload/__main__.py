@@ -111,7 +111,7 @@ def main(args):
             return build_error("invalid request, bucket and/or filename path error")
 
         user_data = Authorize(args['couchdb_host'],args['couchdb_user'],args['couchdb_password']).login(headers['x-impersonate-auth'])
-        mo_client = mutil.build_mo_client(ut.get_env_value(user_data,"MINIO_HOST"), ut.get_env_value(user_data,"MINIO_PORT"),ut.get_env_value(user_data,"MINIO_ACCESS_KEY")  , ut.get_env_value(user_data,"MINIO_SECRET_KEY"))        
+        mo_client = mutil.build_mo_client(ut.get_env_value(user_data,"S3_HOST"), ut.get_env_value(user_data,"S3_PORT"),ut.get_env_value(user_data,"S3_ACCESS_KEY")  , ut.get_env_value(user_data,"S3_SECRET_KEY"))        
 
         if method.lower() in 'put':
             print(f"processing request to upload file {upload_data['filename']}")

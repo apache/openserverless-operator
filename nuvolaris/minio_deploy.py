@@ -31,7 +31,7 @@ from nuvolaris.minio_util import MinioClient
 
 def _add_miniouser_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
     """
-    adds entries for minio connectivity MINIO_ENDPOINT, MINIO_PORT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+    adds entries for minio connectivity S3_HOST, S3_PORT, S3_ACCESS_KEY, S3_SECRET_KEY
     this is becasue MINIO
     """ 
 
@@ -41,9 +41,6 @@ def _add_miniouser_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
             minio_host = f"{minio_service['metadata']['name']}.{minio_service['metadata']['namespace']}.svc.cluster.local"
             access_key = ucfg.get('namespace')
             secret_key = ucfg.get("object-storage.password")
-            user_metadata.add_metadata("MINIO_HOST",minio_host)
-            user_metadata.add_metadata("MINIO_ACCESS_KEY",access_key)
-            user_metadata.add_metadata("MINIO_SECRET_KEY",secret_key)
             user_metadata.add_metadata("S3_PROVIDER","minio")
             user_metadata.add_metadata("S3_HOST",minio_host)
             user_metadata.add_metadata("S3_ACCESS_KEY",access_key)
@@ -55,7 +52,6 @@ def _add_miniouser_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
             ports = list(minio_service['spec']['ports'])
             for port in ports:
                 if(port['name']=='minio-api'):
-                    user_metadata.add_metadata("MINIO_PORT",port['port'])
                     user_metadata.add_metadata("S3_PORT",port['port'])
 
 
@@ -98,7 +94,7 @@ def create(owner=None):
 
 def _annotate_nuv_metadata(data):
     """
-    annotate nuvolaris configmap with entries for minio connectivity MINIO_ENDPOINT, MINIO_PORT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+    annotate nuvolaris configmap with entries for minio connectivity S3_ENDPOINT, S3_PORT, S3_ACCESS_KEY, S3_SECRET_KEY
     this is becasue MINIO
     """ 
     try:
@@ -107,9 +103,6 @@ def _annotate_nuv_metadata(data):
             minio_host = f"{minio_service['metadata']['name']}.{minio_service['metadata']['namespace']}.svc.cluster.local"
             access_key = data["minio_nuv_user"]
             secret_key = data["minio_nuv_password"]
-            openwhisk.annotate(f"minio_host={minio_host}")
-            openwhisk.annotate(f"minio_access_key={access_key}")
-            openwhisk.annotate(f"minio_secret_key={secret_key}")
             openwhisk.annotate(f"s3_host={minio_host}")
             openwhisk.annotate(f"s3_access_key={access_key}")
             openwhisk.annotate(f"s3_secret_key={secret_key}")
@@ -118,7 +111,6 @@ def _annotate_nuv_metadata(data):
             ports = list(minio_service['spec']['ports'])
             for port in ports:
                 if(port['name']=='minio-api'):
-                    openwhisk.annotate(f"minio_port={port['port']}")
                     openwhisk.annotate(f"s3_port={port['port']}")                  
         return None
     except Exception as e:
@@ -144,7 +136,6 @@ def create_nuv_storage(data):
         bucket_policy_names.append("nuvolaris-data/*")
 
         if(res):
-            openwhisk.annotate(f"minio_bucket_data=nuvolaris-data")
             openwhisk.annotate(f"s3_bucket_data=nuvolaris-data")
 
         logging.info(f"*** adding nuvolaris MINIO static public bucket")
@@ -152,7 +143,6 @@ def create_nuv_storage(data):
         bucket_policy_names.append("nuvolaris-web/*")
 
         if(res):
-            openwhisk.annotate(f"minio_bucket_static=nuvolaris-web")
             openwhisk.annotate(f"s3_bucket_static=nuvolaris-web")
             content_path = find_content_path("index.html")
 
@@ -202,8 +192,8 @@ def create_ow_storage(state, ucfg: UserConfig, user_metadata: UserMetadata, owne
         state['storage_data']=res
 
         if(res):
-            user_metadata.add_metadata("MINIO_BUCKET_DATA",bucket_name)
             user_metadata.add_metadata("S3_BUCKET_DATA",bucket_name)
+            ucfg.put("S3_BUCKET_DATA",bucket_name)
 
             if ucfg.exists('object-storage.quota'):
                 assign_bucket_quota(bucket_name,ucfg.get('object-storage.quota'), minioClient)
@@ -215,7 +205,6 @@ def create_ow_storage(state, ucfg: UserConfig, user_metadata: UserMetadata, owne
         bucket_policy_names.append(f"{bucket_name}/*")
 
         if(res):
-            user_metadata.add_metadata("MINIO_BUCKET_STATIC",bucket_name)
             user_metadata.add_metadata("S3_BUCKET_STATIC",bucket_name)
             ucfg.put("S3_BUCKET_STATIC",bucket_name)
             
@@ -311,4 +300,4 @@ def patch_ingresses(status, action, owner=None):
         logging.info(f"*** hanlded request to {action} minio ingresses") 
     except Exception as e:
         logging.error('*** failed to update minio ingresses: %s' % e)    
-        operator_util.patch_operator_status(status,'minio-ingresses','error')           
+        operator_util.patch_operator_status(status,'minio-ingresses','error')        
