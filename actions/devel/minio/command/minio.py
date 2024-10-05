@@ -33,12 +33,12 @@ class Minio():
 
     def __init__(self, user_data):
         self._user_data = user_data        
-        self._minio_access_key= ut.get_env_value(user_data,"MINIO_ACCESS_KEY")        
-        self._minio_secret_key= ut.get_env_value(user_data,"MINIO_SECRET_KEY") 
-        self._minio_host= ut.get_env_value(user_data,"MINIO_HOST") 
-        self._minio_port= ut.get_env_value(user_data,"MINIO_PORT")
-        self._minio_data_bucket= ut.get_env_value(user_data,"MINIO_DATA_BUCKET")
-        self._minio_static_bucket= ut.get_env_value(user_data,"MINIO_STATIC_BUCKET")
+        self._minio_access_key= ut.get_env_value(user_data,"S3_ACCESS_KEY")        
+        self._minio_secret_key= ut.get_env_value(user_data,"S3_SECRET_KEY") 
+        self._minio_host= ut.get_env_value(user_data,"S3_HOST") 
+        self._minio_port= ut.get_env_value(user_data,"S3_PORT")
+        self._minio_data_bucket= ut.get_env_value(user_data,"S3_DATA_BUCKET")
+        self._minio_static_bucket= ut.get_env_value(user_data,"S3_STATIC_BUCKET")
         self.validate()
 
     def validate(self):
