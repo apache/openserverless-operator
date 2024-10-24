@@ -22,7 +22,7 @@ import nuvolaris.config as cfg
 import nuvolaris.testutil as tu
 import nuvolaris.minio_deploy as minio
 import nuvolaris.util as util
-import nuvolaris.minio_static as nginx
+import nuvolaris.storage_static as static
 import logging
 import os
 
@@ -34,7 +34,7 @@ assert(cfg.detect_storage()["nuvolaris.storageclass"])
 os.environ['MINIO_API_HOST']='localhost'
 
 assert(minio.create())
-assert(nginx.create())
+assert(static.create())
 
-assert(nginx.delete())
+assert(static.delete())
 assert(minio.delete())

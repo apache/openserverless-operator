@@ -38,8 +38,7 @@ on:
     branches-ignore:
     - '*'
   pull_request:
-    branches: [main]    
-
+    branches: [main]
 jobs:
   image:
     name: Image
@@ -69,8 +68,28 @@ jobs:
           echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"
       - name: Setup
         run: bash .github/cisetup.sh
+      - name: Kind
+        uses: helm/kind-action@v1.5.0
+        with:
+            cluster_name: nuvolaris
+            config: .github/kind.yaml        
       - name: Install
         run: poetry install
+      - name: BuildAndLoad
+        run: task build-and-load TAG="$IMG_TAG"
+      - name: Ngrok
+        if: ${{ env.NGROK == 'on' }}
+        run: bash .github/debug-github-actions.sh
+        env:
+          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+          USER_PASS: ${{ secrets.USER_PASS }}
+      - name: Wait
+        if: ${{ env.NGROK == 'on' }}
+        run: bash .github/wait.sh
+      - name: AddIngress
+        run: task kind:ingress         
+      - name: Test
+        run:  task test        
       - name: Registry login
         uses: docker/login-action@v3
         with:
@@ -82,4 +101,4 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Image
-        run: task buildx-and-push TAG="$IMG_TAG"      
+        run: task buildx-and-push TAG="$IMG_TAG"     
