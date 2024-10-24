@@ -349,7 +349,7 @@ def get_minio_config_data():
         "applypodsecurity":get_enable_pod_security(),
         "name":"minio-deployment",
         "container":"minio",
-        "minio_host": cfg.get('minio.host') or "minio",
+        "minio_host": cfg.get('minio.host') or 'minio',
         "minio_volume_size": cfg.get('minio.volume-size') or "5",
         "minio_root_user": cfg.get('minio.admin.user') or "minio",
         "minio_root_password": cfg.get('minio.admin.password') or "minio123",

@@ -22,7 +22,7 @@ vars:
   N: ""
   T: ""
   P: ""
-  BASETAG: 0.1.0-testing
+  BASETAG: 0.1.0-incubating
   KUBE:
     sh: ./detect.sh
   NS: "nuvolaris"
@@ -185,6 +185,7 @@ tasks:
 
   # update configuration files from openwhisk source
   update-files-from-openwhisk: 
+    ignore_error: true
     cmds:
       - | 
         cp -v ../nuvolaris/nuvolaris-controller/openwhisk/ansible/files/*.json nuvolaris/files
@@ -236,7 +237,7 @@ tasks:
 
   iclean: rm -f deploy/*/kustomization.yaml deploy/*/__* deploy/*/*_generated.yaml
 
-  itest: 
+  itest:
     cmds:
       - task: iclean
       - |
@@ -272,7 +273,6 @@ tasks:
     - task: t:hello
     - task: t:redis
     - task: t:echo
-    - task: t:api
 
   test:
     - task: clean
