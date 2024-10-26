@@ -29,7 +29,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Build Openserverless-operator Image
+name: Build OpenServerless Operator
 
 on:
   push:
@@ -41,7 +41,7 @@ on:
     branches: [main]
 jobs:
   image:
-    name: Image
+    name: Build OpenServerless Operator Image
     runs-on: ubuntu-latest
     steps:
       - name: Remove unnecessary files
