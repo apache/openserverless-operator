@@ -28,10 +28,9 @@ class IpUtil:
     _machine_ip = None
 
     def __init__(self):
-        self.IPIFY_API_URI = 'https://api.ipify.org'
-        self.IFCONFIG_API_URI = 'https://ifconfig.me/ip'     
+        self.IPIFY_API_URI = 'https://api.ipify.org'  
         self.IP_INFO_API_URI = 'https://ipinfo.io/ip'
-        self.IDENT_ME_API_URI = 'https://ident.me/'
+        self.IDENT_ME_API_URI = 'https://4.ident.me/'
         self.USER_AGENT = 'nuvolaris-ip-resolver'
         # The maximum amount of tries to attempt when making API calls.
         self.MAX_TRIES = 3
@@ -53,17 +52,14 @@ class IpUtil:
         logging.debug(f"querying ip from {api_uri}")
         return get(api_uri, headers={'user-agent': self.USER_AGENT})
 
-    def handle_ip_request(self,url):
+    def handle_ip_request(self,url, extra=None):
         """
-        Query a public api retuning the machine's public ip address
+        Query a public api returning the machine's public ip address
         >>> from nuvolaris.ip_util import IpUtil
         >>> ip_util = IpUtil()
         >>> ipify_ip = ip_util.handle_ip_request('https://api.ipify.org')
-        >>> ifconfig_ip = ip_util.handle_ip_request('https://ifconfig.me/ip')
         >>> ifinfo_ip = ip_util.handle_ip_request('https://ipinfo.io/ip')
-        >>> identme_ip = ip_util.handle_ip_request('https://ident.me/')
-        >>> ipify_ip == ifconfig_ip
-        True
+        >>> identme_ip = ip_util.handle_ip_request('https://4.ident.me/')
         >>> ipify_ip == ifinfo_ip
         True
         >>> ipify_ip == identme_ip
@@ -100,7 +96,6 @@ class IpUtil:
         True
        """
        self.get_ip_chain(self.IPIFY_API_URI)
-       self.get_ip_chain(self.IFCONFIG_API_URI)
        self.get_ip_chain(self.IP_INFO_API_URI)
        self.get_ip_chain(self.IDENT_ME_API_URI)
 

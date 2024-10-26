@@ -31,12 +31,13 @@
 name: openserverless-operator-check
 on: 
   push:
-    tags-ignore:
-       - '*'
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   check:
-    name: Build
+    name: Check OpenServerless Operator
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -46,29 +47,32 @@ jobs:
       - name: License   
         uses: apache/skywalking-eyes@main
         continue-on-error: true
-      - name: Make envfile
-        if:  ${{ env.GITHUB_USER != 'nuvolaris'}}
-        uses: SpicyPizza/create-envfile@v1.3
-        with:
-          envkey_MY_OPERATOR_IMAGE: ${{ secrets.MY_OPERATOR_IMAGE }}
-          file_name: .env
-          fail_on_empty: false        
+      - name: Assign TAG from pull request
+        if:  ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "IMG_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+      - name: Assign TAG from push
+        if:  ${{ github.event_name != 'pull_request' }}
+        run: |
+          echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"        
+      - name: Assign Custom Image Name
+        if:  ${{ github.repository_owner != 'apache'}}
+        run: |
+          echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"       
       - name: Kind
-        uses: helm/kind-action@v1.2.0
+        uses: container-tools/kind-action@v2.0.4
         with:
-          cluster_name: nuvolaris
-          config: .github/kind.yaml
+              version: v0.17.0
+              cluster_name: nuvolaris
+              config: .github/kind.yaml 
       - name: Setup
         run: bash .github/cisetup.sh
       - name: Install
         run: task setup
       - name: BuildAndLoad
-        run: task build-and-load
+        run: task build-and-load TAG="$IMG_TAG"
       - name: AddIngress
-        run: task kind:ingress        
-      - name: Test
-        run: task test
-        continue-on-error: true
+        run: task kind:ingress
       - name: Ngrok
         if: ${{ env.NGROK == 'on' }}
         run: bash .github/debug-github-actions.sh
@@ -77,4 +81,10 @@ jobs:
           USER_PASS: ${{ secrets.USER_PASS }}
       - name: Wait
         if: ${{ env.NGROK == 'on' }}
-        run: bash .github/wait.sh
+        run: bash .github/wait.sh               
+      - name: Unit Test
+        run: task utest
+        continue-on-error: false
+      - name: Integration Test
+        run: task itest
+        continue-on-error: false        

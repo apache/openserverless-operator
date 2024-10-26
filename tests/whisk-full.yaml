@@ -179,14 +179,14 @@ spec:
         enabled: true
         default: true 
         slack_channel_name: '#monitoring-nuvolaris'
-        #slack_api_url: #will read env variable SLACK_API_URL if emtpy
+        slack_api_url: https://hooks.slack.com/services/RND/VALUE
       gmail:       
-        enabled: true
+        enabled: false
         default: false
-        from: francesco.timperi@gmail.com
-        to: francesco@nuvolaris.io #,michele@nuvolaris.io
-        #username: #will read env variable GMAIL_USERNAME if emtpy
-        #password: #will read env variable GMAIL_PASSWORD if emtpy
+        from: alert@nuvolaris.io
+        to: monitoring@nuvolaris.io
+        username: usr
+        password: pwd
   postgres:    
     volume-size: 5
     replicas: 2
