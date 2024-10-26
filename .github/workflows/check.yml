@@ -31,8 +31,9 @@
 name: openserverless-operator-check
 on: 
   push:
-    tags-ignore:
-       - '*'
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   check:

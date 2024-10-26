@@ -37,8 +37,6 @@ on:
     - '[0-9]*'
     branches-ignore:
     - '*'
-  pull_request:
-    branches: [main]
 jobs:
   image:
     name: Build OpenServerless Operator Image
