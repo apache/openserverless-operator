@@ -59,10 +59,11 @@ jobs:
         run: |
           echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"       
       - name: Kind
-        uses: helm/kind-action@v1.5.0
+        uses: container-tools/kind-action@v2.0.4
         with:
-          cluster_name: nuvolaris
-          config: .github/kind.yaml
+              version: v0.17.0
+              cluster_name: nuvolaris
+              config: .github/kind.yaml 
       - name: Setup
         run: bash .github/cisetup.sh
       - name: Install
