@@ -36,7 +36,7 @@ on:
 
 jobs:
   check:
-    name: Build
+    name: Check OpenServerless Operator
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
