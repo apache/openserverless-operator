@@ -87,8 +87,12 @@ jobs:
         run: bash .github/wait.sh
       - name: AddIngress
         run: task kind:ingress         
-      - name: Test
-        run:  task test        
+      - name: Unit Test
+        run: task utest
+        continue-on-error: false
+      - name: Integration Test
+        run: task itest
+        continue-on-error: false        
       - name: Registry login
         uses: docker/login-action@v3
         with:

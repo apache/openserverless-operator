@@ -82,6 +82,9 @@ jobs:
       - name: Wait
         if: ${{ env.NGROK == 'on' }}
         run: bash .github/wait.sh               
-      - name: Test
-        run: task test
-        continue-on-error: true
+      - name: Unit Test
+        run: task utest
+        continue-on-error: false
+      - name: Integration Test
+        run: task itest
+        continue-on-error: false        
