@@ -117,3 +117,21 @@ spec:
     backup:
       enabled: false 
       schedule: "*/2 * * * *"
+  monitoring:
+    prometheus:
+      volume-size: 10
+    alert-manager:
+      enabled: true
+      volume-size: 2
+      slack:        
+        enabled: true
+        default: true 
+        slack_channel_name: '#monitoring-nuvolaris'
+        slack_api_url: https://hooks.slack.com/services/RND/VALUE
+      gmail:       
+        enabled: false
+        default: false
+        from: alert@nuvolaris.io
+        to: monitoring@nuvolaris.io
+        username: usr
+        password: pwd      

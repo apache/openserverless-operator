@@ -30,5 +30,5 @@ cfg.detect()
 cdb.create(None)
 r = !kubectl -n nuvolaris wait --for=condition=complete job/couchdb-init --timeout=600s
 assert(r[0].find("condition met") != -1)
-r = !kubectl -n nuvolaris logs -l job=couchdb-init | grep "OK: add_subjects"
+r = !kubectl -n nuvolaris logs -l job=couchdb-init | grep "OK: enable_db_compaction: subjects"
 assert(r[0].find("OK:") != -1)

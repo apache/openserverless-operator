@@ -106,7 +106,7 @@ def _annotate_nuv_metadata(data):
             openwhisk.annotate(f"s3_host={minio_host}")
             openwhisk.annotate(f"s3_access_key={access_key}")
             openwhisk.annotate(f"s3_secret_key={secret_key}")
-            openwhisk.annotate(f"s3_provider=minio")
+            openwhisk.annotate("s3_provider=minio")
 
             ports = list(minio_service['spec']['ports'])
             for port in ports:
