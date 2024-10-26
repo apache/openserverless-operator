@@ -59,7 +59,7 @@ spec:
   couchdb:
     host: couchdb
     port: 5984
-    volume-size: 10
+    volume-size: 5
     admin:
       user: whisk_admin
       password: some_passw0rd
@@ -71,7 +71,7 @@ spec:
       password: s0meP@ass2
   kafka:
     host: kafka
-    volume-size: 10
+    volume-size: 5
   scheduler:
     schedule: "* * * * *"
   tls:
@@ -100,7 +100,7 @@ spec:
         #mem-lim: "1G"        
   redis:
     persistence-enabled: true
-    volume-size: 10
+    volume-size: 2
     default:
       password: s0meP@ass3
     nuvolaris:
@@ -108,7 +108,7 @@ spec:
       password: s0meP@ass3
   mongodb:
     host: mongodb
-    volume-size: 5
+    volume-size: 2
     admin: 
       user: whisk_admin
       password: 0therPa55
@@ -126,7 +126,7 @@ spec:
       user: nuvolaris
       password: tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   postgres:    
-    volume-size: 5
+    volume-size: 2
     replicas: 2
     admin:      
       password: 0therPa55
@@ -138,7 +138,7 @@ spec:
       schedule: "30 * * * *"
   monitoring:
     prometheus:
-      volume-size: 10
+      volume-size: 2
     alert-manager:
       enabled: true
       volume-size: 2
