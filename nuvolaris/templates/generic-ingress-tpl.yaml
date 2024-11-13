@@ -23,7 +23,6 @@ metadata:
   namespace: {{namespace}}
   annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "1024m"
-      kubernetes.io/ingress.class: "{{ingress_class}}"
       {% if tls %}
       cert-manager.io/cluster-issuer: "letsencrypt-issuer"
       {% endif %}
@@ -48,6 +47,7 @@ metadata:
       traefik.ingress.kubernetes.io/router.middlewares: nuvolaris-{{middleware_ingress_name}}@kubernetescrd
       {% endif %}
 spec:
+  ingressClassName: "{{ingress_class}}"
   {% if tls %}
   tls:
     - hosts:
