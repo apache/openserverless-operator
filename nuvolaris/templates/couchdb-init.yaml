@@ -33,7 +33,11 @@ spec:
         whisks.nuvolaris.org/annotate-version: "true"
     spec:
       serviceAccount: nuvolaris-operator
-      restartPolicy: Never      
+      restartPolicy: Never
+      initContainers:
+      - name: check-couchdb
+        image: busybox:1.36.0
+        command: ["sh", "-c", 'result=1; until [ $result -eq 0 ]; do OK=$(wget -qO - http://couchdb:5984 | grep "Welcome"); if [ "$OK" ]; then result=0; echo "Couchdb returned welcome!"; else echo waiting for Couchdb to be ready; sleep 5; fi; done; echo "Success: couchdb is up"']
       containers:
       - name: init-couchdb
         image: "{{image}}"
