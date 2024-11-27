@@ -17,16 +17,7 @@
 #
 ---
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: ServiceAccount
 metadata:
-  name: etcd-apisix-pv-claim
+  name: nuvolaris-milvus-operator
   namespace: nuvolaris
-  labels:
-    app: etcd-apisix-pv-claim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: standard
-  resources:
-    requests:
-      storage: 8Gi

@@ -1,0 +1,141 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-bookie-init"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: "bookie-init"
+spec:
+  template:
+    spec:      
+      serviceAccountName: "nuvolaris-operator"
+      nodeSelector:
+      tolerations:
+      initContainers:
+      - name: wait-zookeeper-ready
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+          - >-
+            until nslookup nuvolaris-milvus-pulsarv3-zookeeper-0.nuvolaris-milvus-pulsarv3-zookeeper.nuvolaris; do
+              sleep 3;
+            done;
+      containers:
+      - name: "nuvolaris-milvus-pulsarv3-bookie-init"
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c"]
+        args:
+          - >
+            bin/apply-config-from-env.py conf/bookkeeper.conf;            
+            export BOOKIE_MEM="-Xmx128M";
+            if bin/bookkeeper shell whatisinstanceid; then
+                echo "bookkeeper cluster already initialized";
+            else
+                bin/bookkeeper shell initnewcluster;
+            fi
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-bookie"
+        volumeMounts:        
+      volumes:      
+      restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-pulsar-init"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: pulsar-init
+spec:
+# This feature was previously behind a feature gate for several Kubernetes versions and will default to true in 1.23 and beyond
+# https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/
+  template:
+    spec:
+      initContainers:
+      - name: wait-zookeeper-ready
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+          - >-
+            until nslookup nuvolaris-milvus-pulsarv3-zookeeper-0.nuvolaris-milvus-pulsarv3-zookeeper.nuvolaris; do
+              sleep 3;
+            done;
+      # This initContainer will wait for bookkeeper initnewcluster to complete
+      # before initializing pulsar metadata
+      - name: pulsar-bookkeeper-verify-clusterid
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 0.1
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+        - >
+          bin/apply-config-from-env.py conf/bookkeeper.conf;
+          echo Default BOOKIE_MEM settings are set very high, which can cause the init container to fail.;
+          echo Setting the memory to a lower value to avoid OOM as operations below are not memory intensive.;
+          export BOOKIE_MEM="-Xmx128M";
+          
+          until bin/bookkeeper shell whatisinstanceid; do
+            sleep 3;
+          done;
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-bookie"
+        volumeMounts:        
+      containers:
+      - name: "nuvolaris-milvus-pulsarv3-pulsar-init"
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c"]
+        args:
+          - |            
+            export PULSAR_MEM="-Xmx128M";
+            bin/pulsar initialize-cluster-metadata \
+              --cluster nuvolaris-milvus-pulsarv3 \
+              --zookeeper nuvolaris-milvus-pulsarv3-zookeeper:2181 \
+              --configuration-store nuvolaris-milvus-pulsarv3-zookeeper:2181 \
+              --web-service-url http://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080/ \
+              --web-service-url-tls https://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8443/ \
+              --broker-service-url pulsar://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:6650/ \
+              --broker-service-url-tls pulsar+ssl://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:6651/ ;
+        volumeMounts:        
+      volumes:      
+      restartPolicy: OnFailure      

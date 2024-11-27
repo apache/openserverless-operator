@@ -89,6 +89,8 @@ def evaluate_differences(response: dict, differences: list):
         check_component(response, d,"spec.components.static","static") 
         check_component(response, d,"spec.components.postgres","postgres")
         check_component(response, d,"spec.components.quota","quota")
+        check_component(response, d,"spec.components.etcd","etcd")
+        check_component(response, d,"spec.components.milvus","milvus")
         openwhisk(response, d)           
         endpoint(response, d)
         check_minio_ingresses(response, d)

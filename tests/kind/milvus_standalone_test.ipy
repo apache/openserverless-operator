@@ -1,0 +1,47 @@
+
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+import nuvolaris.testutil as tu
+import nuvolaris.config as cfg
+import nuvolaris.kustomize as kus
+import nuvolaris.kube as kube
+import nuvolaris.milvus_standalone as milvus
+import nuvolaris.etcd as etcd
+import nuvolaris.minio_deploy as minio
+
+import requests as req
+import yaml, sys, os
+
+
+# test
+assert(cfg.configure(tu.load_sample_config()))
+assert(cfg.detect_storage()["nuvolaris.storageclass"])
+
+# for this test minioClient should see this env variable
+os.environ['MINIO_API_HOST']='localhost'
+
+# for this test minioClient should see this env variable
+os.environ['MINIO_API_HOST']='localhost'
+
+assert(etcd.create())
+assert(minio.create())
+assert(milvus.create())
+#assert(milvus.delete())
+#assert(etcd.delete())
+#assert(minio.delete())

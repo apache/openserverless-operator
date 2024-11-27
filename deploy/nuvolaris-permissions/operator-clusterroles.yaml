@@ -88,7 +88,7 @@ rules:
 
 - apiGroups: ["apps"]
   resources: ["deployments"]
-  verbs: ["get", "list", "watch"]
+  verbs: ["get", "list", "watch"]  
 
 ---
 kind: ClusterRoleBinding

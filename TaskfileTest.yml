@@ -31,7 +31,7 @@ vars:
   CONFIG: "tests/{{.KUBE}}/{{.WHISK}}.yaml"
   REDIS_URI: "redis://s0meP%40ass4@redis:6379"
   REDIS_PASSWORD: s0meP@ass4
-  MINIO_HOST: "minio"
+  MINIO_HOST: "nuvolaris-minio"
   MINIO_PORT: 9000
   MINIO_USER: "minioadmin"
   MINIO_PWD : "minioadmin"

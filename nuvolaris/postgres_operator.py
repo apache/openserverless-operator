@@ -92,8 +92,11 @@ def create(owner=None):
 
     return res
 
-
 def update_system_cm_for_pdb(data):
+    """"
+    Annotate the default ConfigMAp with default Nuvolaris user parameteres. The default user nuvolaris is setup by the Postgres setup script
+    therefore it is not explicitly created by this operator.
+    """
     logging.info("*** annotating configuration for postgres nuvolaris user")
     try:        
         pdb_service = util.get_service_by_selector("app=nuvolaris-postgres","{.items[?(@.metadata.labels.replicationRole == 'primary')]}")

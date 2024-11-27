@@ -54,7 +54,7 @@ def prepare_login_action():
     return login
 
 def prepare_content_action():
-    minio_host= cfg.get("minio.host") or "minio"
+    minio_host= cfg.get("minio.host") or "nuvolaris-minio"
     minio_port= cfg.get("minio.port") or "9000"
     minio_full_host = f"{minio_host}.nuvolaris.svc.cluster.local"
 
