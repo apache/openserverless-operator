@@ -39,6 +39,8 @@ import nuvolaris.postgres_operator as postgres
 import nuvolaris.runtimes_preloader as preloader
 import nuvolaris.monitoring as monitoring
 import nuvolaris.quota_checker_job as quota
+import nuvolaris.etcd as etcd
+import nuvolaris.milvus_standalone as milvus
 
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, **_):
@@ -77,7 +79,8 @@ def whisk_create(spec, name, **kwargs):
         "minio": "?", # Minio configuration
         "static": "?", # Minio static endpoint provider
         "zookeeper": "?", #Zookeeper configuration
-        "quota":"?" #Quota configuration
+        "quota":"?", #Quota configuration
+        "etcd":"?"
     }
 
     runtime = cfg.get('nuvolaris.kube')
@@ -237,7 +240,29 @@ def whisk_create(spec, name, **kwargs):
             logging.exception("cannot create quotaa checker")
             state['quota']= "error"
     else:
-        state['quota'] = "off"         
+        state['quota'] = "off"
+
+    if cfg.get('components.etcd'):
+        try:
+            msg = etcd.create(owner)
+            state['etcd'] = "on"
+            logging.info(msg)
+        except:
+            logging.exception("cannot create etcd")
+            state['etcd']= "error"
+    else:
+        state['etcd'] = "off" 
+
+    if cfg.get('components.milvus'):
+        try:
+            msg = milvus.create(owner)
+            state['milvus'] = "on"
+            logging.info(msg)
+        except:
+            logging.exception("cannot create milvus")
+            state['milvus']= "error"
+    else:
+        state['milvus'] = "off"                        
 
     whisk_post_create(name,state)
     state['controller']= "Ready"
@@ -313,7 +338,15 @@ def whisk_delete(spec, **kwargs):
 
     if cfg.get("components.quota"):
         msg = quota.delete()
-        logging.info(msg)                                   
+        logging.info(msg) 
+
+    if cfg.get("components.etcd"):
+        msg = etcd.delete()
+        logging.info(msg) 
+
+    if cfg.get("components.milvus"):
+        msg = milvus.delete()
+        logging.info(msg)                                                   
     
                          
 # tested by integration test

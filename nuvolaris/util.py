@@ -349,7 +349,7 @@ def get_minio_config_data():
         "applypodsecurity":get_enable_pod_security(),
         "name":"minio-deployment",
         "container":"minio",
-        "minio_host": cfg.get('minio.host') or 'minio',
+        "minio_host": cfg.get('minio.host') or 'nuvolaris-minio',
         "minio_volume_size": cfg.get('minio.volume-size') or "5",
         "minio_root_user": cfg.get('minio.admin.user') or "minio",
         "minio_root_password": cfg.get('minio.admin.password') or "minio123",
@@ -451,7 +451,7 @@ def get_storage_static_config_data():
     }
 
     if cfg.get('components.minio'):
-        minio_host=cfg.get('minio.host') or "minio"
+        minio_host=cfg.get('minio.host') or "nuvolaris-minio"
         minio_port=cfg.get('minio.port') or "9000"
         data['storage_url']=f"http://{minio_host}.nuvolaris.svc.cluster.local:{minio_port}"
 
@@ -630,18 +630,18 @@ def get_cosi_config_data():
     }
     return data
 
-def b64_encode(value):
+def b64_encode(value:str):
     """
     Encode a value into as base 64
     param: value to be encoded
-    return: the inpout value in case of error, otherwise the b64 representation of the the input value
+    return: the input value in case of error, otherwise the b64 representation of the the input value
     """        
     try:
-        return b64encode(value).decode()
-    except:
+        return b64encode(value.encode(encoding="utf-8")).decode()
+    except:        
         return value
 
-def b64_decode(encoded_str):
+def b64_decode(encoded_str:str):
     """
     Base 64 decode
     param: encoded_str a b64 encoded string
@@ -650,7 +650,88 @@ def b64_decode(encoded_str):
     try:
         return b64decode(encoded_str).decode()
     except:
-        return encoded_str              
+        return encoded_str
+
+# populate specific affinity data for redis
+def etcd_affinity_tolerations_data(data):
+    common_affinity_tolerations_data(data)
+    data["pod_anti_affinity_name"] = "nuvolaris-etcd"
+
+def get_etcd_initial_clusters(name: str, replicas = 1):
+    """ Calculate the proper setup for ETCD initial clusters
+    >>> print(get_etcd_initial_clusters("nuvolaris-etcd"))
+    nuvolaris-etcd-0=http://nuvolaris-etcd-0.nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2380
+    >>> print(get_etcd_initial_clusters("nuvolaris-etcd",2))
+    nuvolaris-etcd-0=http://nuvolaris-etcd-0.nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2380,nuvolaris-etcd-1=http://nuvolaris-etcd-1.nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2380
+    """
+    etc_initial_clusters = ""
+    for idx in range(replicas):
+        if len(etc_initial_clusters) > 0:
+            etc_initial_clusters+=","
+
+        etc_initial_clusters += f"{name}-{idx}=http://{name}-{idx}.{name}-headless.nuvolaris.svc.cluster.local:2380"   
+   
+    return etc_initial_clusters.strip()
+
+# populate etcd configuration parameters
+def get_etcd_config_data():
+
+    data = {
+        "applypodsecurity":get_enable_pod_security(),
+        "name": "nuvolaris-etcd",
+        "container": "nuvolaris-etcd",
+        "size": cfg.get("etcd.volume-size", "REDIS_VOLUME_SIZE", 5),
+        "storageClass": cfg.get("nuvolaris.storageclass"),
+        "root_password":cfg.get("etcd.root.password") or "s0meP@ass3wd",
+        "etcd_replicas":get_etcd_replica(),
+        "namespace":"nuvolaris",
+        "container_cpu_req": cfg.get('etcd.resources.cpu-req') or "250m",
+        "container_cpu_lim": cfg.get('etcd.resources.cpu-lim') or "375m",
+        "container_mem_req": cfg.get('etcd.resources.mem-req') or "256Mi",
+        "container_mem_lim": cfg.get('etcd.resources.mem-lim') or "384Mi"
+    }
+
+    data["etc_initial_cluster"] = get_etcd_initial_clusters(data["container"],data['etcd_replicas'])
+
+    etcd_affinity_tolerations_data(data)
+    return data
+
+def get_etcd_replica():
+    return cfg.get("etcd.replicas") or 1
+
+# populate specific affinity data for milvus controller manager
+def milvus_manager_affinity_tolerations_data():
+    data = {
+            "pod_anti_affinity_name":"milvus-operator",
+            "name":"milvus-operator" 
+    }
+    common_affinity_tolerations_data(data)
+    return data
+
+# return milvus configuration parameter with default valued if not configured
+def get_milvus_config_data():
+    data = {
+        'milvus_etcd_username': "etcdmilvus",
+        'milvus_etcd_password': cfg.get('milvus.password.etcd') or "0therPa55",
+        "milvus_etcd_root_password":cfg.get("etcd.root.password") or "s0meP@ass3wd",
+        'milvus_etcd_prefix': "milvus",
+        'milvus_s3_username': "miniomilvus",
+        'milvus_s3_password': cfg.get('milvus.password.s3') or "s0meP@ass3",
+        'milvus_bucket_name': "vectors",
+        'milvus_bucket_prefix': "milvus/nuvolaris-milvus",
+        'size': cfg.get('milvus.volume-size.cluster') or 10,
+        'zookeeper_size': cfg.get('milvus.volume-size.zookeeper') or 10,
+        'bookie_journal_size': cfg.get('milvus.volume-size.journal') or 25,
+        'bookie_ledgers_size': cfg.get('milvus.volume-size.ledgers') or 50,
+        'replicas': cfg.get('milvus.replicas') or 1,
+        'storageClass': cfg.get('nuvolaris.storageclass'),
+        "etcd_replicas":get_etcd_replica(),
+        "etcd_container": "nuvolaris-etcd", 
+        }
+    
+    data["etcd_range"]=range(data["etcd_replicas"])
+    
+    return data                    
                       
 
     

@@ -110,6 +110,9 @@ ADD deploy/monitoring /home/nuvolaris/deploy/monitoring
 ADD deploy/alert-manager /home/nuvolaris/deploy/alert-manager
 ADD deploy/quota /home/nuvolaris/deploy/quota
 ADD deploy/kvrocks /home/nuvolaris/deploy/kvrocks
+ADD deploy/etcd /home/nuvolaris/deploy/etcd
+ADD deploy/milvus-operator /home/nuvolaris/deploy/milvus-operator
+ADD deploy/milvus /home/nuvolaris/deploy/milvus
 ADD quota.sh /home/nuvolaris/
 
 USER nuvolaris

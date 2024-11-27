@@ -83,7 +83,7 @@ def deploy_minio_ingress(apihost, namespace, type, service_name,port,context_pat
 def deploy_minio_upload_route(apihost,namespace, type):
     upload = RouteData(apihost)
     upload.with_route_name(endpoint.api_route_name(namespace,type))
-    upload.with_service_name("minio")
+    upload.with_service_name("nuvolaris-minio")
     upload.with_service_kind("Service")
     upload.with_service_port("9000")
     upload.with_context_path("/api/upload")
@@ -102,7 +102,7 @@ def deploy_minio_upload_ingress(apihost, namespace, type):
     upload.with_context_path("/api/upload")
     upload.with_context_regexp("(/|$)(.*)")
     upload.with_rewrite_target("/$2")    
-    upload.with_service_name("minio")
+    upload.with_service_name("nuvolaris-minio")
     upload.with_service_port("9000")
     upload.with_middleware_ingress_name(endpoint.api_middleware_ingress_name(namespace,type))
 
@@ -134,9 +134,9 @@ def create_s3_ingress_endpoint(data, runtime, apihost, owner=None):
     exposes MINIO S3 api ingress ingress/route
     """
     if runtime == 'openshift':
-        return deploy_minio_route(apihost,"nuvolaris","minio-s3","minio","9000","/")
+        return deploy_minio_route(apihost,"nuvolaris","minio-s3","nuvolaris-minio","9000","/")
     else:
-        return deploy_minio_ingress(apihost,"nuvolaris","minio-s3","minio","9000","/")
+        return deploy_minio_ingress(apihost,"nuvolaris","minio-s3","nuvolaris-minio","9000","/")
 
 def create_console_ingress_endpoint(data, runtime, apihost, owner=None):
     """
@@ -144,9 +144,9 @@ def create_console_ingress_endpoint(data, runtime, apihost, owner=None):
     """
 
     if runtime == 'openshift':           
-        return deploy_minio_route(apihost,"nuvolaris","minio-console","minio","9090","/")
+        return deploy_minio_route(apihost,"nuvolaris","minio-console","nuvolaris-minio","9090","/")
     else:
-        return deploy_minio_ingress(apihost,"nuvolaris","minio-console","minio","9090","/")
+        return deploy_minio_ingress(apihost,"nuvolaris","minio-console","nuvolaris-minio","9090","/")
     
 def get_minio_ingress_hostname(runtime, apihost_url, prefix, hostname_from_config):
     """

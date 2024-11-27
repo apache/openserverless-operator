@@ -1,0 +1,117 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-zookeeper"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: zookeeper
+spec:
+  serviceName: "nuvolaris-milvus-pulsarv3-zookeeper"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulsarv3
+      release: nuvolaris-milvus
+      component: zookeeper
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: pulsarv3
+        release: nuvolaris-milvus
+        cluster: nuvolaris-milvus-pulsarv3
+        component: zookeeper
+      annotations:
+    spec:
+      affinity:
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: "nuvolaris-operator"
+      securityContext:
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      volumes: 
+          - name: "nuvolaris-milvus-pulsarv3-zookeeper-data"
+            persistentVolumeClaim:
+              claimName: "nuvolaris-milvus-zookeeper"        
+      containers:
+      - name: "nuvolaris-milvus-pulsarv3-zookeeper"
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+        - >
+          bin/apply-config-from-env.py conf/zookeeper.conf;          
+          bin/generate-zookeeper-config.sh conf/zookeeper.conf;
+          OPTS="${OPTS} -Dlog4j2.formatMsgNoLookups=true" exec bin/pulsar zookeeper;
+        ports:
+        # prometheus needs to access /metrics endpoint
+        - name: http
+          containerPort: 8000
+        - name: client
+          containerPort: 2181
+        - name: follower
+          containerPort: 2888
+        - name: leader-election
+          containerPort: 3888
+        env:
+         - name: ZOOKEEPER_SERVERS
+           value: nuvolaris-milvus-pulsarv3-zookeeper-0
+         - name: EXTERNAL_PROVIDED_SERVERS
+           value: "false"
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-zookeeper"
+        readinessProbe:
+          exec:
+            command:
+            - timeout
+            - "30"
+            - bash
+            - -c
+            - 'echo ruok | nc -q 1 localhost 2181 | grep imok'
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          timeoutSeconds: 30
+          failureThreshold: 10
+        livenessProbe:
+          exec:
+            command:
+            - timeout
+            - "30"
+            - bash
+            - -c
+            - 'echo ruok | nc -q 1 localhost 2181 | grep imok'
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          timeoutSeconds: 30
+          failureThreshold: 10
+        volumeMounts:
+        - name: "nuvolaris-milvus-pulsarv3-zookeeper-data"
+          mountPath: /pulsar/data

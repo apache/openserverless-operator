@@ -15,17 +15,45 @@
 # limitations under the License.
 #
 ---
-apiVersion: policy/v1
-kind: PodDisruptionBudget
+apiVersion: v1
+kind: Service
 metadata:
-  name: apisix-etcd
+  name: nuvolaris-etcd
   namespace: nuvolaris
   labels:
-    app.kubernetes.io/name: etcd
-    app.kubernetes.io/instance: apisix
+    app.kubernetes.io/name: nuvolaris-etcd    
 spec:
-  minAvailable: 51%
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: "client"
+      port: 2379
+      targetPort: client
+    - name: "peer"
+      port: 2380
+      targetPort: peer
   selector:
-    matchLabels:
-      app.kubernetes.io/name: etcd
-      app.kubernetes.io/instance: apisix
+    app.kubernetes.io/name: nuvolaris-etcd    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nuvolaris-etcd-headless
+  namespace: nuvolaris
+  labels:
+    app.kubernetes.io/name: nuvolaris-etcd    
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: client
+      port: 2379
+      targetPort: client
+    - name: peer
+      port: 2380
+      targetPort: peer
+  selector:
+    app.kubernetes.io/name: nuvolaris-etcd    

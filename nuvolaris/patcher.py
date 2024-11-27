@@ -33,6 +33,8 @@ import nuvolaris.operator_util as operator_util
 import nuvolaris.runtimes_preloader as preloader
 import nuvolaris.invoker as invoker
 import nuvolaris.quota_checker_job as quota
+import nuvolaris.etcd as etcd
+import nuvolaris.milvus_standalone as milvus
 
 def patch_preloader(owner: None):
     try:
@@ -147,7 +149,15 @@ def patch(diff, status, owner=None, name=None):
 
     if "quota" in what_to_do:
         quota.patch(status,what_to_do['quota'], owner)
-        components_updated = True                
+        components_updated = True 
+
+    if "etcd" in what_to_do:
+        etcd.patch(status,what_to_do['etcd'], owner)
+        components_updated = True 
+
+    if "milvus" in what_to_do:
+        milvus.patch(status,what_to_do['milvus'], owner)
+        components_updated = True                              
 
     # handle update action on openwhisk
     if "openwhisk" in what_to_do and what_to_do['openwhisk'] == "update":        
