@@ -30,6 +30,11 @@ from nuvolaris.user_config import UserConfig
 from nuvolaris.user_metadata import UserMetadata
 
 def patchEntries(data: dict):
+    tplp = ["milvus-cfg-base.yaml","milvus.yaml"]
+
+    if(data['affinity'] or data['tolerations']):
+        tplp.append("affinity-tolerance-dep-core-attach.yaml")
+
     kust = kus.patchTemplates("milvus", ["milvus-cfg-base.yaml","milvus.yaml"], data)
     kust += kus.patchGenericEntry("Secret","nuvolaris-milvus-etcd-secret","/data/username",util.b64_encode(data['milvus_etcd_username']))
     kust += kus.patchGenericEntry("Secret","nuvolaris-milvus-etcd-secret","/data/password",util.b64_encode(data['milvus_etcd_password']))
@@ -59,7 +64,6 @@ def create(owner=None):
 
     if res:
         logging.info("*** creating a milvus standalone instance")
-        
         kust = patchEntries(data)
         mspec = kus.kustom_list("milvus", kust, templates=[], data=data)
 
@@ -105,6 +109,9 @@ def create_default_milvus_database(data):
     if(res):
         _annotate_nuv_milvus_metadata(data)
         logging.info("*** configured MILVUS database for nuvolaris")
+        return True
+    
+    return False
 
 def _annotate_nuv_milvus_metadata(data):
     """

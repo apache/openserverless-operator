@@ -69,15 +69,17 @@ metadata:
     app.kubernetes.io/instance: nuvolaris-milvus
     component: "standalone"
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - name: milvus
       port: 19530
+      nodePort: 32530
       protocol: TCP
       targetPort: milvus
     - name: metrics
       protocol: TCP
       port: 9091
+      nodePort: 32531
       targetPort: metrics
   selector:
     app.kubernetes.io/name: milvus

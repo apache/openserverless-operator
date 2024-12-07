@@ -27,6 +27,7 @@ from urllib.parse import urlparse
 import uuid
 import string
 import random
+import logging
 
 # takes a string, split in lines and search for the word (a re)
 # if field is a number, splits the line in fields separated by spaces and print the selected field
@@ -308,3 +309,6 @@ def load_sample_user_config(name="whisk-user"):
 def load_sample_runtimes(name="runtimes"):
     with open(f"tests/{name}.json") as f: 
         return json.load(f)
+
+def enable_debug_logging():
+    logging.basicConfig(level=logging.DEBUG)

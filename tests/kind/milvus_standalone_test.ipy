@@ -28,13 +28,14 @@ import nuvolaris.minio_deploy as minio
 import requests as req
 import yaml, sys, os
 
-
+tu.enable_debug_logging()
 # test
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["nuvolaris.storageclass"])
 
-# for this test minioClient should see this env variable
+# for this test minioClient and Milvus should see this env variable
 os.environ['MINIO_API_HOST']='localhost'
+os.environ['MILVUS_API_HOST']='localhost'
 
 assert(etcd.create())
 assert(minio.create())
