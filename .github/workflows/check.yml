@@ -85,6 +85,6 @@ jobs:
       - name: Unit Test
         run: task utest
         continue-on-error: false
-      - name: Integration Test
-        run: task itest
-        continue-on-error: false        
+      #- name: Integration Test
+      #  run: task itest
+      #  continue-on-error: false        

@@ -30,6 +30,11 @@ rules:
   resources: ["routes", "configmaps", "secrets", "pods", "services", "persistentvolumeclaims", "ingresses","serviceaccounts","events","pods/exec", "*/finalizers"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
+# required for etcd #resources: 
+- apiGroups: ["policy"]  
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get","patch","list","update","watch","create","delete"]   
+
 - apiGroups: [""]
   resources: ["services/status"]
   verbs: ["update", "patch"]
@@ -85,6 +90,11 @@ rules:
 # required for kubegres #resources: 
 - apiGroups: ["kubegres.reactive-tech.io"]  
   resources: ["kubegres","kubegres/status","kubegres/finalizers"]
+  verbs: ["get","patch","list","update","watch","create","delete"] 
+
+# required for milvus #resources: 
+- apiGroups: ["milvus.io"]  
+  resources: ["milvus","milvus/status","milvus/finalizers"]
   verbs: ["get","patch","list","update","watch","create","delete"]
 
 ---

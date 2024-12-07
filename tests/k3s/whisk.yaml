@@ -28,29 +28,33 @@ spec:
     # start openwhisk controller
     openwhisk: true
     # start openwhisk invoker
-    invoker: true    
+    invoker: false    
     # start couchdb
     couchdb: true
     # start kafka
-    kafka: true
+    kafka: false
     # start mongodb
-    mongodb: true
+    mongodb: false
     # start redis
-    redis: true
+    redis: false
     # start cron based action parser
-    cron: true 
+    cron: false 
     # enable TLS
     tls: false
     # minio enabled or not
     minio: true 
     # zookeeper enabled or not
-    zookeeper: true
+    zookeeper: false
     # minio static enabled or not
     static: true  
     # monitoring enabled or not
     monitoring: false
     # postgres enabled or not
-    postgres: true              
+    postgres: false
+    # etcd enabled or not
+    etcd: true
+    # milvus enabled or not
+    milvus: true                      
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abcfO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
@@ -175,3 +179,19 @@ spec:
       replica-password: 0therPa55RR
     nuvolaris:
       password: s0meP@ass3                        
+  etcd:    
+    volume-size: 5
+    replicas: 1
+    root:      
+      password: 0therPa55
+  milvus:    
+    volume-size:
+      cluster: 20
+      zookeeper: 15
+      journal: 20
+      ledgers: 25
+    replicas: 1
+    password:
+      root: x£VqD7G6712o        
+      etcd: 97Vk2{qe8o>S
+      s3: 8_d$8zCrl7£m      

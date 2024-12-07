@@ -29,7 +29,7 @@ from nuvolaris.ingress_data import IngressData
 from nuvolaris.route_data import RouteData
 
 def create(owner=None):
-    logging.info(f"*** configuring nuvolaris nginx static provider")
+    logging.info("*** configuring nuvolaris nginx static provider")
     runtime = cfg.get('nuvolaris.kube')
     
     data = util.get_storage_static_config_data()

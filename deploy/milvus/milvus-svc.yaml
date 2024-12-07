@@ -1,0 +1,140 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-recovery"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: recovery
+spec:
+  ports:
+  - name: http
+    port: 8000
+  clusterIP: None
+  selector:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    component: recovery
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-bookie"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: bookie
+spec:
+  ports:
+  - name: "bookie"
+    port: 3181
+  - name: http
+    port: 8000
+  clusterIP: None
+  selector:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    component: bookie
+  publishNotReadyAddresses: true 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nuvolaris-milvus
+  namespace: nuvolaris
+  labels:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: nuvolaris-milvus
+    component: "standalone"
+spec:
+  type: NodePort
+  ports:
+    - name: milvus
+      port: 19530
+      nodePort: 32530
+      protocol: TCP
+      targetPort: milvus
+    - name: metrics
+      protocol: TCP
+      port: 9091
+      nodePort: 32531
+      targetPort: metrics
+  selector:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: nuvolaris-milvus
+    component: "standalone"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-zookeeper"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: zookeeper
+  annotations:
+    {}
+spec:
+  ports:
+    # prometheus needs to access /metrics endpoint
+    - name: http
+      port: 8000
+    - name: "follower"
+      port: 2888
+    - name: "leader-election"
+      port: 3888
+    - name: "client"
+      port: 2181
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    component: zookeeper
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-broker"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: broker
+spec:
+  ports:
+  # prometheus needs to access /metrics endpoint
+  - name: http
+    port: 8080
+  - name: "pulsar"
+    port: 6650
+  clusterIP: None
+  selector:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    component: broker        

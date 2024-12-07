@@ -1,0 +1,286 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nuvolaris-milvus-minio
+data:
+  initialize: |-
+    #!/bin/sh
+    set -e ; # Have script exit in the event of a failed command.
+    MC_CONFIG_DIR="/etc/minio/mc/"
+    MC="/usr/bin/mc --insecure --config-dir ${MC_CONFIG_DIR}"
+    
+    # connectToMinio
+    # Use a check-sleep-check loop to wait for Minio service to be available
+    connectToMinio() {
+      SCHEME=$1
+      ATTEMPTS=0 ; LIMIT=29 ; # Allow 30 attempts
+      set -e ; # fail if we can't read the keys.
+      ACCESS=$(cat /config/accesskey) ; SECRET=$(cat /config/secretkey) ;
+      set +e ; # The connections to minio are allowed to fail.
+      echo "Connecting to Minio server: $SCHEME://$MINIO_ENDPOINT:$MINIO_PORT" ;
+      MC_COMMAND="${MC} config host add myminio $SCHEME://$MINIO_ENDPOINT:$MINIO_PORT $ACCESS $SECRET" ;
+      $MC_COMMAND ;
+      STATUS=$? ;
+      until [ $STATUS = 0 ]
+      do
+        ATTEMPTS=`expr $ATTEMPTS + 1` ;
+        echo \"Failed attempts: $ATTEMPTS\" ;
+        if [ $ATTEMPTS -gt $LIMIT ]; then
+          exit 1 ;
+        fi ;
+        sleep 2 ; # 1 second intervals between attempts
+        $MC_COMMAND ;
+        STATUS=$? ;
+      done ;
+      set -e ; # reset `e` as active
+      return 0
+    }
+    
+    # checkBucketExists ($bucket)
+    # Check if the bucket exists, by using the exit code of `mc ls`
+    checkBucketExists() {
+      BUCKET=$1
+      CMD=$(${MC} ls myminio/$BUCKET > /dev/null 2>&1)
+      return $?
+    }
+    
+    # createBucket ($bucket, $policy, $purge)
+    # Ensure bucket exists, purging if asked to
+    createBucket() {
+      BUCKET=$1
+      POLICY=$2
+      PURGE=$3
+      VERSIONING=$4
+    
+      # Purge the bucket, if set & exists
+      # Since PURGE is user input, check explicitly for `true`
+      if [ $PURGE = true ]; then
+        if checkBucketExists $BUCKET ; then
+          echo "Purging bucket '$BUCKET'."
+          set +e ; # don't exit if this fails
+          ${MC} rm -r --force myminio/$BUCKET
+          set -e ; # reset `e` as active
+        else
+          echo "Bucket '$BUCKET' does not exist, skipping purge."
+        fi
+      fi
+    
+      # Create the bucket if it does not exist
+      if ! checkBucketExists $BUCKET ; then
+        echo "Creating bucket '$BUCKET'"
+        ${MC} mb myminio/$BUCKET
+      else
+        echo "Bucket '$BUCKET' already exists."
+      fi
+    
+    
+      # set versioning for bucket
+      if [ ! -z $VERSIONING ] ; then
+        if [ $VERSIONING = true ] ; then
+            echo "Enabling versioning for '$BUCKET'"
+            ${MC} version enable myminio/$BUCKET
+        elif [ $VERSIONING = false ] ; then
+            echo "Suspending versioning for '$BUCKET'"
+            ${MC} version suspend myminio/$BUCKET
+        fi
+      else
+          echo "Bucket '$BUCKET' versioning unchanged."
+      fi
+    
+      # At this point, the bucket should exist, skip checking for existence
+      # Set policy on the bucket
+      echo "Setting policy of bucket '$BUCKET' to '$POLICY'."
+      ${MC} policy set $POLICY myminio/$BUCKET
+    }
+    
+    # Try connecting to Minio instance
+    scheme=http
+    connectToMinio $scheme
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-bookie"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: bookie
+data:
+  # common config
+  zkServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zkLedgersRootPath: "/ledgers"
+  # enable bookkeeper http server
+  httpServerEnabled: "true"
+  httpServerPort: "8000"
+  # config the stats provider
+  statsProviderClass: org.apache.bookkeeper.stats.prometheus.PrometheusMetricsProvider
+  # use hostname as the bookie id
+  useHostNameAsBookieID: "true"
+  # disable auto recovery on bookies since we will start AutoRecovery in separated pods
+  autoRecoveryDaemonEnabled: "false"
+  # Do not retain journal files as it increase the disk utilization
+  journalMaxBackups: "0"
+  journalDirectories: "/pulsar/data/bookkeeper/journal"
+  PULSAR_PREFIX_journalDirectories: "/pulsar/data/bookkeeper/journal"
+  ledgerDirectories: "/pulsar/data/bookkeeper/ledgers"
+  # TLS config
+  
+  PULSAR_GC: |
+    -XX:+UseG1GC -XX:MaxGCPauseMillis=10 -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=4 -XX:ConcGCThreads=4 -XX:G1NewSizePercent=50 -XX:+DisableExplicitGC -XX:-ResizePLAB -XX:+ExitOnOutOfMemoryError -XX:+PerfDisableSharedMem
+  PULSAR_MEM: |
+    -Xms4096m -Xmx4096m -XX:MaxDirectMemorySize=8192m
+  diskCheckInterval: "1800"
+  diskUsageLwmThreshold: "0.85"
+  diskUsageThreshold: "0.95"
+  diskUsageWarnThreshold: "0.9"
+  gcWaitTime: "300000"
+  isForceGCAllowWhenNoSpace: "true"
+  majorCompactionInterval: "10800"
+  majorCompactionThreshold: "0.8"
+  minorCompactionInterval: "360"
+  minorCompactionThreshold: "0.2"
+  nettyMaxFrameSizeBytes: "104867840"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-broker"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    chart: pulsarv3-3.3.0
+    release: nuvolaris-milvus
+    heritage: Helm
+    cluster: nuvolaris-milvus-pulsarv3
+    component: broker
+data:
+  # Metadata settings
+  zookeeperServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  configurationStoreServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+
+  # Broker settings
+  clusterName: nuvolaris-milvus-pulsarv3
+  exposeTopicLevelMetricsInPrometheus: "true"
+  numHttpServerThreads: "8"
+  zooKeeperSessionTimeoutMillis: "30000"
+  statusFilePath: "/pulsar/status"
+
+  # Tiered storage settings
+
+  # Function Worker Settings
+  # function worker configuration
+  functionsWorkerEnabled: "false"
+
+  # prometheus needs to access /metrics endpoint
+  webServicePort: "8080"
+  brokerServicePort: "6650"
+
+  # Authentication Settings
+  PULSAR_GC: |
+    -XX:+UseG1GC -XX:MaxGCPauseMillis=10 -Dio.netty.leakDetectionLevel=disabled -Dio.netty.recycler.linkCapacity=1024 -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=4 -XX:ConcGCThreads=4 -XX:G1NewSizePercent=50 -XX:+DisableExplicitGC -XX:-ResizePLAB -XX:+ExitOnOutOfMemoryError -XX:+PerfDisableSharedMem
+  PULSAR_MEM: |
+    -Xms4096m -Xmx4096m -XX:MaxDirectMemorySize=8192m
+  backlogQuotaDefaultLimitGB: "8"
+  backlogQuotaDefaultRetentionPolicy: producer_exception
+  defaultRetentionSizeInMB: "-1"
+  defaultRetentionTimeInMinutes: "10080"
+  managedLedgerDefaultAckQuorum: "2"
+  managedLedgerDefaultEnsembleSize: "3"
+  managedLedgerDefaultWriteQuorum: "3"
+  maxMessageSize: "104857600"
+  subscriptionExpirationTimeMinutes: "3"
+  ttlDurationDefaultInSeconds: "259200"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-proxy"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    chart: pulsarv3-3.3.0
+    release: nuvolaris-milvus
+    heritage: Helm
+    cluster: nuvolaris-milvus-pulsarv3
+    component: proxy
+data:
+  clusterName: nuvolaris-milvus-pulsarv3
+  statusFilePath: "/pulsar/status"
+  # prometheus needs to access /metrics endpoint
+  webServicePort: "8080"
+  servicePort: "6650"
+  brokerServiceURL: pulsar://nuvolaris-milvus-pulsarv3-broker:6650
+  brokerWebServiceURL: http://nuvolaris-milvus-pulsarv3-broker:8080
+
+  # Authentication Settings
+  PULSAR_GC: |
+    -XX:+UseG1GC -XX:MaxGCPauseMillis=10 -Dio.netty.leakDetectionLevel=disabled -Dio.netty.recycler.linkCapacity=1024 -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=4 -XX:ConcGCThreads=4 -XX:G1NewSizePercent=50 -XX:+DisableExplicitGC -XX:-ResizePLAB -XX:+ExitOnOutOfMemoryError -XX:+PerfDisableSharedMem
+  PULSAR_MEM: |
+    -Xms512m -Xmx512m -XX:MaxDirectMemorySize=2048m
+  httpNumThreads: "8"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-zookeeper"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: zookeeper
+data:
+  dataDir: /pulsar/data/zookeeper
+  PULSAR_PREFIX_serverCnxnFactory: org.apache.zookeeper.server.NIOServerCnxnFactory
+  serverCnxnFactory: org.apache.zookeeper.server.NIOServerCnxnFactory
+  PULSAR_GC: |
+    -XX:+UseG1GC -XX:MaxGCPauseMillis=10 -Dcom.sun.management.jmxremote -Djute.maxbuffer=10485760 -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+DoEscapeAnalysis -XX:+DisableExplicitGC -XX:+ExitOnOutOfMemoryError -XX:+PerfDisableSharedMem
+  PULSAR_MEM: |
+    -Xms256m -Xmx256m    
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-recovery"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    chart: pulsarv3-3.3.0
+    release: nuvolaris-milvus
+    heritage: Helm
+    cluster: nuvolaris-milvus-pulsarv3
+    component: recovery
+data:
+  # common config
+  zkServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zkLedgersRootPath: "/ledgers"
+  # enable bookkeeper http server
+  httpServerEnabled: "true"
+  httpServerPort: "8000"
+  # config the stats provider
+  statsProviderClass: org.apache.bookkeeper.stats.prometheus.PrometheusMetricsProvider
+  # use hostname as the bookie id
+  useHostNameAsBookieID: "true"
+  BOOKIE_MEM: |
+    -Xms128m -Xmx128m
+  PULSAR_PREFIX_useV2WireProtocol: "true"
