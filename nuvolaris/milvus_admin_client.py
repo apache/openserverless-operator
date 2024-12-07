@@ -17,7 +17,7 @@
 #
 import logging
 import nuvolaris.config as cfg
-from pymilvus import MilvusClient
+from pymilvus import MilvusClient, connections,  db
 
 class MilvusAdminClient:
     """
@@ -45,6 +45,7 @@ class MilvusAdminClient:
         except Exception as ex:
             logging.warning("cannot close MILVUS client connection", ex)
 
+
     def add_user(self, username, password):
         """
         adds a new MILVUS user to the predefined
@@ -60,6 +61,20 @@ class MilvusAdminClient:
             logging.error(f"Could not create milvus user {username}", ex)
             return False
         
+    def add_database(self, db_name):
+        """
+        adds a new MILVUS database, suing the ORM MILVUS way
+        param: db_name
+        return: True if the database has been successfully created
+        """
+        try:
+            conn = connections.connect(host=self.milvus_api_host, port=self.milvus_api_port, token=f"{self.admin_username}:{self.admin_password}")
+            db.create_database(db_name)
+            return True
+        except Exception as ex:
+            logging.error(f"Could not create MILVUS database {db_name}", ex)
+            return False        
+        
     def add_role(self, role):
         """
         adds a new MILVUS role 
@@ -74,10 +89,11 @@ class MilvusAdminClient:
             logging.error(f"Could not create milvus role {role}", ex)
             return False 
 
-    def add_default_privileges_to_role(self, role):
+    def add_default_privileges_to_role(self, role, db_name):
         """
-        adds default privileges to a role
-        param: role        
+        adds default privileges to a role on the specified db_name
+        param: role
+        param: db_name        
         return: True if role has been successfully created
         """
         try:
@@ -85,14 +101,8 @@ class MilvusAdminClient:
                 role_name=role,
                 object_type='Global',  # value here can be Global, Collection or User, object type also depends on the API defined in privilegeName
                 object_name='*',  # value here can be * or a specific user name if object type is 'User'
-                privilege='CreateCollection'
-            )
-
-            self.client.grant_privilege(
-                role_name=role,
-                object_type='Collection',  # value here can be Global, Collection or User, object type also depends on the API defined in privilegeName
-                object_name='*',  # value here can be * or a specific user name if object type is 'User'
-                privilege='*'
+                privilege='*',
+                db_name=db_name
             )
 
             return True
@@ -117,13 +127,14 @@ class MilvusAdminClient:
 
     def setup_user(self, username, password):
         """
-        Creates a user into MILVUS and assign permission on collection
+        Creates a user into MILVUS, creates a corresponding database and grant collection
         param: username
         param: role        
         return: True if role has been successfully created
         """
         role = f"{username}_role"
         self.add_user(username,password)
+        self.add_database(username)
         self.add_role(role)
-        self.add_default_privileges_to_role(role)
+        self.add_default_privileges_to_role(role, db_name=username)
         self.assign_role(username, role)
