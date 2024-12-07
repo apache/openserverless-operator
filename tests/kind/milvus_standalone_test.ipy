@@ -28,7 +28,7 @@ import nuvolaris.minio_deploy as minio
 import requests as req
 import yaml, sys, os
 
-tu.enable_debug_logging()
+# tu.enable_debug_logging()
 # test
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["nuvolaris.storageclass"])
