@@ -36,9 +36,6 @@ assert(cfg.detect_storage()["nuvolaris.storageclass"])
 # for this test minioClient should see this env variable
 os.environ['MINIO_API_HOST']='localhost'
 
-# for this test minioClient should see this env variable
-os.environ['MINIO_API_HOST']='localhost'
-
 assert(etcd.create())
 assert(minio.create())
 assert(milvus.create())

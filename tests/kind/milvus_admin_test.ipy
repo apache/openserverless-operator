@@ -1,0 +1,52 @@
+
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+import os
+import nuvolaris.testutil as tu
+import nuvolaris.config as cfg
+from nuvolaris.milvus_admin_client import MilvusAdminClient
+from pymilvus import MilvusClient
+
+# for this test minioClient should see this env variable
+os.environ['MILVUS_ROOT_USER']='root'
+os.environ['MILVUS_API_HOST']='localhost'
+os.environ['MILVUS_API_PORT']='19530'
+os.environ['MILVUS_ROOT_PASSWORD']='x£VqD7G6712o'
+
+#client = MilvusAdminClient()
+#client.setup_user("franz","Afrodite1972#123")
+#client.setup_user("ciccillo","Afrodite1973#123")
+#client.close_connection()
+
+milvus = MilvusClient(uri="http://localhost:19530",token="root:x£VqD7G6712o")
+print(milvus.grant_privilege(role_name="ciccillo_role",object_type='Global',  object_name='*', privilege='CreateCollection'))
+#print(milvus.grant_privilege(role_name="franz_role",object_type='Global',  object_name='*', privilege='CreateCollection'))
+#print(milvus.grant_role(user_name="franz",role_name="franz_role"))
+#print(milvus.describe_role(role_name="franz_role"))
+#print(milvus.describe_user("franz"))
+milvus.close()
+
+fttclient = MilvusClient(uri="http://localhost:19530",token="franz:Afrodite1972#123")
+#print(fttclient.create_collection(collection_name="franz_collection", dimension=100))
+fttclient.close()
+
+cclient = MilvusClient(uri="http://localhost:19530",token="ciccillo:Afrodite1973#123")
+print(cclient.create_collection(collection_name="cc_collection",dimension=100))
+print(cclient.list_collections())
+

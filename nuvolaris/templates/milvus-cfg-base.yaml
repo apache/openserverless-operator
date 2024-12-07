@@ -133,3 +133,8 @@ data:
     #   common:
     #     security:
     #       tlsMode: 1
+    # Enable User Authentication
+    common:
+      security:
+        authorizationEnabled: true
+        defaultRootPassword: {{milvus_root_password}}
