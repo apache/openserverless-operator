@@ -35,7 +35,7 @@ def patchEntries(data: dict):
     if(data['affinity'] or data['tolerations']):
         tplp.append("affinity-tolerance-dep-core-attach.yaml")
 
-    kust = kus.patchTemplates("milvus", ["milvus-cfg-base.yaml","milvus.yaml"], data)
+    kust = kus.patchTemplates("milvus", tplp, data)
     kust += kus.patchGenericEntry("Secret","nuvolaris-milvus-etcd-secret","/data/username",util.b64_encode(data['milvus_etcd_username']))
     kust += kus.patchGenericEntry("Secret","nuvolaris-milvus-etcd-secret","/data/password",util.b64_encode(data['milvus_etcd_password']))
 

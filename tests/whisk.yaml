@@ -23,6 +23,8 @@ metadata:
 spec:
   nuvolaris:
     password: nuvpassw0rd
+    affinity: false 
+    tolerations: false    
   components:
     # start openwhisk controller
     openwhisk: true
