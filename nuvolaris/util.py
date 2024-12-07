@@ -700,12 +700,16 @@ def get_etcd_replica():
     return cfg.get("etcd.replicas") or 1
 
 # populate specific affinity data for milvus controller manager
-def milvus_manager_affinity_tolerations_data():
-    data = {
-            "pod_anti_affinity_name":"milvus-operator",
-            "name":"milvus-operator" 
-    }
+def milvus_manager_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
+    data["pod_anti_affinity_name"] = "milvus-operator"
+    return data
+
+def milvus_standalone_affinity_tolerations_data(data):
+    common_affinity_tolerations_data(data)
+    data["pod_anti_affinity_name"] = "nuvolaris-milvus"
+    data["name"] = "nuvolaris-milvus-standalone"
+    data["container-name"] = "nuvolaris-milvus"
     return data
 
 # return milvus configuration parameter with default valued if not configured
@@ -732,7 +736,7 @@ def get_milvus_config_data():
         }
     
     data["etcd_range"]=range(data["etcd_replicas"])
-    
+    milvus_standalone_affinity_tolerations_data(data)
     return data                    
                       
 

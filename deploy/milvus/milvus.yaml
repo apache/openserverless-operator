@@ -39,7 +39,7 @@ spec:
   template:
     metadata:
       labels:
-        name: milvus
+        name: nuvolaris-milvus
         app.kubernetes.io/name: milvus
         app.kubernetes.io/instance: nuvolaris-milvus
         component: "standalone"
