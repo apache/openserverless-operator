@@ -65,6 +65,10 @@ class NuvolarisMetadata:
         self._store_safely_from_cm("S3_PROVIDER", '{.metadata.annotations.s3_provider}')
         self._store_safely_from_cm("S3_API_URL", '{.metadata.annotations.s3_api_url}')
         self._store_safely_from_cm("S3_CONSOLE_URL", '{.metadata.annotations.s3_console_url}')
+        self._store_safely_from_cm("MILVUS_HOST", '{.metadata.annotations.milvus_host}')
+        self._store_safely_from_cm("MILVUS_PORT", '{.metadata.annotations.milvus_port}')
+        self._store_safely_from_cm("MILVUS_TOKEN", '{.metadata.annotations.milvus_token}')
+        self._store_safely_from_cm("MILVUS_DB_NAME", '{.metadata.annotations.milvus_db_name}')
                 
 
     def dump(self):

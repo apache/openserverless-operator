@@ -21,7 +21,7 @@ import logging
 import json, os, os.path
 import nuvolaris.config as cfg
 import nuvolaris.couchdb as cdb
-import minio_deploy as minio_deploy
+import nuvolaris.minio_deploy as minio_deploy
 import nuvolaris.kube as kube
 import nuvolaris.ferretdb as mdb
 import nuvolaris.storage_static as static
@@ -30,6 +30,7 @@ import nuvolaris.userdb_util as userdb
 import nuvolaris.postgres_operator as postgres
 import nuvolaris.endpoint as endpoint
 import nuvolaris.user_patcher as user_patcher
+import nuvolaris.milvus_standalone as milvus
 
 from nuvolaris.user_config import UserConfig
 from nuvolaris.user_metadata import UserMetadata
@@ -87,7 +88,12 @@ def whisk_user_create(spec, name, patch, **kwargs):
     if(cfg.get('components.postgres') and ucfg.get('postgres.enabled')):
         res = postgres.create_db_user(ucfg, user_metadata)
         logging.info(f"Postgres setup for {ucfg.get('namespace')} added = {res}")
-        state['postgres']= res        
+        state['postgres']= res 
+
+    if(cfg.get('components.milvus') and ucfg.get('milvus.enabled')):
+        res = milvus.create_ow_milvus(ucfg, user_metadata)
+        logging.info(f"Milvus setup for {ucfg.get('namespace')} added = {res}")
+        state['milvus']= res
 
     # finally persists user metadata into the internal couchdb database
     user_metadata.dump()
@@ -133,7 +139,11 @@ def whisk_user_delete(spec, name, **kwargs):
 
     if(cfg.get('components.postgres') and ucfg.get('postgres.enabled')):
         res = postgres.delete_db_user(ucfg.get('namespace'),ucfg.get('postgres.database'))
-        logging.info(f"Postgres setup for {ucfg.get('namespace')} removed = {res}")        
+        logging.info(f"Postgres setup for {ucfg.get('namespace')} removed = {res}")
+
+    if(cfg.get('components.milvus') and ucfg.get('milvus.enabled')):
+        res = milvus.delete_ow_milvus(ucfg)
+        logging.info(f"Milvus setup for {ucfg.get('namespace')} removed = {res}")        
 
     res = userdb.delete_user_metadata(ucfg.get('namespace'))
 
@@ -170,4 +180,10 @@ def whisk_user_resume(spec, name, namespace,annotations, **kwargs):
         state['static']= True
 
     if(cfg.get('components.mongodb') and ucfg.get('mongodb.enabled')):
-        state['mongodb']= True          
+        state['mongodb']= True 
+
+    if(cfg.get('components.milvus') and ucfg.get('milvus.enabled')):
+        state['milvus']= True 
+
+    if(cfg.get('components.postgres') and ucfg.get('postgres.enabled')):
+        state['postgres']= True                          

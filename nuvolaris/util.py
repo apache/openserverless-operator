@@ -728,8 +728,7 @@ def get_milvus_config_data():
         "etcd_replicas":get_etcd_replica(),
         "etcd_container": "nuvolaris-etcd",
         'milvus_root_password': cfg.get('milvus.password.root') or "An0therPa55",
-        'nuvolaris_password': cfg.get('milvus.nuvolaris.password') or "Nuv0therPa55",
-        'nuvolaris_collection': cfg.get('milvus.nuvolaris.collection') or "nuvolaris"
+        'nuvolaris_password': cfg.get('milvus.nuvolaris.password') or "Nuv0therPa55"
         }
     
     data["etcd_range"]=range(data["etcd_replicas"])

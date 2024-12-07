@@ -23,10 +23,11 @@ import nuvolaris.config as cfg
 import nuvolaris.util as util
 import nuvolaris.operator_util as operator_util
 import nuvolaris.minio_util as mutil
-import nuvolaris.etcd as etcd
+import nuvolaris.openwhisk as openwhisk
 
-from nuvolaris.opaque_secret import OpaqueSecret
-from nuvolaris.minio_util import MinioClient
+from nuvolaris.milvus_admin_client import MilvusAdminClient
+from nuvolaris.user_config import UserConfig
+from nuvolaris.user_metadata import UserMetadata
 
 def patchEntries(data: dict):
     kust = kus.patchTemplates("milvus", ["milvus-cfg-base.yaml","milvus.yaml"], data)
@@ -68,6 +69,9 @@ def create(owner=None):
             cfg.put("state.milvus.spec", mspec)
 
         res = kube.apply(mspec)
+        util.wait_for_pod_ready("{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')].metadata.name}")
+        res=create_default_milvus_database(data)
+        logging.info("*** created a milvus standalone instance")
 
     return res
 
@@ -89,6 +93,88 @@ def create_milvus_accounts(data:dict):
     except Exception as ex:
         logging.error("Could not create milvus ETCD and MINIO accounts",ex)
         return False
+    
+def create_default_milvus_database(data):
+    """
+    Creates nuvolaris MILVUS custom resources
+    """
+    logging.info("*** configuring MILVUS database for nuvolaris")   
+    adminClient = MilvusAdminClient()
+    res = adminClient.setup_user("nuvolaris", data["nuvolaris_password"],"nuvolaris")
+    
+    if(res):
+        _annotate_nuv_milvus_metadata(data)
+        logging.info("*** configured MILVUS database for nuvolaris")
+
+def _annotate_nuv_milvus_metadata(data):
+    """
+    annotate nuvolaris configmap with entries for MILVUS connectivity MILVUS_HOST, MILVUS_PORT, MILVUS_TOKEN, MILVUS_DB_NAME
+    this is becasue MINIO
+    """ 
+    try:
+        milvus_service =  util.get_service("{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')]}")
+        if(milvus_service):
+            milvus_host = f"{milvus_service['metadata']['name']}.{milvus_service['metadata']['namespace']}.svc.cluster.local"
+            password = data["nuvolaris_password"]
+            
+            openwhisk.annotate(f"milvus_host={milvus_host}")
+            openwhisk.annotate(f"milvus_token=nuvolaris:{password}")
+            openwhisk.annotate("milvus_db_name=nuvolaris")
+
+            ports = list(milvus_service['spec']['ports'])
+            for port in ports:
+                if(port['name']=='milvus'):
+                    openwhisk.annotate(f"milvus_port={port['port']}")                  
+        return None
+    except Exception as e:
+        logging.error(f"failed to annotate MILVUS for nuvolaris: {e}")
+        return None
+
+def _add_milvus_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
+    """
+    adds entries for MILVUS connectivity MILVUS_HOST, MILVUS_PORT, MILVUS_TOKEN, MILVUS_DB_NAME    
+    """ 
+
+    try:
+        milvus_service =  util.get_service("{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')]}")
+        
+        if(milvus_service):
+            milvus_host = f"{milvus_service['metadata']['name']}.{milvus_service['metadata']['namespace']}.svc.cluster.local"
+            milvus_token = f"{ucfg.get('namespace')}:{ucfg.get('milvus.password')}"
+            user_metadata.add_metadata("MILVUS_HOST",milvus_host)
+            user_metadata.add_metadata("MILVUS_TOKEN",milvus_token)
+            user_metadata.add_metadata("MILVUS_DB_NAME",ucfg.get('milvus.database'))
+
+            ports = list(milvus_service['spec']['ports'])
+            for port in ports:
+                if(port['name']=='milvus'):
+                    user_metadata.add_metadata("MILVUS_PORT",port['port'])
+
+        return None
+    except Exception as e:
+        logging.error(f"failed to build MILVUS metadata for {ucfg.get('namespace')}: {e}")
+        return None
+
+def create_ow_milvus(ucfg: UserConfig, user_metadata: UserMetadata, owner=None):
+    logging.info(f"*** configuring MILVUS database for {ucfg.get('namespace')}")
+    
+    adminClient = MilvusAdminClient()
+    username = ucfg.get("namespace")
+    password = ucfg.get("milvus.password")
+    database = ucfg.get("milvus.database")
+    res = adminClient.setup_user(username, password,database)
+    
+    if(res):
+        _add_milvus_user_metadata(ucfg, user_metadata)
+        logging.info(f"*** configured MILVUS database linked to namespace {ucfg.get('namespace')}")
+
+def delete_ow_milvus(ucfg):
+    logging.info(f"removing MILVUS database {ucfg.get('namespace')}")
+    adminClient = MilvusAdminClient()
+    res = adminClient.remove_user(ucfg.get('namespace'),ucfg.get('milvus.database'))
+
+    if res:
+        logging.info(f"removed MILVUS database linked to namespace {ucfg.get('namespace')}")                     
 
 def delete_by_owner():
     spec = kus.build("milvus")
