@@ -131,19 +131,19 @@ def create_nuv_storage(data):
         _annotate_nuv_metadata(data)
         bucket_policy_names = []
 
-        logging.info(f"*** adding nuvolaris MINIO data bucket")
+        logging.info("*** adding nuvolaris MINIO data bucket")
         res = minioClient.make_bucket("nuvolaris-data")                
         bucket_policy_names.append("nuvolaris-data/*")
 
         if(res):
-            openwhisk.annotate(f"s3_bucket_data=nuvolaris-data")
+            openwhisk.annotate("s3_bucket_data=nuvolaris-data")
 
-        logging.info(f"*** adding nuvolaris MINIO static public bucket")
+        logging.info("*** adding nuvolaris MINIO static public bucket")
         res = minioClient.make_public_bucket("nuvolaris-web")             
         bucket_policy_names.append("nuvolaris-web/*")
 
         if(res):
-            openwhisk.annotate(f"s3_bucket_static=nuvolaris-web")
+            openwhisk.annotate("s3_bucket_static=nuvolaris-web")
             content_path = find_content_path("index.html")
 
             if(content_path):
@@ -156,7 +156,7 @@ def create_nuv_storage(data):
             logging.info(f"granting rw access to created policies under username {data['minio_nuv_user']}")
             minioClient.assign_rw_bucket_policy_to_user(data["minio_nuv_user"],bucket_policy_names)
 
-        logging.info(f"*** configured MINIO storage for nuvolaris")
+        logging.info("*** configured MINIO storage for nuvolaris")
 
 def assign_bucket_quota(bucket_name, quota, minioClient:MinioClient):
     if not quota.lower() in ['auto'] and quota.isnumeric():

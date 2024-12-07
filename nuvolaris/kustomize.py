@@ -345,5 +345,5 @@ def patchGenericEntry(kind, name, path, value, op="replace",apiVersion="v1"):
     - op: {op}
       path: {path}
       value: {value}
-""" 
+"""
    

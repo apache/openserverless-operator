@@ -71,11 +71,11 @@ def whisk_post_create(name):
     update_nuvolaris_metadata()
     annotate_operator_components_version()
     if system.deploy_whisk_system_action():
-        openwhisk.annotate(f"system_action_status=created")
+        openwhisk.annotate("system_action_status=created")
         return True
     
-    openwhisk.annotate(f"system_action_status=failed")
-    return False;    
+    openwhisk.annotate("system_action_status=failed")
+    return False
 
 def whisk_post_resume(name):
     """    
@@ -128,15 +128,8 @@ def patch_operator_status(status,component, status_code):
     """
     Patch the operator status in the safiest way:
     """
-    try:    
-        if 'whisk_create' in status:
-            logging.debug(f"patching whisk_create for {component} with code = {status_code}")
-            status['whisk_create'][component]=status_code
-            return
-        
-        if 'whisk_update' in status:
-            logging.debug(f"patching whisk_update for {component} with code = {status_code}")
-            status['whisk_update'][component]=status_code
-            return
+    try:
+        logging.debug(f"patching component {component} with code = {status_code} from event handler {status}")
+        status['whisk_create'][component]=status_code
     except Exception as e:
-        logging.error('*** failed to patch_operator_status: %s' % e)      
+        logging.error('*** failed to patch_operator_status: %s' % e)  

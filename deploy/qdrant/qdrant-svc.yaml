@@ -25,8 +25,6 @@ metadata:
     app: qdrant
     app.kubernetes.io/name: qdrant
     app.kubernetes.io/instance: nuvolaris-qdrant
-    app.kubernetes.io/version: "v1.9.5"
-    app.kubernetes.io/managed-by: Helm
 spec:
   clusterIP: None
   publishNotReadyAddresses: true

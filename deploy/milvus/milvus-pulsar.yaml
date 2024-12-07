@@ -1,0 +1,463 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-recovery"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    chart: pulsarv3-3.3.0
+    release: nuvolaris-milvus
+    heritage: Helm
+    cluster: nuvolaris-milvus-pulsarv3
+    component: recovery
+spec:
+  serviceName: "nuvolaris-milvus-pulsarv3-recovery"
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  # nodeSelector:
+  selector:
+    matchLabels:
+      app: pulsarv3
+      release: nuvolaris-milvus
+      component: recovery
+  template:
+    metadata:
+      labels:
+        app: pulsarv3
+        release: nuvolaris-milvus
+        cluster: nuvolaris-milvus-pulsarv3
+        component: recovery
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      affinity:
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: nuvolaris-operator
+      initContainers:
+      # This initContainer will wait for bookkeeper initnewcluster to complete
+      # before deploying the bookies
+      - name: pulsar-bookkeeper-verify-clusterid
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+        - >
+          bin/apply-config-from-env.py conf/bookkeeper.conf;until bin/bookkeeper shell whatisinstanceid; do
+            sleep 3;
+          done;
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-recovery"
+        volumeMounts:
+        
+      containers:
+      - name: "nuvolaris-milvus-pulsarv3-recovery"
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        command: ["sh", "-c"]
+        args:
+        - >
+          bin/apply-config-from-env.py conf/bookkeeper.conf;          
+          OPTS="${OPTS} -Dlog4j2.formatMsgNoLookups=true" exec bin/bookkeeper autorecovery
+        ports:
+        - name: http
+          containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-recovery"
+        volumeMounts:        
+      volumes:
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-bookie"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: bookie
+spec:
+  serviceName: "nuvolaris-milvus-pulsarv3-bookie"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulsarv3
+      release: nuvolaris-milvus
+      component: bookie
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: pulsarv3
+        release: nuvolaris-milvus
+        cluster: nuvolaris-milvus-pulsarv3
+        component: bookie
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      affinity:
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: nuvolaris-operator
+      securityContext:
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+        - name: "nuvolaris-milvus-pulsarv3-bookie-journal"
+          persistentVolumeClaim:
+            claimName: "nuvolaris-milvus-bookie-journal"
+        - name: "nuvolaris-milvus-pulsarv3-bookie-ledgers"
+          persistentVolumeClaim:
+            claimName: "nuvolaris-milvus-bookie-ledgers"        
+      initContainers:
+      # This initContainer will wait for bookkeeper initnewcluster to complete
+      # before deploying the bookies
+      - name: pulsar-bookkeeper-verify-clusterid
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+        # only reformat bookie if bookkeeper is running without persistence
+        - >          
+          set -e;
+          bin/apply-config-from-env.py conf/bookkeeper.conf;until bin/bookkeeper shell whatisinstanceid; do
+            sleep 3;
+          done;
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-bookie"                    
+      containers:
+      - name: "nuvolaris-milvus-pulsarv3-bookie"
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /api/v1/bookie/state
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /api/v1/bookie/is_ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 60
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2048Mi
+        command: ["sh", "-c"]
+        args:
+        - >
+          bin/apply-config-from-env.py conf/bookkeeper.conf;          
+          OPTS="${OPTS} -Dlog4j2.formatMsgNoLookups=true" exec bin/pulsar bookie;
+        ports:
+        - name: "bookie"
+          containerPort: 3181
+        - name: http
+          containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-bookie"
+        volumeMounts:
+        - name: "nuvolaris-milvus-pulsarv3-bookie-journal"
+          mountPath: /pulsar/data/bookkeeper/journal
+        - name: "nuvolaris-milvus-pulsarv3-bookie-ledgers"
+          mountPath: /pulsar/data/bookkeeper/ledgers        
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-broker"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: broker
+spec:
+  serviceName: "nuvolaris-milvus-pulsarv3-broker"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulsarv3
+      release: nuvolaris-milvus
+      component: broker
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: pulsarv3
+        release: nuvolaris-milvus
+        cluster: nuvolaris-milvus-pulsarv3
+        component: broker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      serviceAccountName: nuvolaris-operator
+      affinity:
+      terminationGracePeriodSeconds: 30
+      initContainers:
+      # This init container will wait for zookeeper to be ready before
+      # deploying the bookies
+      - name: wait-zookeeper-ready
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+          - >-
+            
+            export BOOKIE_MEM="-Xmx128M";
+            until bin/bookkeeper org.apache.zookeeper.ZooKeeperMain -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /admin/clusters/nuvolaris-milvus-pulsarv3; do
+              echo "pulsar cluster nuvolaris-milvus-pulsarv3 isn't initialized yet ... check in 3 seconds ..." && sleep 3;
+            done;
+        volumeMounts:
+        
+      # This init container will wait for bookkeeper to be ready before
+      # deploying the broker
+      - name: wait-bookkeeper-ready
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        env:
+          - name: BOOK_KEEPER_REPLICAS
+            value: "1"            
+        command: ["sh", "-c"]
+        args:
+          - >
+            
+            bin/apply-config-from-env.py conf/bookkeeper.conf;
+            export BOOKIE_MEM="-Xmx128M";
+            until bin/bookkeeper shell whatisinstanceid; do
+              echo "bookkeeper cluster is not initialized yet. backoff for 3 seconds ...";
+              sleep 3;
+            done;
+            echo "bookkeeper cluster is already initialized";
+            bookieServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-bookie | grep Name | wc -l)";
+            until [ ${bookieServiceNumber} -ge $BOOK_KEEPER_REPLICAS ]; do
+              echo "bookkeeper cluster nuvolaris-milvus-pulsarv3 isn't ready yet ... check in 10 seconds ...";
+              sleep 10;
+              bookieServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-bookie | grep Name | wc -l)";
+            done;
+            echo "bookkeeper cluster is ready";
+        envFrom:
+          - configMapRef:
+              name: "nuvolaris-milvus-pulsarv3-bookie"
+        volumeMounts:
+          
+      containers:
+      - name: "nuvolaris-milvus-pulsarv3-broker"
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /status.html
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /status.html
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2048Mi
+        command: ["sh", "-c"]
+        args:
+        - >
+          bin/apply-config-from-env.py conf/broker.conf;
+          bin/gen-yml-from-env.py conf/functions_worker.yml;
+          echo "OK" > status;
+          
+          bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080;
+          while [ $? -eq 0 ]; do
+            echo "broker ${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local znode still exists ... check in 10 seconds ...";
+            sleep 10;
+            bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080;
+          done;
+          cat conf/pulsar_env.sh;
+          OPTS="${OPTS} -Dlog4j2.formatMsgNoLookups=true" exec bin/pulsar broker;
+        ports:
+        # prometheus needs to access /metrics endpoint
+        - name: http
+          containerPort: 8080
+        - name: "pulsar"
+          containerPort: 6650
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-broker"
+        volumeMounts:          
+        env:
+      volumes:      
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "nuvolaris-milvus-pulsarv3-proxy"
+  namespace: nuvolaris
+  labels:
+    app: pulsarv3
+    release: nuvolaris-milvus
+    cluster: nuvolaris-milvus-pulsarv3
+    component: proxy
+spec:
+  serviceName: "nuvolaris-milvus-pulsarv3-proxy"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulsarv3
+      release: nuvolaris-milvus
+      component: proxy
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: pulsarv3
+        release: nuvolaris-milvus
+        cluster: nuvolaris-milvus-pulsarv3
+        component: proxy
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+    spec:
+      affinity:
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: nuvolaris-operator
+      initContainers:
+      # This init container will wait for zookeeper to be ready before
+      # deploying the bookies
+      - name: wait-zookeeper-ready
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        command: ["sh", "-c"]
+        args:
+          - >-
+            export PULSAR_MEM="-Xmx128M";
+            until bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper get /admin/clusters/nuvolaris-milvus-pulsarv3; do
+              sleep 3;
+            done;
+      # This init container will wait for at least one broker to be ready before
+      # deploying the proxy
+      - name: wait-broker-ready
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        resources: 
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        env:
+          - name: BROKER_REPLICAS
+            value: "1"            
+        command: ["sh", "-c"]
+        args:
+          - >-
+            set -e;
+            brokerServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-broker | grep Name | wc -l)";
+            until [ ${brokerServiceNumber} -ge $BROKER_REPLICAS ]; do
+              echo "pulsar cluster nuvolaris-milvus-pulsarv3 isn't initialized yet ... check in 10 seconds ...";
+              sleep 10;
+              brokerServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-broker | grep Name | wc -l)";
+            done;          
+      containers:
+      - name: "nuvolaris-milvus-pulsarv3-proxy"
+        image: "apachepulsar/pulsar:3.0.7"
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /status.html
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /status.html
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        command: ["sh", "-c"]
+        args:
+        - >
+          bin/apply-config-from-env.py conf/proxy.conf &&
+          echo "OK" > status &&
+          OPTS="${OPTS} -Dlog4j2.formatMsgNoLookups=true" exec bin/pulsar proxy
+        ports:
+        # prometheus needs to access /metrics endpoint
+        - name: sts-http
+          containerPort: 8080
+        - name: "sts-pulsar"
+          containerPort: 6650
+        envFrom:
+        - configMapRef:
+            name: "nuvolaris-milvus-pulsarv3-proxy"              

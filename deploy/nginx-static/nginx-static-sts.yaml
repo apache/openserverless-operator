@@ -36,7 +36,7 @@ spec:
       initContainers:
       - name: check-minio
         image: busybox:1.36.0
-        command: ['sh', '-c', "until nslookup minio.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for minio; sleep 2; done"]     
+        command: ['sh', '-c', "until nslookup nuvolaris-minio.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for minio; sleep 2; done"]     
       containers:
       - name: nuvolaris-static
         image: nginxinc/nginx-unprivileged:1.24

@@ -31,11 +31,11 @@ spec:
     # start kafka
     kafka: false
     # start mongodb
-    mongodb: true
+    mongodb: false
     # start redis
-    redis: true      
+    redis: false      
     # start cron based action parser
-    cron: true 
+    cron: false 
     # tls enabled or not
     tls: false
     # minio enabled or not
@@ -43,7 +43,11 @@ spec:
     # minio static enabled or not
     static: true
     # postgres enabled or not
-    postgres: true              
+    postgres: false 
+    # etcd enabled or not
+    etcd: true
+    # milvus enabled or not
+    milvus: true                      
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
@@ -56,6 +60,8 @@ spec:
     provisioner: auto #rancher.io/local-path
     ingressclass: auto #nginx
     ingresslb: auto #ingress-nginx/ingress-nginx-controller
+    affinity: true 
+    tolerations: true     
   couchdb:
     host: couchdb
     port: 5984
@@ -153,4 +159,20 @@ spec:
         from: alert@nuvolaris.io
         to: monitoring@nuvolaris.io
         username: usr
-        password: pwd                              
+        password: pwd
+  etcd:    
+    volume-size: 5
+    replicas: 1
+    root:      
+      password: 0therPa55
+  milvus:    
+    volume-size:
+      cluster: 20
+      zookeeper: 15
+      journal: 20
+      ledgers: 25
+    replicas: 1
+    password:
+      root: x£VqD7G6712o        
+      etcd: 97Vk2{qe8o>S
+      s3: 8_d$8zCrl7£m                                            

@@ -23,6 +23,8 @@ metadata:
 spec:
   nuvolaris:
     password: nuvpassw0rd
+    affinity: false 
+    tolerations: false    
   components:
     # start openwhisk controller
     openwhisk: true
@@ -43,7 +45,11 @@ spec:
     # minio enabled or not
     minio: true  
     # postgres enabled or not
-    postgres: true              
+    postgres: true
+    # etcd enabled or not
+    etcd: true
+    # milvus enabled or not
+    milvus: true                      
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
@@ -135,3 +141,8 @@ spec:
         to: monitoring@nuvolaris.io
         username: usr
         password: pwd      
+  etcd:    
+    volume-size: 5
+    replicas: 1
+    root:      
+      password: 0therPa55
