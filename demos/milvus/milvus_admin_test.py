@@ -29,24 +29,15 @@ os.environ['MILVUS_API_HOST']='localhost'
 os.environ['MILVUS_API_PORT']='19530'
 os.environ['MILVUS_ROOT_PASSWORD']='x£VqD7G6712o'
 
-client = MilvusAdminClient()
-client.setup_user("franz","Afrodite1972#123")
-client.setup_user("ciccillo","Afrodite1973#123")
-client.close_connection()
+#client = MilvusAdminClient()
+#client.setup_user("userA","Afrodite1972#123")
+#client.setup_user("userB","Afrodite1972#123")
 
-#milvus = MilvusClient(uri="http://localhost:19530",token="root:x£VqD7G6712o")
-#print(milvus.grant_privilege(role_name="ciccillo_role",object_type='Global',  object_name='*', privilege='CreateCollection'))
-#print(milvus.grant_privilege(role_name="franz_role",object_type='Global',  object_name='*', privilege='CreateCollection'))
-#print(milvus.grant_role(user_name="franz",role_name="franz_role"))
-#print(milvus.describe_role(role_name="franz_role"))
-#print(milvus.describe_user("franz"))
-#milvus.close()
+client3 = MilvusClient(uri="http://localhost:19530",token="nuvolaris:Nuv0therPa55",db_name="nuvolaris")
+print(client3.create_collection(collection_name="userA_collection", dimension=100))
+print(client3.list_collections())
 
-#fttclient = MilvusClient(uri="http://localhost:19530",token="franz:Afrodite1972#123")
-#print(fttclient.create_collection(collection_name="franz_collection", dimension=100))
-#fttclient.close()
-
-#cclient = MilvusClient(uri="http://localhost:19530",token="ciccillo:Afrodite1973#123")
-#print(cclient.create_collection(collection_name="cc_collection",dimension=100))
-#print(cclient.list_collections())
-
+client3 = MilvusClient(uri="http://localhost:19530",token="franztt:milvusPwd",db_name="franztt")
+print(client3.create_collection(collection_name="fttA_collection", dimension=100))
+print(client3.create_collection(collection_name="fttB_collection", dimension=100))
+print(client3.list_collections())

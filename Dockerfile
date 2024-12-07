@@ -16,6 +16,7 @@
 # under the License.
 #
 FROM ubuntu:22.04
+
 ENV CONTROLLER_IMAGE=ghcr.io/nuvolaris/openwhisk-controller
 ENV CONTROLLER_TAG=3.1.0-mastrogpt.2402101445
 ENV INVOKER_IMAGE=ghcr.io/nuvolaris/openwhisk-invoker
@@ -31,7 +32,8 @@ ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # install Python
 RUN apt-get update && apt-get -y upgrade &&\
-    apt-get -y install apt-utils python3.10 python3.10-venv curl sudo telnet inetutils-ping zip unzip
+    apt-get -y install python3.10 python3.10-venv curl sudo telnet inetutils-ping zip unzip
+
 # Download Kubectl
 RUN KVER="v1.23.0" ;\
     ARCH="$(dpkg --print-architecture)" ;\
@@ -127,4 +129,4 @@ USER nuvolaris
 ENV HOME=/home/nuvolaris
 RUN ./whisk-system.sh
 RUN cd deploy && tar cvf ../deploy.tar *
-CMD ./run.sh
+CMD ["./run.sh"]

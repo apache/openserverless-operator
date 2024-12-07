@@ -71,11 +71,11 @@ def whisk_post_create(name):
     update_nuvolaris_metadata()
     annotate_operator_components_version()
     if system.deploy_whisk_system_action():
-        openwhisk.annotate(f"system_action_status=created")
+        openwhisk.annotate("system_action_status=created")
         return True
     
-    openwhisk.annotate(f"system_action_status=failed")
-    return False;    
+    openwhisk.annotate("system_action_status=failed")
+    return False
 
 def whisk_post_resume(name):
     """    

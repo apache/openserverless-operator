@@ -49,3 +49,7 @@ spec:
     database: franztt
     password: urghgdghhggkjdgksdjh
     quota: "100"
+  milvus:
+    enabled: true
+    database: franztt
+    password: milvusPwd    
