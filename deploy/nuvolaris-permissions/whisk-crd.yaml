@@ -738,6 +738,9 @@ spec:
                       description: MILVUS related user passwords
                       type: object
                       properties:
+                        root:
+                          description: milvus root password
+                          type: string
                         etcd:
                           description: ETCD milvus user password
                           type: string
@@ -745,8 +748,18 @@ spec:
                           description: MINIO/S3 milvus user password
                           type: string                          
                       required:
-                      - etcd
-                      - s3                      
+                      - root
+                      - s3
+                    nuvolaris:
+                      description: MILVUS default user setup
+                      type: object
+                      properties:
+                        password:
+                          description: nuvolaris MILVUS password
+                          type: string
+                        collection:
+                          description: nuvolaris MILVUS collection (default to nuvolaris)
+                          type: string                        
             status:
               x-kubernetes-preserve-unknown-fields: true
               # type: object

@@ -120,26 +120,26 @@ tasks:
     echo "*** $APIHOST ***"
     AUTH=$(kubectl -n nuvolaris get wsk/controller -o jsonpath='{.spec.openwhisk.namespaces.nuvolaris}')
     echo $AUTH
-    echo wsk property set --apihost $APIHOST --auth $AUTH
-    wsk property set --apihost $APIHOST --auth $AUTH
-    while ! wsk action list
+    echo ops -wsk property set --apihost $APIHOST --auth $AUTH
+    ops -wsk property set --apihost $APIHOST --auth $AUTH
+    while ! ops action list
     do echo $(( N++)) "waiting for the load balancer to be ready..." ; sleep 10
     done
   
   hello:
-    - wsk -i action update hello tests/hello.js --web=true
-    - wsk -i action invoke hello -r | grep "hello"
+    - ops -wsk -i action update hello tests/hello.js --web=true
+    - ops -wsk -i action invoke hello -r | grep "hello"
     - |
-      URL=$(wsk -i action get hello --url | tail +2)
+      URL=$(ops -wsk -i action get hello --url | tail +2)
       curl -skL $URL | grep hello
 
   redis:
     cmds:
-      - wsk -i package update redis -p redis_url "{{.REDIS_NUV_URL}}" -p redis_prefix "{{.REDIS_NUV_PREFIX}}" -p password "{{.REDIS_PASSWORD}}"
-      - wsk -i action update redis/ping tests/ping.js   
-      - wsk -i action invoke redis/ping -r | grep "PONG"      
-      - wsk -i action update redis/redis tests/redis.js
-      - wsk -i action invoke redis/redis -r | grep "world"
+      - ops -wsk -i package update redis -p redis_url "{{.REDIS_NUV_URL}}" -p redis_prefix "{{.REDIS_NUV_PREFIX}}" -p password "{{.REDIS_PASSWORD}}"
+      - ops -wsk -i action update redis/ping tests/ping.js   
+      - ops -wsk -i action invoke redis/ping -r | grep "PONG"      
+      - ops -wsk -i action update redis/redis tests/redis.js
+      - ops -wsk -i action invoke redis/redis -r | grep "world"
     vars:
         REDIS_NUV_PREFIX:
           sh:  kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.redis_prefix}'
@@ -147,35 +147,35 @@ tasks:
           sh:  kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.redis_url}'
 
   echo:
-    - wsk -i action update echo tests/echo.js -a provide-api-key true
-    - wsk -i action invoke echo -r | grep "__OW_API_KEY"
-    - wsk -i action invoke echo -r | grep "__OW_API_HOST"
+    - ops -wsk -i action update echo tests/echo.js -a provide-api-key true
+    - ops -wsk -i action invoke echo -r | grep "__OW_API_KEY"
+    - ops -wsk -i action invoke echo -r | grep "__OW_API_HOST"
 
   api:
-    - wsk -i action update api tests/api.js -a provide-api-key true
-    - wsk -i action invoke api -r | grep '"api"'
+    - ops -wsk -i action update api tests/api.js -a provide-api-key true
+    - ops -wsk -i action invoke api -r | grep '"api"'
 
   mongo:
     - | 
        MONGODB_URL=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.mongodb_url}') 
        wsk -i package update mongo -p dburi "$MONGODB_URL"
-    - wsk -i action update mongo/mongo tests/mongo.js
-    - wsk -i action invoke mongo/mongo -r | grep "hello"
+    - ops -wsk -i action update mongo/mongo tests/mongo.js
+    - ops -wsk -i action invoke mongo/mongo -r | grep "hello"
 
   minio:
-    - wsk -i package update minio -p minio_host {{.MINIO_HOST}} -p minio_port {{.MINIO_PORT}} -p minio_user {{.MINIO_USER}} -p minio_pwd {{.MINIO_PWD}}
-    - wsk -i action update minio/minio tests/minio.js
-    - wsk -i action invoke minio/minio -r
+    - ops -wsk -i package update minio -p minio_host {{.MINIO_HOST}} -p minio_port {{.MINIO_PORT}} -p minio_user {{.MINIO_USER}} -p minio_pwd {{.MINIO_PWD}}
+    - ops -wsk -i action update minio/minio tests/minio.js
+    - ops -wsk -i action invoke minio/minio -r
     
   mongo2:
-    - wsk -i project deploy --manifest tests/mongo.yaml
+    - ops -wsk -i project deploy --manifest tests/mongo.yaml
 
   postgres:
     - |
       PG_URL=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.postgres_url}')
-      wsk -i package update postgres -p dburi "$PG_URL"
-    - wsk -i action update postgres/postgres tests/postgres.js
-    - wsk -i action invoke postgres/postgres -r | grep "Nuvolaris Postgres is up and running!"
+      ops -wsk -i package update postgres -p dburi "$PG_URL"
+    - ops -wsk -i action update postgres/postgres tests/postgres.js
+    - ops -wsk -i action invoke postgres/postgres -r | grep "Nuvolaris Postgres is up and running!"
 
   minio2:
     silent: true
@@ -188,10 +188,10 @@ tasks:
       MINIO_PORT=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.s3_port}')
       MINIO_BUCKET_DATA=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.s3_bucket_data}')
       MINIO_BUCKET_WEB=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.s3_bucket_static}')
-      wsk -i action update minio/minio-nuv tests/minio-nuv.js \
+      ops -wsk -i action update minio/minio-nuv tests/minio-nuv.js \
       -p minio_access "$MINIO_ACCESS_KEY" \
       -p minio_secret "$MINIO_SECRET_KEY" \
       -p minio_host "$MINIO_HOST" \
       -p minio_port "$MINIO_PORT" \
       -p minio_data "$MINIO_BUCKET_DATA" 
-    - wsk -i action invoke minio/minio-nuv -r        
+    - ops -wsk -i action invoke minio/minio-nuv -r        

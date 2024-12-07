@@ -191,6 +191,7 @@ spec:
       journal: 20
       ledgers: 25
     replicas: 1
-    password:      
+    password:
+      root: x£VqD7G6712o        
       etcd: 97Vk2{qe8o>S
       s3: 8_d$8zCrl7£m      
