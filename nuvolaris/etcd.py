@@ -137,7 +137,7 @@ def delete_by_spec():
     if spec:
         res = kube.delete(spec)
         logging.info(f"delete etcd: {res}")
-    return res
+        return res
 
 def delete(owner=None):
     if owner:        
