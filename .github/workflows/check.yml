@@ -46,7 +46,6 @@ jobs:
           submodules: recursive
       - name: License   
         uses: apache/skywalking-eyes@main
-        continue-on-error: true
       - name: Assign TAG from pull request
         if:  ${{ github.event_name == 'pull_request' }}
         run: |
