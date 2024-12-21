@@ -30,18 +30,16 @@ These features are exclusively provided by this enterprise version:
 - Kafka deployment including the corresponding Zookeeper
 - Openwhisk Invoker fully integrated with Zookeeper and Kafka
 - Openwhisk Controller fully integrated with Kafka
-- Possibility to deploy Openshisk Controller in lean mode
+- Possibility to deploy Openwhisk Controller in lean mode
 
 ## Publishing the operator
+
 Once the operator is ready, you can build and test it a against a kubernetes cluster.
 First, generate a new image tag with `task image-tag`.
-You can test locally using the kind cluster (provided by default by the development environment) with  `ent:build-and-load`. 
-
+You can test locally using the kind cluster (provided by default by the development environment) with `ent:build-and-load`.
 
 To test it against other clusters, you need to publish it to the nuvolaris private repository on docker.hub
-
 To do this, add to your `.env` the following variables:
-
 
 ```
 MY_CONTROLLER_IMAGE=<your-user>/<your-name>
