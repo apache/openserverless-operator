@@ -34,9 +34,9 @@ These features are exclusively provided by this enterprise version:
 
 ## Publishing the operator
 
-Once the operator is ready, you can build and test it a against a kubernetes cluster.
+Once the operator is ready, you can build and test it against a kubernetes cluster.
 First, generate a new image tag with `task image-tag`.
-You can test locally using the kind cluster (provided by default by the development environment) with `ent:build-and-load`.
+You can test locally using the kind cluster (provided by default by the development environment) with `build-and-load`.
 
 To test it against other clusters, you need to publish it to the nuvolaris private repository on docker.hub
 To do this, add to your `.env` the following variables:
@@ -47,17 +47,20 @@ DOCKER_HUB_USER=<docker.hub user>
 DOCKER_HUB_TOKEN=<docker hub token>
 ```
 
-To override the tag of the operator you have to generate a git tag: `task image-tag`. Note the tag is unique for the current hour (it embeds: YYMMDDhh).
+To override the tag of the operator you have to generate a git tag: `task image-tag`. Note the tag is unique for the 
+current hour (it embeds: YYMMDDhh).
 
 If you set those variables you can use 
-- `task ent:docker-login` to log to the current docker.hub registry
-- `task ent:build-and-push` to build for one single architecture (faster but limited to your architecture)
-- `task ent:buildx-and-push` to build for all the architectues (slower, used by the GitHub action)
-- `task ent:docker-hub-authorize` to upload to the current kubernetes runtime a secret to give the possibility to download the operator enterprise image
+- `task docker-login` to log to the current docker.hub registry
+- `task build-and-push` to build for one single architecture (faster but limited to your architecture)
+- `task buildx-and-push` to build for all the architectures (slower, used by the GitHub action)
+- `task docker-hub-authorize` to upload to the current kubernetes runtime a secret to give the possibility to download 
+   the operator enterprise image
 
 ## Customization notes
 
-Nuvolaris operators it is normally deploy using a `whisk.yaml` configuration file which is applied via the installer. Typically the customization file contains something like
+Nuvolaris operators it is normally deploy using a `whisk.yaml` configuration file which is applied via the installer. 
+Typically, the customization file contains something like:
 
 ```
 apiVersion: nuvolaris.org/v1
@@ -148,7 +151,8 @@ spec:
 ```
 
 ## Default configs values
-If the provided `whisk.yaml` does not specify any dynamic configuration parameteres under `configs` item, the Enterprise operators defaults to these values:
+If the provided `whisk.yaml` does not specify any dynamic configuration parameters under `configs` item, the Enterprise 
+operators defaults to these values:
 
 - `configs.limit.actions.sequence-maxLength=50`
 - `configs.limit.actions.invokes-perMinute=60`
@@ -168,7 +172,9 @@ If the provided `whisk.yaml` does not specify any dynamic configuration paramete
 
 ## Openwhisk Enterprise hot deployment
 
-The enterprise operator supports hot deployment for both Openwhisk Controller & Invoker, i.e it is possible to modify some specific part of the configuration inside the `whisk.yaml` file and apply it again. The operator will automatically stop and redeploy controller & invoker to take into account the new settings.
+The enterprise operator supports hot deployment for both Openwhisk Controller & Invoker, i.e. it is possible to modify 
+some specific part of the configuration inside the `whisk.yaml` file and apply it again. The operator will automatically 
+stop and redeploy controller & invoker to take into account the new settings.
 
 ```
   configs:    
@@ -197,11 +203,14 @@ The enterprise operator supports hot deployment for both Openwhisk Controller & 
         userMemory: "4096m"       
 ```
 
-As an example, using the above configuration and taking into account the standard 256m memory size limit per action, gives the possibility to execute around 16 action concurrently [`As a general rule consider it as the result of controller.javaOpts/256m`]. To increase the number of estimated action that can be executed modify for example `controller.javaOpts:"-Xmx8192M"` and redeploy the modified `whisk.yaml`.
+As an example, using the above configuration and taking into account the standard 256m memory size limit per action, 
+gives the possibility to execute around 16 action concurrently 
+[`As a general rule consider it as the result of controller.javaOpts/256m`]. To increase the number of estimated action 
+that can be executed modify for example `controller.javaOpts:"-Xmx8192M"` and redeploy the modified `whisk.yaml`.
 
-To apply the new customization execute
+To apply the new customization execute:
 
-```
+```shell
 kubectl -n nuvolaris apply -f whisk.yaml
 ```
 
