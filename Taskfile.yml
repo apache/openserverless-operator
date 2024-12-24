@@ -331,7 +331,7 @@ tasks:
   docker-login:
     - task: b:docker-login
 
-  # openserverless-operator sction
+  # openserverless-operator section
   tag: 
     silent: true
     desc: generate a new tag based on the current time 
