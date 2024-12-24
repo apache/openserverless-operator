@@ -27,7 +27,7 @@ on:
 jobs:
   image:
     name: Build OpenServerless Operator Image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Remove unnecessary files
         run: |
