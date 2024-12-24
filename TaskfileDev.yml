@@ -57,9 +57,9 @@ tasks:
       CONTROLLER_TAG: "{{.CONTROLLER_TAG}}"
       OPERATOR_TAG: "{{.OPERATOR_TAG}}"
 
-  run: 
-    cmds:     
-      # note that the .env is loaded after the env pameters
+  run:
+    cmds:
+      # note that the .env is loaded after the env parameters
       - env OPERATOR_IMAGE="${MY_OPERATOR_IMAGE:-{{.OPERATOR_IMAGE}}}" ./run.sh
     env:
       CONTROLLER_IMAGE: "{{.CONTROLLER_IMAGE}}"
