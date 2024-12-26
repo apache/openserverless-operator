@@ -19,18 +19,7 @@
 -->
 # Apache OpenServerless Operator
 
-This is the Enterprise Kubernetes Operator of the [bit.ly/nuvolaris](nuvolaris project).
-
-## Developer notes
-
-We try to keep the enterprise version as closed as possible with the standalone version from the [bit.ly/nuvolaris](nuvolaris project).
-
-These features are exclusively provided by this enterprise version:
-
-- Kafka deployment including the corresponding Zookeeper
-- Openwhisk Invoker fully integrated with Zookeeper and Kafka
-- Openwhisk Controller fully integrated with Kafka
-- Possibility to deploy Openwhisk Controller in lean mode
+This is the Kubernetes Operator of the [Apache OpenServerless (incubating) project](https://openserverless.apache.org).
 
 ## Publishing the operator
 
@@ -38,7 +27,9 @@ Once the operator is ready, you can build and test it against a kubernetes clust
 First, generate a new image tag with `task image-tag`.
 You can test locally using the kind cluster (provided by default by the development environment) with `build-and-load`.
 
-To test it against other clusters, you need to publish it to the nuvolaris private repository on docker.hub
+To test it against other clusters, you need to publish it to the Apache OpenServerless private repository on 
+[Docker Hub](https://hub.docker.com/r/apache/openserverless-operator).
+
 To do this, add to your `.env` the following variables:
 
 ```
@@ -59,7 +50,7 @@ If you set those variables you can use
 
 ## Customization notes
 
-Nuvolaris operators it is normally deploy using a `whisk.yaml` configuration file which is applied via the installer. 
+OpenServerless operator is normally deployed using a `whisk.yaml` configuration file which is applied via the installer. 
 Typically, the customization file contains something like:
 
 ```
