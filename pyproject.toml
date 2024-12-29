@@ -22,7 +22,7 @@ description = "Apache OpenServerless operator"
 authors = ["Michele Sciabarra <michele@sciabarra.com>","Francesco Timperi Tiberi <francesco@nuvolaris.io>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.12"
 kopf = {extras = ["full-auth"], version = "^1.36.1"}
 PyYAML = "^6.0"
 pykube = "^0.15.0"

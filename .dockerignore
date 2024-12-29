@@ -1,0 +1,12 @@
+.idea
+.vscode
+.env.dist
+.env.sample
+.github
+.git
+__pycache__
+.pytest_cache
+tests/
+.venv
+deploy/*/kustomization.yaml
+deploy/*/__*.yaml

@@ -19,13 +19,8 @@
 !kubectl -n nuvolaris delete pvc --all
 
 import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
-import nuvolaris.kube as kube
 import nuvolaris.monitoring as monitoring
-import nuvolaris.couchdb as cdb
-import nuvolaris.couchdb_util as cdbu
-import nuvolaris.util as util
-import logging
+import nuvolaris.testutil as tu
 
 # test
 assert(cfg.configure(tu.load_sample_config("whisk-full")))
