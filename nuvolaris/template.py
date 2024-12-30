@@ -67,9 +67,9 @@ def process_tpl_line(line):
     >>> line = "  - item #- {{item}}"
     >>> print(process_tpl_line(line))
       - {{item}}
-    >>> line = "#\! with #\~, #\: and #\- but not #\@" 
+    >>> line = "#\\! with #\\~, #\\: and #\\- but not #\\@"
     >>> print(process_tpl_line(line))
-    #! with #~, #: and #- but not #\@
+    #! with #~, #: and #- but not #\\@
     """
     if re.search(r"#~", line):
         return ""
