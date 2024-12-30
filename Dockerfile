@@ -15,118 +15,144 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-FROM ubuntu:22.04
+#------------------------------------------------------------------------------
+# Sources
+FROM python:3.12-slim-bullseye AS sources
 
+RUN groupadd --gid 1001 nuvolaris && \
+    useradd -m nuvolaris -s /bin/bash --uid 1001 --gid 1001 --groups root
+
+USER nuvolaris
+WORKDIR /home/nuvolaris
+# install the operator
+ADD --chown=nuvolaris:nuvolaris nuvolaris/*.py /home/nuvolaris/nuvolaris/
+ADD --chown=nuvolaris:nuvolaris nuvolaris/files /home/nuvolaris/nuvolaris/files
+ADD --chown=nuvolaris:nuvolaris nuvolaris/templates /home/nuvolaris/nuvolaris/templates
+ADD --chown=nuvolaris:nuvolaris nuvolaris/policies /home/nuvolaris/nuvolaris/policies
+ADD --chown=nuvolaris:nuvolaris deploy/nuvolaris-operator /home/nuvolaris/deploy/nuvolaris-operator
+ADD --chown=nuvolaris:nuvolaris deploy/nuvolaris-permissions /home/nuvolaris/deploy/nuvolaris-permissions
+ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-standalone /home/nuvolaris/deploy/openwhisk-standalone
+ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-endpoint /home/nuvolaris/deploy/openwhisk-endpoint
+ADD --chown=nuvolaris:nuvolaris deploy/couchdb /home/nuvolaris/deploy/couchdb
+ADD --chown=nuvolaris:nuvolaris deploy/redis /home/nuvolaris/deploy/redis
+ADD --chown=nuvolaris:nuvolaris deploy/scheduler /home/nuvolaris/deploy/scheduler
+ADD --chown=nuvolaris:nuvolaris deploy/mongodb-operator /home/nuvolaris/deploy/mongodb-operator
+ADD --chown=nuvolaris:nuvolaris deploy/mongodb-operator-deploy /home/nuvolaris/deploy/mongodb-operator-deploy
+ADD --chown=nuvolaris:nuvolaris deploy/mongodb-standalone /home/nuvolaris/deploy/mongodb-standalone
+ADD --chown=nuvolaris:nuvolaris deploy/cert-manager /home/nuvolaris/deploy/cert-manager
+ADD --chown=nuvolaris:nuvolaris deploy/ingress-nginx /home/nuvolaris/deploy/ingress-nginx
+ADD --chown=nuvolaris:nuvolaris deploy/issuer /home/nuvolaris/deploy/issuer
+ADD --chown=nuvolaris:nuvolaris deploy/minio /home/nuvolaris/deploy/minio
+ADD --chown=nuvolaris:nuvolaris deploy/kafka /home/nuvolaris/deploy/kafka
+ADD --chown=nuvolaris:nuvolaris deploy/zookeeper /home/nuvolaris/deploy/zookeeper
+ADD --chown=nuvolaris:nuvolaris deploy/nginx-static /home/nuvolaris/deploy/nginx-static
+ADD --chown=nuvolaris:nuvolaris deploy/content /home/nuvolaris/deploy/content
+ADD --chown=nuvolaris:nuvolaris deploy/postgres-operator /home/nuvolaris/deploy/postgres-operator
+ADD --chown=nuvolaris:nuvolaris deploy/postgres-operator-deploy /home/nuvolaris/deploy/postgres-operator-deploy
+ADD --chown=nuvolaris:nuvolaris deploy/ferretdb /home/nuvolaris/deploy/ferretdb
+ADD --chown=nuvolaris:nuvolaris deploy/runtimes /home/nuvolaris/deploy/runtimes
+ADD --chown=nuvolaris:nuvolaris deploy/postgres-backup /home/nuvolaris/deploy/postgres-backup
+ADD --chown=nuvolaris:nuvolaris run.sh dbinit.sh cron.sh pyproject.toml poetry.lock whisk-system.sh /home/nuvolaris/
+
+# prepares the required folders to deploy the whisk-system actions
+RUN mkdir /home/nuvolaris/deploy/whisk-system
+ADD --chown=nuvolaris:nuvolaris actions /home/nuvolaris/actions
+
+# enterprise specific
+ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-enterprise /home/nuvolaris/deploy/openwhisk-enterprise
+ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-invoker /home/nuvolaris/deploy/openwhisk-invoker
+ADD --chown=nuvolaris:nuvolaris deploy/monitoring /home/nuvolaris/deploy/monitoring
+ADD --chown=nuvolaris:nuvolaris deploy/alert-manager /home/nuvolaris/deploy/alert-manager
+ADD --chown=nuvolaris:nuvolaris deploy/quota /home/nuvolaris/deploy/quota
+ADD --chown=nuvolaris:nuvolaris deploy/kvrocks /home/nuvolaris/deploy/kvrocks
+ADD --chown=nuvolaris:nuvolaris deploy/etcd /home/nuvolaris/deploy/etcd
+ADD --chown=nuvolaris:nuvolaris deploy/milvus-operator /home/nuvolaris/deploy/milvus-operator
+ADD --chown=nuvolaris:nuvolaris deploy/milvus /home/nuvolaris/deploy/milvus
+ADD --chown=nuvolaris:nuvolaris quota.sh /home/nuvolaris/
+
+#------------------------------------------------------------------------------
+# Python dependencies
+FROM python:3.12-slim-bullseye AS deps
+
+# --- Install Poetry ---
+ARG POETRY_VERSION=1.8.5
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_NO_INTERACTION=1
+ENV POETRY_VIRTUALENVS_IN_PROJECT=1
+ENV POETRY_VIRTUALENVS_CREATE=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV POETRY_CACHE_DIR=/opt/.cache
+ENV PATH=${POETRY_HOME}/bin:$PATH
+
+WORKDIR /home/nuvolaris
+COPY --chown=nuvolaris:nuvolaris pyproject.toml poetry.lock /home/nuvolaris/
+RUN echo "Installing poetry" && \
+    # Install minimal dependencies
+    echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    curl gnupg zip unzip && \
+    curl -sSL https://install.python-poetry.org | python - && \
+    cd /home/nuvolaris && poetry install --no-root --no-dev --no-interaction --no-ansi && rm -rf $POETRY_CACHE_DIR
+
+#------------------------------------------------------------------------------
+# Final stage
+FROM python:3.12-slim-bullseye
+
+ARG OPERATOR_IMAGE_DEFAULT=registry.hub.docker.com/apache/openserverless-operator
+ARG OPERATOR_TAG_DEFAULT=0.1.0-testing.2309191654
 ENV CONTROLLER_IMAGE=ghcr.io/nuvolaris/openwhisk-controller
 ENV CONTROLLER_TAG=3.1.0-mastrogpt.2402101445
 ENV INVOKER_IMAGE=ghcr.io/nuvolaris/openwhisk-invoker
 ENV INVOKER_TAG=3.1.0-mastrogpt.2402101445
-ARG OPERATOR_IMAGE_DEFAULT=registry.hub.docker.com/apache/openserverless-operator
-ARG OPERATOR_TAG_DEFAULT=0.1.0-testing.2309191654
 ENV OPERATOR_IMAGE=${OPERATOR_IMAGE_DEFAULT}
 ENV OPERATOR_TAG=${OPERATOR_TAG_DEFAULT}
-
-# configure dpkg && timezone
-RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 ENV TZ=Europe/London
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-# install Python
-RUN apt-get update && apt-get -y upgrade &&\
-    apt-get -y install python3.10 python3.10-venv curl sudo telnet inetutils-ping zip unzip
-
-# Download Kubectl
-RUN KVER="v1.23.0" ;\
-    ARCH="$(dpkg --print-architecture)" ;\
-    KURL="https://dl.k8s.io/release/$KVER/bin/linux/$ARCH/kubectl" ;\
-    curl -sL $KURL -o /usr/bin/kubectl && chmod +x /usr/bin/kubectl
-RUN VER="v4.5.7" ;\
-    ARCH="$(dpkg --print-architecture)" ;\
-    URL="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$VER/kustomize_${VER}_linux_${ARCH}.tar.gz" ;\
-    curl -sL "$URL" | tar xzvf - -C /usr/bin
-# Download WSK
-RUN WSK_VERSION=1.2.0 ;\
-    WSK_BASE=https://github.com/apache/openwhisk-cli/releases/download ;\
-    ARCH=$(dpkg --print-architecture) ;\
-    WSK_URL="$WSK_BASE/$WSK_VERSION/OpenWhisk_CLI-$WSK_VERSION-linux-$ARCH.tgz" ;\
-    curl -sL "$WSK_URL" | tar xzvf - -C /usr/bin/
-# Download MINIO client
-RUN rm -Rvf /tmp/minio-binaries ;\
-    mkdir /tmp/minio-binaries ;\
-    MINIO_BASE=https://dl.min.io/client/mc/release/linux ;\
-    ARCH=$(dpkg --print-architecture) ;\
-    MC_VER=RELEASE.2023-03-23T20-03-04Z ;\
-    MINIO_URL="$MINIO_BASE-$ARCH/archive/mc.${MC_VER}" ;\
-    curl -sL "$MINIO_URL" --create-dirs -o /tmp/minio-binaries/mc ;\
-    chmod +x /tmp/minio-binaries/mc ;\
-    mv /tmp/minio-binaries/mc /usr/bin/mc ;\
-    rm -Rvf /tmp/minio-binaries
-# Download and instal task
-RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/bin
-# add nuvolaris user
-RUN groupadd --gid 1001 nuvolaris
-RUN useradd -m nuvolaris -s /bin/bash --uid 1001 --gid 1001 --groups root
-RUN echo "nuvolaris ALL=(ALL:ALL) NOPASSWD: ALL" >>/etc/sudoers
-
-#RUN useradd -m -s /bin/bash -g root -N nuvolaris && \
-#    echo "nuvolaris ALL=(ALL:ALL) NOPASSWD: ALL" >>/etc/sudoers
-
-WORKDIR /home/nuvolaris
-# install the operator
-ADD nuvolaris/*.py /home/nuvolaris/nuvolaris/
-ADD nuvolaris/files /home/nuvolaris/nuvolaris/files
-ADD nuvolaris/templates /home/nuvolaris/nuvolaris/templates
-ADD nuvolaris/policies /home/nuvolaris/nuvolaris/policies
-ADD deploy/nuvolaris-operator /home/nuvolaris/deploy/nuvolaris-operator
-ADD deploy/nuvolaris-permissions /home/nuvolaris/deploy/nuvolaris-permissions
-ADD deploy/openwhisk-standalone /home/nuvolaris/deploy/openwhisk-standalone
-ADD deploy/openwhisk-endpoint /home/nuvolaris/deploy/openwhisk-endpoint
-ADD deploy/couchdb /home/nuvolaris/deploy/couchdb
-ADD deploy/redis /home/nuvolaris/deploy/redis
-ADD deploy/scheduler /home/nuvolaris/deploy/scheduler
-ADD deploy/mongodb-operator /home/nuvolaris/deploy/mongodb-operator
-ADD deploy/mongodb-operator-deploy /home/nuvolaris/deploy/mongodb-operator-deploy
-ADD deploy/mongodb-standalone /home/nuvolaris/deploy/mongodb-standalone
-ADD deploy/cert-manager /home/nuvolaris/deploy/cert-manager
-ADD deploy/ingress-nginx /home/nuvolaris/deploy/ingress-nginx
-ADD deploy/issuer /home/nuvolaris/deploy/issuer
-ADD deploy/minio /home/nuvolaris/deploy/minio
-ADD deploy/kafka /home/nuvolaris/deploy/kafka
-ADD deploy/zookeeper /home/nuvolaris/deploy/zookeeper
-ADD deploy/nginx-static /home/nuvolaris/deploy/nginx-static
-ADD deploy/content /home/nuvolaris/deploy/content
-ADD deploy/postgres-operator /home/nuvolaris/deploy/postgres-operator
-ADD deploy/postgres-operator-deploy /home/nuvolaris/deploy/postgres-operator-deploy
-ADD deploy/ferretdb /home/nuvolaris/deploy/ferretdb
-ADD deploy/runtimes /home/nuvolaris/deploy/runtimes
-ADD deploy/postgres-backup /home/nuvolaris/deploy/postgres-backup
-ADD run.sh dbinit.sh cron.sh pyproject.toml poetry.lock whisk-system.sh /home/nuvolaris/
-
-# prepares the required folders to deploy the whisk-system actions
-RUN mkdir /home/nuvolaris/deploy/whisk-system
-ADD actions /home/nuvolaris/actions
-
-# enterprise specific 
-ADD deploy/openwhisk-enterprise /home/nuvolaris/deploy/openwhisk-enterprise
-ADD deploy/openwhisk-invoker /home/nuvolaris/deploy/openwhisk-invoker
-ADD deploy/monitoring /home/nuvolaris/deploy/monitoring
-ADD deploy/alert-manager /home/nuvolaris/deploy/alert-manager
-ADD deploy/quota /home/nuvolaris/deploy/quota
-ADD deploy/kvrocks /home/nuvolaris/deploy/kvrocks
-ADD deploy/etcd /home/nuvolaris/deploy/etcd
-ADD deploy/milvus-operator /home/nuvolaris/deploy/milvus-operator
-ADD deploy/milvus /home/nuvolaris/deploy/milvus
-ADD quota.sh /home/nuvolaris/
-
-USER nuvolaris
-ENV PATH=/home/nuvolaris/.local/bin:/usr/local/bin:/usr/bin:/sbin:/bin
-RUN curl -sSL https://install.python-poetry.org | python3.10 -
-RUN poetry install
-USER root
-RUN chown -R nuvolaris /home/nuvolaris ;\
-    chgrp -R root /home/nuvolaris ;\
-    chmod -R 0775 /home/nuvolaris
-USER nuvolaris
 ENV HOME=/home/nuvolaris
-RUN ./whisk-system.sh
-RUN cd deploy && tar cvf ../deploy.tar *
+ENV VIRTUAL_ENV=/home/nuvolaris/.venv
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_CACHE_DIR=/opt/.cache
+ENV PATH=$POETRY_HOME/bin:$HOME/.venv/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/sbin:/bin:/usr/sbin/
+# configure dpkg && timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    # add nuvolaris user
+    groupadd --gid 1001 nuvolaris && \
+    useradd -m nuvolaris -s /bin/bash --uid 1001 --gid 1001 --groups root && \
+    echo "nuvolaris ALL=(ALL:ALL) NOPASSWD: ALL" >>/etc/sudoers && \
+    # Install minimal dependencies
+    echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    curl gnupg zip unzip && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    # install kubectl
+    KVER="v1.23.0" && \
+    ARCH="$(dpkg --print-architecture)" && \
+    curl -sL "https://dl.k8s.io/release/$KVER/bin/linux/$ARCH/kubectl" -o /usr/bin/kubectl && chmod +x /usr/bin/kubectl && \
+    VER="v4.5.7" && \
+    curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$VER/kustomize_${VER}_linux_${ARCH}.tar.gz" | tar xzvf - -C /usr/bin && \
+    # openwhisk cli
+    WSK_VERSION=1.2.0 && \
+    WSK_BASE=https://github.com/apache/openwhisk-cli/releases/download && \
+    curl -sL "$WSK_BASE/$WSK_VERSION/OpenWhisk_CLI-$WSK_VERSION-linux-$ARCH.tgz" | tar xzvf - -C /usr/bin/ && \
+    # install minio
+    MINIO_BASE=https://dl.min.io/client/mc/release/linux && \
+    MC_VER=RELEASE.2023-03-23T20-03-04Z && \
+    curl -sL "$MINIO_BASE-$ARCH/archive/mc.${MC_VER}" -o /usr/bin/mc && chmod +x /usr/bin/mc && \
+    # install taskfile
+    curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/bin
+
+USER nuvolaris
+WORKDIR /home/nuvolaris
+# Copy virtualenv
+COPY --from=deps --chown=nuvolaris:nuvolaris ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+# Copy poetry
+COPY --from=deps --chown=nuvolaris:nuvolaris ${POETRY_HOME} ${POETRY_HOME}
+# Copy the home
+COPY --from=sources --chown=nuvolaris:nuvolaris ${HOME} ${HOME}
+RUN poetry install --only main --no-dev --no-interaction --no-ansi && rm -rf ${POETRY_CACHE_DIR}
+# prepares the required folders to deploy the whisk-system actions
+RUN mkdir -p /home/nuvolaris/deploy/whisk-system && \
+    ./whisk-system.sh && \
+    cd deploy && tar cvf ../deploy.tar * && \
+    rm -f ../deploy.tar
 CMD ["./run.sh"]
