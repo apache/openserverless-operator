@@ -54,7 +54,7 @@ def create(owner=None):
 
         res = kube.apply(am_spec)
         # dynamically detect alert manager pod and wait for readiness
-        util.wait_for_pod_ready("{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'alertmanager')].metadata.name}")   
+        util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'alertmanager')].metadata.name}")
     
     what = []
     spec = ""
@@ -86,7 +86,7 @@ def create(owner=None):
     res = kube.apply(spec)
 
     # dynamically detect prometheus pod and wait for readiness
-    util.wait_for_pod_ready("{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'prometheus')].metadata.name}")
+    util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'prometheus')].metadata.name}")
  
     logging.info("*** created prometheus based monitoring")    
     return res 

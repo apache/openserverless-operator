@@ -430,7 +430,7 @@ def get_enable_pod_security():
     storage_class = cfg.get('nuvolaris.storageclass')
     return runtime in ["eks","gke","aks","generic"] or (runtime in ["k3s"] and "rook" in storage_class)
 
-def get_runtimes_json_from_config_map(namespace="nuvolaris", path='{.data.runtimes\.json}'):
+def get_runtimes_json_from_config_map(namespace="nuvolaris", path=r'{.data.runtimes\.json}'):
     """ Return the configured runtimes.json from the config map cm/openwhisk-runtimes
     """
     runtimes= kube.kubectl("get", "cm/openwhisk-runtimes", namespace=namespace, jsonpath=path)

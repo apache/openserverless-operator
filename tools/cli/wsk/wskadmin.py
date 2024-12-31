@@ -691,7 +691,7 @@ def getLogsCmd(args, props):
     def getComponentLogs(component):
         path = '%s/%s/%s_logs.log' % (props[LOGS_DIR], component, component)
         if args.tid:
-            cmd = 'grep "\[#tid_%s\]" %s' % (args.tid, path)
+            cmd = r'grep "\[#tid_%s\]" %s' % (args.tid, path)
         elif args.grep:
             cmd = 'grep "%s" %s' % (args.grep, path)
         else:
