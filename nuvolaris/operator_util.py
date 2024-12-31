@@ -33,7 +33,7 @@ def annotate_operator_components_version():
     """
     try:
         logging.info("**** annotating nuvolaris operator component versions")
-        pods = kube.kubectl("get","pods",jsonpath="{.items[?(@.metadata.annotations.whisks\.nuvolaris\.org\/annotate-version)]}",debugresult=False)
+        pods = kube.kubectl("get","pods",jsonpath=r"{.items[?(@.metadata.annotations.whisks\.nuvolaris\.org\/annotate-version)]}",debugresult=False)
 
         for pod in pods:
             if(pod['metadata'].get('labels') and pod['metadata']['labels'].get('name')):

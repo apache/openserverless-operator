@@ -51,7 +51,7 @@ def create(owner=None):
 
 def wait_for_etcd_ready():
     # dynamically detect etcd pod and wait for readiness
-    util.wait_for_pod_ready("{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'nuvolaris-etcd')].metadata.name}")
+    util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'nuvolaris-etcd')].metadata.name}")
 
 def render_etcd_script(namespace,template,data):
     """

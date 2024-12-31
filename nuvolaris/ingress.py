@@ -22,7 +22,7 @@ import nuvolaris.config as cfg
 import nuvolaris.util as util
 
 def get_ingress_pod_name(runtime, namespace="ingress-nginx"):
-    jpath = "{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'controller')].metadata.name}"
+    jpath = r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'controller')].metadata.name}"
 
     if runtime == "microk8s":
          jpath= "{.items[?(@.metadata.labels.name == 'nginx-ingress-microk8s')].metadata.name}"
