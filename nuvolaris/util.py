@@ -44,7 +44,7 @@ def nuv_retry(deadline_seconds=120, max_backoff=5):
                     backoff_delay = min(
                             math.pow(2, retry_number) + random.random(), max_backoff
                     )
-                    
+
                     if current_t + backoff_delay < deadline:
                         time.sleep(backoff_delay)
                         retry_number += 1
@@ -61,8 +61,8 @@ def get_default_storage_class():
     """
     Get the storage class attempting to get the default storage class defined on the configured kubernetes environment
     """
-    storage_class = kube.kubectl("get", "storageclass", jsonpath="{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io\/is-default-class=='true')].metadata.name}")
-    storage_class += kube.kubectl("get", "storageclass", jsonpath="{.items[?(@.metadata.annotations.storageclass\.beta\.kubernetes\.io\/is-default-class=='true')].metadata.name}")
+    storage_class = kube.kubectl("get", "storageclass", jsonpath=r"{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io\/is-default-class=='true')].metadata.name}")
+    storage_class += kube.kubectl("get", "storageclass", jsonpath=r"{.items[?(@.metadata.annotations.storageclass\.beta\.kubernetes\.io\/is-default-class=='true')].metadata.name}")
     if(storage_class):
         return storage_class[0]
 
@@ -71,9 +71,9 @@ def get_default_storage_class():
 def get_default_storage_provisioner():
     """
     Get the storage provisioner
-    """    
-    provisioner = kube.kubectl("get", "storageclass", jsonpath="{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io\/is-default-class=='true')].provisioner}")
-    provisioner += kube.kubectl("get", "storageclass", jsonpath="{.items[?(@.metadata.annotations.storageclass\.beta\.kubernetes\.io\/is-default-class=='true')].metadata.name}")
+    """
+    provisioner = kube.kubectl("get", "storageclass", jsonpath=r"{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io\/is-default-class=='true')].provisioner}")
+    provisioner += kube.kubectl("get", "storageclass", jsonpath=r"{.items[?(@.metadata.annotations.storageclass\.beta\.kubernetes\.io\/is-default-class=='true')].metadata.name}")
     if(provisioner):
         return provisioner[0]
 
@@ -96,16 +96,16 @@ def get_ingress_namespace(runtime):
     True
     >>> get_ingress_namespace('kind')
     'ingress-nginx-azure'
-    """        
+    """
     ingresslb_value = cfg.get('nuvolaris.ingresslb') or 'auto'
 
-    if 'auto' != ingresslb_value:        
+    if 'auto' != ingresslb_value:
         ingress_namespace = ingresslb_value.split('/')[0]
         logging.debug(f"skipping ingress namespace auto detection and returning {ingress_namespace}")
         return ingress_namespace
 
     if runtime == "microk8s":
-        return "ingress" 
+        return "ingress"
     else:
         return  "ingress-nginx"
 
@@ -126,14 +126,14 @@ def get_ingress_service_name(runtime):
     True
     >>> get_ingress_service_name('kind')
     'service/ingress-nginx-controller-custom'
-    """        
+    """
     ingresslb_value = cfg.get('nuvolaris.ingresslb') or 'auto'
 
     if 'auto' != ingresslb_value:
         ingress_srv_name = f"service/{ingresslb_value.split('/')[1]}"
         logging.debug(f"skipping ingress service name auto detection and returning {ingress_srv_name}")
         return ingress_srv_name
-   
+
     return "service/ingress-nginx-controller"
 
 def get_ingress_class(runtime):
@@ -141,7 +141,7 @@ def get_ingress_class(runtime):
     Attempt to determine the proper ingress class
     - When set to 'auto' it will attempt to calculate it according to the kubernetes runtime
     - When set to <> 'auto' it will return the configured value.
-    """      
+    """
     ingress_class = cfg.get('nuvolaris.ingressclass') or 'auto'
 
     if 'auto' != ingress_class:
@@ -157,16 +157,16 @@ def get_ingress_class(runtime):
 
     # On k3s ingress class must be traefik
     if runtime == "k3s":
-        ingress_class = "traefik" 
-    
-    return ingress_class  
+        ingress_class = "traefik"
+
+    return ingress_class
 
 # determine the ingress-nginx flavour
 def get_ingress_yaml(runtime):
     if runtime == "eks":
         return "eks-nginx-ingress.yaml"
     elif runtime == "kind":
-        return  "kind-nginx-ingress.yaml"  
+        return  "kind-nginx-ingress.yaml"
     else:
         return  "cloud-nginx-ingress.yaml"
 
@@ -178,12 +178,12 @@ def get_pod_name(jsonpath,namespace="nuvolaris"):
         return pod_name[0]
 
     raise Exception(f"could not find any pod matching jsonpath={jsonpath}")
-  
+
 # helper method waiting for a pod ready using the given jsonpath to retrieve the pod name
 def wait_for_pod_ready(pod_name_jsonpath, timeout="600s", namespace="nuvolaris"):
-    try:        
+    try:
         pod_name = get_pod_name(pod_name_jsonpath, namespace)
-        logging.info(f"checking pod {pod_name}")        
+        logging.info(f"checking pod {pod_name}")
         while not kube.wait(f"pod/{pod_name}", "condition=ready", timeout, namespace):
             logging.info(f"waiting for {pod_name} to be ready...")
             time.sleep(1)
@@ -200,7 +200,7 @@ def get_mongodb_config_data():
         'size': cfg.get('mongodb.volume-size') or 10,
         'pvcName': 'mongodb-data',
         'storageClass':cfg.get("nuvolaris.storageclass"),
-        'pvcAccessMode':'ReadWriteOnce'    
+        'pvcAccessMode':'ReadWriteOnce'
         }
     return data
 
@@ -233,12 +233,12 @@ def get_controller_image_data(data):
         img_data = parse_image(controller_image)
         data['controller_image'] = img_data["image"]
         data['controller_tag'] = img_data["tag"]
-    else:        
+    else:
         data['controller_image'] = cfg.get("controller.image") or "ghcr.io/nuvolaris/openwhisk-controller"
         data['controller_tag'] = cfg.get("controller.tag") or "3.1.0-mastrogpt.2402101445"
 
 # return configuration parameters for the standalone controller
-def get_standalone_config_data():        
+def get_standalone_config_data():
     data = {
         "name":"controller",
         "couchdb_host": cfg.get("couchdb.host") or "couchdb",
@@ -252,14 +252,14 @@ def get_standalone_config_data():
         "actions_invokes_perMinute": cfg.get("configs.limits.actions.invokes-perMinute") or 60,
         "actions_invokes_concurrent": cfg.get("configs.limits.actions.invokes-concurrent") or 30,
         "activation_payload_max": cfg.get('configs.limits.activations.max_allowed_payload') or "1048576",
-        "time_limit_min": cfg.get("configs.limits.time.limit-min") or "100ms", 
-        "time_limit_std": cfg.get("configs.limits.time.limit-std") or "1min", 
-        "time_limit_max": cfg.get("configs.limits.time.limit-max") or "5min", 
-        "memory_limit_min": cfg.get("configs.limits.memory.limit-min") or "128m", 
-        "memory_limit_std": cfg.get("configs.limits.memory.limit-std") or "256m", 
-        "memory_limit_max": cfg.get("configs.limits.memory.limit-max") or "512m", 
-        "concurrency_limit_min": cfg.get("configs.limits.concurrency.limit-min") or 1, 
-        "concurrency_limit_std": cfg.get("configs.limits.concurrency.limit-std") or 1, 
+        "time_limit_min": cfg.get("configs.limits.time.limit-min") or "100ms",
+        "time_limit_std": cfg.get("configs.limits.time.limit-std") or "1min",
+        "time_limit_max": cfg.get("configs.limits.time.limit-max") or "5min",
+        "memory_limit_min": cfg.get("configs.limits.memory.limit-min") or "128m",
+        "memory_limit_std": cfg.get("configs.limits.memory.limit-std") or "256m",
+        "memory_limit_max": cfg.get("configs.limits.memory.limit-max") or "512m",
+        "concurrency_limit_min": cfg.get("configs.limits.concurrency.limit-min") or 1,
+        "concurrency_limit_std": cfg.get("configs.limits.concurrency.limit-std") or 1,
         "concurrency_limit_max": cfg.get("configs.limits.concurrency.limit-max") or 1,
         "controller_java_opts": cfg.get('configs.controller.javaOpts') or "-Xmx2048M",
         "invoker_containerpool_usermemory": cfg.get('configs.invoker.containerPool.userMemory') or "2048m",
@@ -283,7 +283,7 @@ def validate_ow_auth(auth):
         True
         >>> util.validate_ow_auth('21321:3213216')
         False
-    """ 
+    """
     try:
         parts = auth.split(':')
         try:
@@ -296,7 +296,7 @@ def validate_ow_auth(auth):
         if len(key) < 64:
             logging.error('authorization key must be at least 64 characters long')
             return False
-        
+
         return True
     except Exception as e:
         logging.error('failed to determine authorization id and key: %s' % e)
@@ -402,7 +402,7 @@ def wait_for_service(jsonpath,namespace="nuvolaris"):
 
     raise Exception(f"could not find any pod matching jsonpath={jsonpath}")
 
-def get_controller_http_timeout():    
+def get_controller_http_timeout():
     return cfg.get("configs.limits.time.limit-max") or "5min"
 
 def get_apihost_from_config_map(namespace="nuvolaris"):
@@ -410,7 +410,7 @@ def get_apihost_from_config_map(namespace="nuvolaris"):
     if(annotations):
         return annotations[0]
 
-    raise Exception("Could not find apihost annotation inside internal cm/config config Map")  
+    raise Exception("Could not find apihost annotation inside internal cm/config config Map")
 
 def get_value_from_config_map(namespace="nuvolaris", path='{.metadata.annotations.apihost}'):
     annotations= kube.kubectl("get", "cm/config", namespace=namespace, jsonpath=path)
@@ -426,8 +426,8 @@ def get_enable_pod_security():
     basis and/or storage class.
     @TODO: find a better way to determine when this function should return true.
     """
-    runtime = cfg.get('nuvolaris.kube')    
-    storage_class = cfg.get('nuvolaris.storageclass')    
+    runtime = cfg.get('nuvolaris.kube')
+    storage_class = cfg.get('nuvolaris.storageclass')
     return runtime in ["eks","gke","aks","generic"] or (runtime in ["k3s"] and "rook" in storage_class)
 
 def get_runtimes_json_from_config_map(namespace="nuvolaris", path='{.data.runtimes\.json}'):
@@ -446,7 +446,7 @@ def get_storage_static_config_data():
         "container":"nuvolaris-static",
         "size":1,
         "storageClass": cfg.get('nuvolaris.storageclass'),
-        "dir":"/var/cache/nginx",    
+        "dir":"/var/cache/nginx",
         "applypodsecurity": get_enable_pod_security()
     }
 
@@ -455,11 +455,11 @@ def get_storage_static_config_data():
         minio_port=cfg.get('minio.port') or "9000"
         data['storage_url']=f"http://{minio_host}.nuvolaris.svc.cluster.local:{minio_port}"
 
-    if cfg.get('components.cosi'):                        
+    if cfg.get('components.cosi'):
         data['storage_url']=apihost_util.add_suffix_to_url(get_object_storage_rgw_url(),"cluster.local")
 
     storage_static_affinity_tolerations_data(data)
-    return data    
+    return data
 
 # populate common affinity data
 def common_affinity_tolerations_data(data):
@@ -487,17 +487,17 @@ def minio_affinity_tolerations_data(data):
 # populate specific affinity data for minio
 def storage_static_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
-    data["pod_anti_affinity_name"] = "nuvolaris-static" 
+    data["pod_anti_affinity_name"] = "nuvolaris-static"
 
 # populate specific affinity data for postgres
 def postgres_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
-    data["pod_anti_affinity_name"] = "nuvolaris-postgres"  
+    data["pod_anti_affinity_name"] = "nuvolaris-postgres"
 
 # populate specific affinity data for ferretdb
 def ferretb_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
-    data["pod_anti_affinity_name"] = "ferretdb" 
+    data["pod_anti_affinity_name"] = "ferretdb"
 
 # populate specific affinity data for ferretdb
 def standalone_affinity_tolerations_data(data):
@@ -508,7 +508,7 @@ def standalone_affinity_tolerations_data(data):
 def postgres_manager_affinity_tolerations_data():
     data = {
             "pod_anti_affinity_name":"kubegres-controller-manager",
-            "name":"kubegres-controller-manager" 
+            "name":"kubegres-controller-manager"
     }
     common_affinity_tolerations_data(data)
     return data
@@ -585,7 +585,7 @@ def get_object_storage_class():
     if(storage_class):
         return storage_class[0]
 
-    return "" 
+    return ""
 
 def get_object_storage_rgw_url():
     """
@@ -635,10 +635,10 @@ def b64_encode(value:str):
     Encode a value into as base 64
     param: value to be encoded
     return: the input value in case of error, otherwise the b64 representation of the the input value
-    """        
+    """
     try:
         return b64encode(value.encode(encoding="utf-8")).decode()
-    except:        
+    except:
         return value
 
 def b64_decode(encoded_str:str):
@@ -646,7 +646,7 @@ def b64_decode(encoded_str:str):
     Base 64 decode
     param: encoded_str a b64 encoded string
     return: the inpiut value in case of error, the decoded string otherwise.
-    """  
+    """
     try:
         return b64decode(encoded_str).decode()
     except:
@@ -669,8 +669,8 @@ def get_etcd_initial_clusters(name: str, replicas = 1):
         if len(etc_initial_clusters) > 0:
             etc_initial_clusters+=","
 
-        etc_initial_clusters += f"{name}-{idx}=http://{name}-{idx}.{name}-headless.nuvolaris.svc.cluster.local:2380"   
-   
+        etc_initial_clusters += f"{name}-{idx}=http://{name}-{idx}.{name}-headless.nuvolaris.svc.cluster.local:2380"
+
     return etc_initial_clusters.strip()
 
 # populate etcd configuration parameters
@@ -734,10 +734,9 @@ def get_milvus_config_data():
         'milvus_root_password': cfg.get('milvus.password.root') or "An0therPa55",
         'nuvolaris_password': cfg.get('milvus.nuvolaris.password') or "Nuv0therPa55"
         }
-    
+
     data["etcd_range"]=range(data["etcd_replicas"])
     milvus_standalone_affinity_tolerations_data(data)
-    return data                    
-                      
+    return data
 
-    
+
