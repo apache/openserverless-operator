@@ -153,6 +153,5 @@ RUN poetry install --only main --no-dev --no-interaction --no-ansi && rm -rf ${P
 # prepares the required folders to deploy the whisk-system actions
 RUN mkdir -p /home/nuvolaris/deploy/whisk-system && \
     ./whisk-system.sh && \
-    cd deploy && tar cvf ../deploy.tar * && \
-    rm -f ../deploy.tar
+    cd deploy && tar cvf ../deploy.tar *
 CMD ["./run.sh"]
