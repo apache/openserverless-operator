@@ -54,7 +54,7 @@ def spool_template(template, file, data):
 # you can escape the #x replacement rules writing #\~, #\#, #\-, #\:
 # those sequences will be replaced with #~ ## #- #: respectively after the replacement
 def process_tpl_line(line):
-    """
+    r"""
     >>> line = "##{{ if some-condition }}"
     >>> print(process_tpl_line(line))
     {{ if some-condition }}
@@ -67,9 +67,9 @@ def process_tpl_line(line):
     >>> line = "  - item #- {{item}}"
     >>> print(process_tpl_line(line))
       - {{item}}
-    >>> line = "#\\! with #\\~, #\\: and #\\- but not #\\@"
+    >>> line = r"#\! with #\~, #\: and #\- but not #\@"
     >>> print(process_tpl_line(line))
-    #! with #~, #: and #- but not #\\@
+    #! with #~, #: and #- but not #\@
     """
     if re.search(r"#~", line):
         return ""
