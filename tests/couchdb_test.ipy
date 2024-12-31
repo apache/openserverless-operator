@@ -20,7 +20,6 @@
 
 import nuvolaris.config as cfg
 import nuvolaris.testutil as tu
-import nuvolaris.kube as kube
 import nuvolaris.couchdb as cdb
 
 tu.load_image_env()
@@ -28,7 +27,7 @@ assert(cfg.configure(tu.load_sample_config()))
 cfg.detect()
 #cfg.put("couchdb.host", "couchdb")
 cdb.create(None)
-r = !kubectl -n nuvolaris wait --for=condition=complete job/couchdb-init --timeout=600s
+r = %system kubectl -n nuvolaris wait --for=condition=complete job/couchdb-init --timeout="600s"
 assert(r[0].find("condition met") != -1)
-r = !kubectl -n nuvolaris logs -l job=couchdb-init | grep "OK: enable_db_compaction: subjects"
+r = %system kubectl -n nuvolaris logs -l job=couchdb-init | grep "OK: enable_db_compaction: subjects"
 assert(r[1].find("OK:") != -1)
