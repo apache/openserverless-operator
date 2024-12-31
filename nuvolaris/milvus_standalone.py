@@ -73,7 +73,7 @@ def create(owner=None):
             cfg.put("state.milvus.spec", mspec)
 
         res = kube.apply(mspec)
-        util.wait_for_pod_ready("{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')].metadata.name}")
+        util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')].metadata.name}")
         res=create_default_milvus_database(data)
         logging.info("*** created a milvus standalone instance")
 
@@ -119,7 +119,7 @@ def _annotate_nuv_milvus_metadata(data):
     this is becasue MINIO
     """ 
     try:
-        milvus_service =  util.get_service("{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')]}")
+        milvus_service =  util.get_service(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')]}")
         if(milvus_service):
             milvus_host = f"{milvus_service['metadata']['name']}.{milvus_service['metadata']['namespace']}.svc.cluster.local"
             password = data["nuvolaris_password"]
@@ -143,7 +143,7 @@ def _add_milvus_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
     """ 
 
     try:
-        milvus_service =  util.get_service("{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')]}")
+        milvus_service =  util.get_service(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')]}")
         
         if(milvus_service):
             milvus_host = f"{milvus_service['metadata']['name']}.{milvus_service['metadata']['namespace']}.svc.cluster.local"

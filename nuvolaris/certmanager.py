@@ -54,9 +54,9 @@ def create(owner=None):
         res = kube.kubectl("apply", "-f", spec, namespace=None)
 
         # ensure the cert-manager pods are running    
-        wait_for_cm_ready(runtime, "{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'controller')].metadata.name}")
-        wait_for_cm_ready(runtime, "{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'cainjector')].metadata.name}")
-        wait_for_cm_ready(runtime, "{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'webhook')].metadata.name}")
+        wait_for_cm_ready(runtime, r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'controller')].metadata.name}")
+        wait_for_cm_ready(runtime, r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'cainjector')].metadata.name}")
+        wait_for_cm_ready(runtime, r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/component == 'webhook')].metadata.name}")
 
         return res
 

@@ -44,7 +44,7 @@ def create(owner=None):
 
     res = kube.apply(spec)    
     #wait for milvus_operator to be ready
-    util.wait_for_pod_ready("{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'milvus-operator')].metadata.name}")
+    util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'milvus-operator')].metadata.name}")
     logging.info("*** created milvus operator")
 
     return res

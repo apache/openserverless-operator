@@ -16,26 +16,27 @@
 # under the License.
 #
 # Provides extra kopf handlers to manage nuvolaris users
-import kopf
 import logging
-import json, os, os.path
+from datetime import datetime
+
+import kopf
+
 import nuvolaris.config as cfg
 import nuvolaris.couchdb as cdb
-import nuvolaris.minio_deploy as minio_deploy
-import nuvolaris.kube as kube
-import nuvolaris.ferretdb as mdb
-import nuvolaris.storage_static as static
-import nuvolaris.redis as redis
-import nuvolaris.userdb_util as userdb
-import nuvolaris.postgres_operator as postgres
 import nuvolaris.endpoint as endpoint
-import nuvolaris.user_patcher as user_patcher
+import nuvolaris.ferretdb as mdb
+import nuvolaris.kube as kube
 import nuvolaris.milvus_standalone as milvus
-
+import nuvolaris.minio_deploy as minio_deploy
+import nuvolaris.postgres_operator as postgres
+import nuvolaris.redis as redis
+import nuvolaris.storage_static as static
+import nuvolaris.user_patcher as user_patcher
+import nuvolaris.userdb_util as userdb
+from nuvolaris.quota_checker import REDIS_DB_QUOTA_ANNOTATION
 from nuvolaris.user_config import UserConfig
 from nuvolaris.user_metadata import UserMetadata
-from datetime import datetime
-from nuvolaris.quota_checker import REDIS_DB_QUOTA_ANNOTATION
+
 
 def get_ucfg(spec):
     ucfg = UserConfig(spec)
