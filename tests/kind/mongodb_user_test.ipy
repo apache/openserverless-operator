@@ -34,7 +34,7 @@ assert(mdb.create())
 while not kube.wait("pod/nuvolaris-mongodb-0", "condition=ready"): pass
 assert(kube.get("service/nuvolaris-mongodb-svc"))
 
-flavour = kube.kubectl("get", "pod/nuvolaris-mongodb-0", jsonpath="{.metadata.labels.nuvolaris\.mongodb\.flavour}")
+flavour = kube.kubectl("get", "pod/nuvolaris-mongodb-0", jsonpath=r"{.metadata.labels.nuvolaris\.mongodb\.flavour}")
 assert("standalone"==flavour[0])
 
 spec = tu.load_sample_config("whisk-user")
