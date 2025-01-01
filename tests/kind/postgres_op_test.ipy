@@ -20,10 +20,9 @@
 !kubectl -n nuvolaris delete pvc --all
 
 import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
 import nuvolaris.kube as kube
 import nuvolaris.postgres_operator as pdb
-import logging
+import nuvolaris.testutil as tu
 
 # test
 assert(cfg.configure(tu.load_sample_config()))

@@ -18,12 +18,11 @@
 !kubectl -n nuvolaris delete all --all
 !kubectl -n nuvolaris delete pvc --all
 
-import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
-import nuvolaris.kube as kube
 import nuvolaris.actionexecutor as ae
-import nuvolaris.couchdb_util as cu
+import nuvolaris.config as cfg
 import nuvolaris.couchdb as cb
+import nuvolaris.couchdb_util as cu
+import nuvolaris.testutil as tu
 
 # init
 assert(cfg.configure(tu.load_sample_config()))
