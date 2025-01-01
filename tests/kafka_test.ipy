@@ -19,13 +19,10 @@
 %system kubectl -n nuvolaris delete pvc --all
 
 import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
-import nuvolaris.kube as kube
-import nuvolaris.zookeeper as zookeeper
 import nuvolaris.kafka as kafka
-import nuvolaris.couchdb as cdb
-import nuvolaris.couchdb_util as cdbu
-import logging
+import nuvolaris.kube as kube
+import nuvolaris.testutil as tu
+import nuvolaris.zookeeper as zookeeper
 
 # test
 assert(cfg.configure(tu.load_sample_config(name="whisk-full")))
