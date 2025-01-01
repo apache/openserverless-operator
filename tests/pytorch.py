@@ -15,9 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import torch
 import math
-import json
+
+import torch
+
 
 class Polynomial3(torch.nn.Module):
     def __init__(self):

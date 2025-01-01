@@ -19,15 +19,16 @@
 !kubectl -n nuvolaris delete all --all
 !kubectl -n nuvolaris delete pvc --all
 
-import json, logging
+import json
+
+import nuvolaris.config as cfg
 import nuvolaris.couchdb as cdb
 import nuvolaris.couchdb_util as cdbu
-import nuvolaris.testutil as tu
-import nuvolaris.config as cfg
 import nuvolaris.kube as kube
-import nuvolaris.userdb_util as userdb
+import nuvolaris.testutil as tu
 import nuvolaris.user_config as user_config
 import nuvolaris.user_metadata as user_metadata
+import nuvolaris.userdb_util as userdb
 
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_labels()["nuvolaris.kube"] == "kind")

@@ -23,11 +23,8 @@
 # - openwhisk with couchdb and the volumes hostpath
 # - openwhisk with couchdb and the volumes 
 
-import yaml
-import nuvolaris.testutil as tu
 import nuvolaris.config as cfg
-import nuvolaris.kube as kube
-import nuvolaris.main as main 
+import nuvolaris.testutil as tu
 
 #kube.mocker.config("apply", "ok")
 cfg.configure(tu.load_sample_config())

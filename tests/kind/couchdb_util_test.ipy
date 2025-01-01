@@ -19,10 +19,9 @@
 !kubectl -n nuvolaris delete pvc --all
 
 import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
-import nuvolaris.kube as kube
 import nuvolaris.couchdb as cdb
 import nuvolaris.couchdb_util as cu
+import nuvolaris.testutil as tu
 
 !kubectl apply -f deploy/nuvolaris-permissions/nuvolaris-common.yaml
 # init
@@ -34,8 +33,6 @@ cdb.create(None)
 
 !kubectl -n nuvolaris wait --for=condition=ready pod couchdb-0
 
-
-import nuvolaris.couchdb_util 
 db = cu.CouchDB()
 
 assert(db.wait_db_ready(60))

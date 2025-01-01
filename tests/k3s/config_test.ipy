@@ -16,7 +16,6 @@
 # under the License.
 #
 import nuvolaris.config as cfg
-import nuvolaris.kube as kube
 
 cfg.clean()
 assert(cfg.detect_labels()['nuvolaris.kube'] == "k3s")

@@ -17,14 +17,9 @@
 # under the License.
 #
 
-import nuvolaris.testutil as tu
 import nuvolaris.config as cfg
-import nuvolaris.kustomize as kus
-import nuvolaris.kube as kube
 import nuvolaris.etcd as etcd
-
-import requests as req
-import yaml, sys, os
+import nuvolaris.kube as kube
 
 cfg.clean()
 cfg.detect_labels()
