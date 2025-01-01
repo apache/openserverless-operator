@@ -19,11 +19,9 @@
 !kubectl -n nuvolaris delete pvc --all
 
 import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
 import nuvolaris.kube as kube
 import nuvolaris.mongodb as mdb
-import logging
-
+import nuvolaris.testutil as tu
 from nuvolaris.user_config import UserConfig
 from nuvolaris.user_metadata import UserMetadata
 

@@ -17,16 +17,13 @@
 # under the License.
 #
 
-import nuvolaris.testutil as tu
-import nuvolaris.config as cfg
-import nuvolaris.kustomize as kus
-import nuvolaris.kube as kube
-import nuvolaris.milvus_standalone as milvus
-import nuvolaris.etcd as etcd
-import nuvolaris.minio_deploy as minio
+import os
 
-import requests as req
-import yaml, sys, os
+import nuvolaris.config as cfg
+import nuvolaris.etcd as etcd
+import nuvolaris.milvus_standalone as milvus
+import nuvolaris.minio_deploy as minio
+import nuvolaris.testutil as tu
 
 # tu.enable_debug_logging()
 # test

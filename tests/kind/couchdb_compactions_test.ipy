@@ -19,12 +19,11 @@
 !kubectl -n nuvolaris delete all --all
 !kubectl -n nuvolaris delete pvc --all
 
+import nuvolaris.config as cfg
 import nuvolaris.couchdb as cdb
 import nuvolaris.couchdb_util as cdbu
-import nuvolaris.testutil as tu
-import nuvolaris.config as cfg
 import nuvolaris.kube as kube
-import requests as req
+import nuvolaris.testutil as tu
 
 assert(cfg.configure(tu.load_sample_config()))
 cfg.put("couchdb.host", "localhost")

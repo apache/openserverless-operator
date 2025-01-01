@@ -19,7 +19,6 @@ import nuvolaris.config as cfg
 import nuvolaris.kube as kube
 import nuvolaris.kustomize as kus
 import nuvolaris.testutil as tu
-import requests as req
 
 #print("kind")
 cfg.clean()

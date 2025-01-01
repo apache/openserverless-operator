@@ -67,7 +67,7 @@ class MilvusAdminClient:
 
     def remove_user(self, username, database):
         """
-        Removes a userfrom MILVUS, dropping corresponding database and roles
+        Removes a user from MILVUS, dropping corresponding database and roles
         param: username
         return: True if role has been successfully created
         """

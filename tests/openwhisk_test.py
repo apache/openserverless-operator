@@ -17,10 +17,9 @@
 #
 
 import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
-import nuvolaris.openwhisk as ow
 import nuvolaris.kube as kube
-import os
+import nuvolaris.openwhisk as ow
+import nuvolaris.testutil as tu
 
 # apihost
 assert(cfg.configure(tu.load_sample_config(), clean=True))
