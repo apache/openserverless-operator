@@ -946,15 +946,15 @@ traitlets = "*"
 
 [[package]]
 name = "milvus-lite"
-version = "2.4.10"
+version = "2.4.11"
 description = "A lightweight version of Milvus wrapped with Python."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "milvus_lite-2.4.10-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:fc4246d3ed7d1910847afce0c9ba18212e93a6e9b8406048436940578dfad5cb"},
-    {file = "milvus_lite-2.4.10-py3-none-macosx_11_0_arm64.whl", hash = "sha256:74a8e07c5e3b057df17fbb46913388e84df1dc403a200f4e423799a58184c800"},
-    {file = "milvus_lite-2.4.10-py3-none-manylinux2014_aarch64.whl", hash = "sha256:240c7386b747bad696ecb5bd1f58d491e86b9d4b92dccee3315ed7256256eddc"},
-    {file = "milvus_lite-2.4.10-py3-none-manylinux2014_x86_64.whl", hash = "sha256:211d2e334a043f9282bdd9755f76b9b2d93b23bffa7af240919ffce6a8dfe325"},
+    {file = "milvus_lite-2.4.11-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:9e563ae0dca1b41bfd76b90f06b2bcc474460fe4eba142c9bab18d2747ff843b"},
+    {file = "milvus_lite-2.4.11-py3-none-macosx_11_0_arm64.whl", hash = "sha256:d21472bd24eb327542817829ce7cb51878318e6173c4d62353c77421aecf98d6"},
+    {file = "milvus_lite-2.4.11-py3-none-manylinux2014_aarch64.whl", hash = "sha256:8e6ef27f7f84976f9fd0047b675ede746db2e0cc581c44a916ac9e71e0cef05d"},
+    {file = "milvus_lite-2.4.11-py3-none-manylinux2014_x86_64.whl", hash = "sha256:551f56b49fcfbb330b658b4a3c56ed29ba9b692ec201edd1f2dade7f5e39957d"},
 ]
 
 [package.dependencies]
@@ -1663,18 +1663,18 @@ oidc = ["requests-oauthlib (>=1.3.0,<2.0.0)"]
 
 [[package]]
 name = "pymilvus"
-version = "2.4.10"
+version = "2.5.2"
 description = "Python Sdk for Milvus"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pymilvus-2.4.10-py3-none-any.whl", hash = "sha256:737b701a758a88b73fe8dd7db7c0ec246365f51a3a71aff55417da347f9adee5"},
-    {file = "pymilvus-2.4.10.tar.gz", hash = "sha256:24a26234c94084d147945e208250a53414cc0e53e6e49460192c0a934786968d"},
+    {file = "pymilvus-2.5.2-py3-none-any.whl", hash = "sha256:a162a6a27c11322333dfddc37e055b3c76625032985bae2c985b7c7a0838fce7"},
+    {file = "pymilvus-2.5.2.tar.gz", hash = "sha256:f54aa42f0ed10fa58dafa8c309e9b0add21abe8b1cda684a9560fc4960dfbe61"},
 ]
 
 [package.dependencies]
 grpcio = ">=1.49.1,<=1.67.1"
-milvus-lite = {version = ">=2.4.0,<2.5.0", markers = "sys_platform != \"win32\""}
+milvus-lite = {version = ">=2.4.0", markers = "sys_platform != \"win32\""}
 pandas = ">=1.2.4"
 protobuf = ">=3.20.0"
 python-dotenv = ">=1.0.1,<2.0.0"
@@ -1688,13 +1688,13 @@ model = ["milvus-model (>=0.1.0)"]
 
 [[package]]
 name = "pyparsing"
-version = "3.2.0"
+version = "3.2.1"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pyparsing-3.2.0-py3-none-any.whl", hash = "sha256:93d9577b88da0bbea8cc8334ee8b918ed014968fd2ec383e868fb8afb1ccef84"},
-    {file = "pyparsing-3.2.0.tar.gz", hash = "sha256:cbf74e27246d595d9a74b186b810f6fbb86726dbf3b9532efb343f6d7294fe9c"},
+    {file = "pyparsing-3.2.1-py3-none-any.whl", hash = "sha256:506ff4f4386c4cec0590ec19e6302d3aedb992fdc02c761e90416f158dacf8e1"},
+    {file = "pyparsing-3.2.1.tar.gz", hash = "sha256:61980854fd66de3a90028d679a954d5f2623e83144b5afe5ee86f43d762e5f0a"},
 ]
 
 [package.extras]
@@ -2219,4 +2219,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "396de843a95ba096351ac7aea6e1118b5fb33a84940bd2def5747425e6fe883d"
+content-hash = "b30d3426dd56c29e69db63e80240d151d4fba29a38fc7f6e583b4c31d534845c"
