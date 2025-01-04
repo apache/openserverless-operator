@@ -18,10 +18,7 @@
 #
 
 import os
-import nuvolaris.testutil as tu
-import nuvolaris.config as cfg
-from nuvolaris.milvus_admin_client import MilvusAdminClient
-from pymilvus import MilvusClient
+from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
 
 # for this test minioClient should see this env variable
 os.environ['MILVUS_ROOT_USER']='root'

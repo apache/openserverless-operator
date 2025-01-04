@@ -16,9 +16,10 @@
 # under the License.
 #
 import logging
+
 import nuvolaris.config as cfg
-import nuvolaris.util as util
-from pymilvus import MilvusClient, connections,  db
+from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
+#from pymilvus import MilvusClient, connections,  db
 
 class MilvusAdminClient:
     """
