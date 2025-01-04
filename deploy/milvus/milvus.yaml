@@ -50,7 +50,7 @@ spec:
       initContainers:
       containers:
       - name: standalone
-        image: "milvusdb/milvus:v2.4.17"
+        image: "milvusdb/milvus:v2.5.2"
         imagePullPolicy: IfNotPresent
         args: [ "milvus", "run", "standalone"]
         ports:

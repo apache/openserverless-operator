@@ -35,7 +35,6 @@ backoff = "^2.2.1"
 psycopg-binary = "^3.1.18"
 psycopg = "^3.1.18"
 redis = "^5.0.4"
-pymilvus = "2.4.10"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.31.0"
