@@ -717,22 +717,25 @@ def get_milvus_config_data():
     data = {
         'milvus_etcd_username': "etcdmilvus",
         'milvus_etcd_password': cfg.get('milvus.password.etcd') or "0therPa55",
-        "milvus_etcd_root_password":cfg.get("etcd.root.password") or "s0meP@ass3wd",
-        'milvus_etcd_prefix': "milvus",
-        'milvus_s3_username': "miniomilvus",
+        'milvus_etcd_root_password':cfg.get("etcd.root.password") or "s0meP@ass3wd",
+        'milvus_etcd_prefix': 'milvus',
+        'milvus_s3_username': 'miniomilvus',
         'milvus_s3_password': cfg.get('milvus.password.s3') or "s0meP@ass3",
-        'milvus_bucket_name': "vectors",
-        'milvus_bucket_prefix': "milvus/nuvolaris-milvus",
+        'milvus_bucket_name': 'vectors',
+        'milvus_bucket_prefix': 'milvus/nuvolaris-milvus',
         'size': cfg.get('milvus.volume-size.cluster') or 10,
         'zookeeper_size': cfg.get('milvus.volume-size.zookeeper') or 10,
         'bookie_journal_size': cfg.get('milvus.volume-size.journal') or 25,
         'bookie_ledgers_size': cfg.get('milvus.volume-size.ledgers') or 50,
         'replicas': cfg.get('milvus.replicas') or 1,
         'storageClass': cfg.get('nuvolaris.storageclass'),
-        "etcd_replicas":get_etcd_replica(),
-        "etcd_container": "nuvolaris-etcd",
+        'etcd_replicas':get_etcd_replica(),
+        'etcd_container': 'nuvolaris-etcd',
         'milvus_root_password': cfg.get('milvus.password.root') or "An0therPa55",
-        'nuvolaris_password': cfg.get('milvus.nuvolaris.password') or "Nuv0therPa55"
+        'nuvolaris_password': cfg.get('milvus.nuvolaris.password') or "Nuv0therPa55",
+        'milvus_max_role_num': cfg.get('milvus.proxy.max-role-num') or 10,
+        'milvus_max_user_num': cfg.get('milvus.proxy.max-user-num') or 100,
+        'milvus_max_database_num': cfg.get('milvus.root-coord.max-database-num') or 64
         }
 
     data["etcd_range"]=range(data["etcd_replicas"])
