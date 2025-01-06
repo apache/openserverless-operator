@@ -79,12 +79,13 @@ data:
       address: localhost
       port: 53100
       enableActiveStandby: false  # Enable rootcoord active-standby
+      maxDatabaseNum: {{milvus_max_database_num}}
     
     proxy:
       port: 19530
       internalPort: 19529
-      maxRoleNum: 100
-      maxUserNum: 100
+      maxRoleNum: {{milvus_max_role_num}}
+      maxUserNum: {{milvus_max_user_num}}
     
     queryCoord:
       address: localhost
