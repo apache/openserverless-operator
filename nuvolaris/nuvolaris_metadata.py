@@ -17,16 +17,24 @@
 #
 import json
 import logging
+from datetime import datetime
+
+import nuvolaris.bcrypt_util as bu
 import nuvolaris.config as cfg
 import nuvolaris.util as util
+
 
 class NuvolarisMetadata:
     _data = {}
 
     def __init__(self):
+        password = cfg.get('nuvolaris.password') or "nuvpassw0rd"
+        salted_password = bu.hash_password(password)
+
         self._data = {
             "login":"nuvolaris",
-            "password":cfg.get('nuvolaris.password') or "nuvpassw0rd",
+            "password":salted_password,
+            "password_timestamp": datetime.now().isoformat(),
             "email":cfg.get('nuvolaris.email') or "nuvolaris@nuvolaris.io",
             "metadata":[]            
         }

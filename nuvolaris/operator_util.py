@@ -104,7 +104,7 @@ def config_from_spec(spec, handler_type = "on_create"):
     """
     Initialize the global configuration from the given spec.
     :param spec 
-    :param on_resume boolen flag telling if thsi method is called from the on_resume handler
+    :param on_resume boolean flag telling if this method is called from the on_resume handler
     """
     cfg.clean()
     cfg.configure(spec)
