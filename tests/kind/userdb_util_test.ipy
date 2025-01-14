@@ -16,6 +16,7 @@
 # under the License.
 #
 
+
 !kubectl -n nuvolaris delete all --all
 !kubectl -n nuvolaris delete pvc --all
 
@@ -29,6 +30,7 @@ import nuvolaris.testutil as tu
 import nuvolaris.user_config as user_config
 import nuvolaris.user_metadata as user_metadata
 import nuvolaris.userdb_util as userdb
+import nuvolaris.bcrypt_util as bu
 
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_labels()["nuvolaris.kube"] == "kind")
@@ -61,7 +63,17 @@ docs = list(response['docs'])
 assert(len(docs) > 0)
 
 doc = docs[0]
-assert(ucfg.get('password') == doc['password'])
+assert(bu.verify_password(ucfg.get('password'),doc['password']))
+
+# test password change
+new_password = 'test123'
+
+userdb.update_user_metadata_password(ucfg.get('namespace'), new_password)
+response = db.find_doc("users_metadata", json.dumps(selector))
+assert(response)
+docs = list(response['docs'])
+doc = docs[0]
+assert(bu.verify_password(new_password,doc['password']))
 
 assert(userdb.delete_user_metadata(ucfg.get('namespace')))
 response = db.find_doc("users_metadata", json.dumps(selector))
