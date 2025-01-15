@@ -17,17 +17,25 @@
 #
 import json
 import logging
-import nuvolaris.util as util
+from datetime import datetime
 
+import nuvolaris.bcrypt_util as bu
+import nuvolaris.util as util
 from nuvolaris.user_config import UserConfig
+
 
 class UserMetadata:
     _data = {}
 
     def __init__(self, ucfg: UserConfig):
+
+        password = ucfg.get('password')
+        salted_password = bu.hash_password(password)
+
         self._data = {
             "login":ucfg.get('namespace'),
-            "password":ucfg.get('password'),
+            "password":salted_password,
+            "password_timestamp": datetime.now().isoformat(),
             "email":ucfg.get('email'),
             "metadata":[],
             "quota":[]
