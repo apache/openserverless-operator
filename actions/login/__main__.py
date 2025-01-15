@@ -16,9 +16,12 @@
 # under the License.
 #
 
+import json
+import logging
+
+import nuvolaris.bcrypt_util as bu
 import nuvolaris.config as cfg
 import nuvolaris.couchdb_util as cu
-import logging, json
 
 USER_META_DBN = "users_metadata"
 
@@ -79,14 +82,15 @@ def main(args):
     cfg.put("couchdb.admin.user", args['couchdb_user'])
     cfg.put("couchdb.admin.password", args['couchdb_password'])
     
-    if('login' in args and 'password' in args):
+    if 'login' in args and 'password' in args:
         db = cu.CouchDB()
         login = args['login']
         password = args['password']
         user_data = fetch_user_data(db,login)
 
-        if(user_data):
-            if(password == user_data['password']):
+        if user_data:
+            if bu.verify_password(password, user_data['password']):
+            # if(password == user_data['password']):
                 return build_response(map_data(user_data))
             else:
                 return build_error(f"password mismatch for user {login}")

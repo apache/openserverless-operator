@@ -73,7 +73,7 @@ tasks:
   login:prepare:
     - |- 
       mkdir -p login/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py login/nuvolaris
+      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py ../nuvolaris/bcrypt_util.py login/nuvolaris
     - |-
       cd login
       rm  -f ../{{.DEPLOY}}/login.zip

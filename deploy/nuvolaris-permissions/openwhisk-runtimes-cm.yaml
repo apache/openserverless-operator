@@ -101,7 +101,7 @@ data:
                     "image": {
                         "prefix": "apache",
                         "name": "openserverless-runtime-python",
-                        "tag": "v3.12-2409142109"
+                        "tag": "v3.12-2501141314"
                     },
                     "deprecated": false,
                     "attached": {
