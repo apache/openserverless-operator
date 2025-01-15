@@ -23,7 +23,7 @@ echo preparing nuvolaris system actions....
 
 mkdir -p ${HOME}/actions/login/nuvolaris
 mkdir -p ${HOME}/deploy/whisk-system
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/actions/login/nuvolaris
+cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/nuvolaris/bcrypt_util.py ${HOME}/actions/login/nuvolaris
 cd ${HOME}/actions/login
 rm  -f ${HOME}/deploy/whisk-system/login.zip
 zip -r ${HOME}/deploy/whisk-system/login.zip *
