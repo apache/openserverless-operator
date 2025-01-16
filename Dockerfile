@@ -93,7 +93,7 @@ RUN echo "Installing poetry" && \
     apt-get update && apt-get install -y --no-install-recommends \
     curl gnupg zip unzip && \
     curl -sSL https://install.python-poetry.org | python - && \
-    cd /home/nuvolaris && poetry install --no-root --no-dev --no-interaction --no-ansi && rm -rf $POETRY_CACHE_DIR
+    cd /home/nuvolaris && poetry install --no-root --no-interaction --no-ansi && rm -rf $POETRY_CACHE_DIR
 
 #------------------------------------------------------------------------------
 # Final stage
@@ -149,7 +149,7 @@ COPY --from=deps --chown=nuvolaris:nuvolaris ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=deps --chown=nuvolaris:nuvolaris ${POETRY_HOME} ${POETRY_HOME}
 # Copy the home
 COPY --from=sources --chown=nuvolaris:nuvolaris ${HOME} ${HOME}
-RUN poetry install --only main --no-dev --no-interaction --no-ansi && rm -rf ${POETRY_CACHE_DIR}
+RUN poetry install --only main --no-interaction --no-ansi && rm -rf ${POETRY_CACHE_DIR}
 # prepares the required folders to deploy the whisk-system actions
 RUN mkdir -p /home/nuvolaris/deploy/whisk-system && \
     ./whisk-system.sh && \
