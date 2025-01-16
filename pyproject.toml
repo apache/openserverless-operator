@@ -20,6 +20,7 @@ name = "nuvolaris"
 version = "2.0.0"
 description = "Apache OpenServerless operator"
 authors = ["Michele Sciabarra <michele@sciabarra.com>","Francesco Timperi Tiberi <francesco@nuvolaris.io>"]
+license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -37,8 +38,8 @@ psycopg = "^3.1.18"
 redis = "^5.0.4"
 bcrypt = "^4.2.1"
 
-[tool.poetry.dev-dependencies]
-ipython = "^7.31.0"
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.15.0"
 
 [tool.poetry.scripts]
 dbinit = "nuvolaris.couchdb:init"
@@ -46,5 +47,5 @@ actionexecutor = "nuvolaris.actionexecutor:start"
 quota_checker = "nuvolaris.quota_checker:start"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.5.0"]
 build-backend = "poetry.core.masonry.api"
