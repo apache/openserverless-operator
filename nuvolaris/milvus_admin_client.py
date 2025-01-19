@@ -18,8 +18,9 @@
 import logging
 
 import nuvolaris.config as cfg
+# from pymilvus import MilvusClient, connections,  db
 from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
-#from pymilvus import MilvusClient, connections,  db
+
 
 class MilvusAdminClient:
     """
@@ -32,6 +33,15 @@ class MilvusAdminClient:
         self.admin_password   = cfg.get("milvus.password.root", "MILVUS_ROOT_PASSWORD", "An0therPa55")
         self.milvus_url   = f"http://{self.milvus_api_host}:{self.milvus_api_port}"
         self.milvus_admin_token = f"root:{self.admin_password}"
+
+        #self.global_privileges_v1 = ['CreateCollection', 'DropCollection', 'DescribeCollection', 'ShowCollections',
+        #                 'RenameCollection']
+        self.global_privileges_v1 = []
+
+        # references:
+        # https://milvus.io/docs/privilege_group.md
+        # https://milvus.io/docs/grant_privileges.md#Grant-a-privilege-or-a-privilege-group-to-a-role
+        self.global_privileges_v2 = ['CollectionAdmin','DatabaseAdmin']
 
     def setup_user(self, username, password,database):
         """
@@ -53,12 +63,11 @@ class MilvusAdminClient:
             # rest of action are performed specifying the database
             client = MilvusClient(uri=self.milvus_url,token=self.milvus_admin_token, db_name=database)
             client.create_role(role_name=role,db_name=database)
-            client.grant_privilege(role_name=role, object_type='Global',  object_name='*', privilege='CreateCollection', db_name=database)
-            client.grant_privilege(role_name=role, object_type='Global',  object_name='*', privilege='DropCollection', db_name=database)
-            client.grant_privilege(role_name=role, object_type='Global',  object_name='*', privilege='DescribeCollection', db_name=database)
-            client.grant_privilege(role_name=role, object_type='Global',  object_name='*', privilege='ShowCollections', db_name=database)
-            client.grant_privilege(role_name=role, object_type='Global',  object_name='*', privilege='RenameCollection', db_name=database)
-            client.grant_privilege(role_name=role, object_type='Collection',  object_name='*', privilege='*', db_name=database)
+            for priv in self.global_privileges_v1:
+                client.grant_privilege(role_name=role, object_type='Global',  object_name='*', privilege=priv, db_name=database)
+            for priv in self.global_privileges_v2:
+                client.grant_privilege_v2(role_name=role, object_type='Global',  object_name='*', collection_name='*', privilege=priv, db_name=database)
+
             client.grant_role(user_name=username,role_name=role,db_name=database)
             client.close()
             return True
@@ -82,7 +91,16 @@ class MilvusAdminClient:
                 client.drop_collection(collection_name=collection)
             client.close()
 
-            client = MilvusClient(uri=self.milvus_url,token=self.milvus_admin_token)                    
+            client = MilvusClient(uri=self.milvus_url,token=self.milvus_admin_token)
+
+            for privilege in self.global_privileges_v1:
+                client.revoke_privilege(role_name=role, object_type='Global', object_name='*', privilege=privilege,
+                                       db_name=database)
+            for privilege in self.global_privileges_v2:
+                client.revoke_privilege_v2(role_name=role, object_type='Global', object_name='*', collection_name='*',
+                                          privilege=privilege, db_name=database)
+
+
             client.drop_role(role_name=role,db_name=database)
             client.drop_user(user_name=username)                
             client.drop_database(db_name=database)

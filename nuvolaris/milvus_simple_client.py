@@ -17,6 +17,7 @@
 #
 from types import NoneType
 from typing import Optional
+from requests.exceptions import HTTPError
 
 import requests
 
@@ -28,6 +29,10 @@ class MilvusSimpleException(Exception):
 
     def __str__(self):
         return f"{self.message} ({self.code})"
+
+class MilvusUnauthorizedException(MilvusSimpleException):
+    def __init__(self):
+        super().__init__(0, "Unauthorized")
 
 
 class MilvusSimpleClient:
@@ -46,12 +51,17 @@ class MilvusSimpleClient:
         if json is None:
             json = {}
         response = requests.request(method, url, headers=headers, json=json)
-        response.raise_for_status()
-        res = response.json()
-        if type(res.get('data')) is not NoneType:
-            return res['data']
-        else:
-            raise MilvusSimpleException(code=res.get('code'), message=res.get('message'))
+        try:
+            response.raise_for_status()
+            res = response.json()
+            if type(res.get('data')) is not NoneType:
+                return res['data']
+            else:
+                raise MilvusSimpleException(code=res.get('code'), message=res.get('message'))
+        except HTTPError as e:
+            if e.response.status_code == 403:
+                raise MilvusUnauthorizedException()
+
 
     def close(self):
         pass
@@ -161,6 +171,31 @@ class MilvusSimpleClient:
         if db_name is not None:
             payload["dbName"] = db_name
         return self._request(f"roles/revoke_privilege", json=payload)
+
+
+    def grant_privilege_v2(self, role_name: str, object_type: str, object_name: str, collection_name: str,  privilege: str, db_name: Optional[str] = None):
+        payload = {
+            "roleName": role_name,
+            "objectType": object_type,
+            "objectName": object_name,
+            "privilege": privilege,
+            "collectionName": collection_name,
+        }
+        if db_name is not None:
+            payload["dbName"] = db_name
+        return self._request(f"roles/grant_privilege_v2", json=payload)
+
+    def revoke_privilege_v2(self, role_name: str, object_type: str, object_name: str, collection_name: str,  privilege: str, db_name: Optional[str] = None):
+        payload = {
+            "roleName": role_name,
+            "objectType": object_type,
+            "objectName": object_name,
+            "privilege": privilege,
+            "collectionName": collection_name,
+        }
+        if db_name is not None:
+            payload["dbName"] = db_name
+        return self._request(f"roles/revoke_privilege_v2", json=payload)
 
     # Collection operations
 
