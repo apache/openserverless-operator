@@ -173,6 +173,6 @@ spec:
       ledgers: 25
     replicas: 1
     password:
-      root: x£VqD7G6712o        
+      root: An0therPa55
       etcd: 97Vk2{qe8o>S
-      s3: 8_d$8zCrl7£m                                            
+      s3: 8_d$8zCrl7£m
