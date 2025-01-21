@@ -24,6 +24,9 @@ import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
 import nuvolaris.minio_deploy as minio
 import nuvolaris.testutil as tu
+from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
+from nuvolaris.user_config import UserConfig
+from nuvolaris.user_metadata import UserMetadata
 
 # tu.enable_debug_logging()
 # test
@@ -37,6 +40,50 @@ os.environ['MILVUS_API_HOST']='localhost'
 assert(etcd.create())
 assert(minio.create())
 assert(milvus.create())
+
+# generate some user config
+ucfg = UserConfig({
+    "namespace": "demouser",
+    "password": "s0meComplicat3d",
+    "email": "demouser@somedomain.com",
+    "milvus": {
+        "password": "s0meComplicat3d",
+        "database": "demouser"
+    }
+})
+# generate some user metadata
+metadata = UserMetadata(ucfg)
+
+# test user creation
+assert(milvus.create_ow_milvus(ucfg, metadata))
+
+# load user metadata
+user_metadata = metadata.get_metadata()
+body = {}
+envs = list(user_metadata['metadata'])
+
+for env in envs:
+    body[env['key']]=env['value']
+
+# test user metadata
+host = body["MILVUS_HOST"]
+token = body["MILVUS_TOKEN"]
+database = body["MILVUS_DB_NAME"]
+port = body["MILVUS_PORT"]
+assert host
+assert token
+assert database
+assert port
+
+# test client
+client = MilvusClient(uri=f'http://localhost:{port}',token=token, db_name=database)
+client.create_collection("testcollection", dimension=128)
+assert("testcollection" in client.list_collections())
+client.drop_collection("testcollection")
+
+# test user deletion
+assert(milvus.delete_ow_milvus(ucfg))
+
 assert(milvus.delete())
 assert(etcd.delete())
 assert(minio.delete())
