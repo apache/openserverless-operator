@@ -53,6 +53,17 @@ def prepare_login_action():
 
     return login
 
+def prepare_secrets_action():
+    secrets = {
+        "name":"secrets",
+        "function":"secrets.zip",
+        "runtime":"python:3",
+        "web":"true",
+        "inputs":get_couchdb_inputs()
+    }
+
+    return secrets
+
 def prepare_content_action():
     minio_host= cfg.get("minio.host") or "nuvolaris-minio"
     minio_port= cfg.get("minio.port") or "9000"
@@ -145,6 +156,7 @@ def prepare_system_actions():
     """
     actions = []
     actions.append(prepare_login_action())
+    actions.append(prepare_secrets_action())
     actions.append(prepare_content_action())
     actions.append(prepare_redis_action())
     actions.append(prepare_psql_action())
