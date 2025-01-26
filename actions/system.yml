@@ -111,7 +111,16 @@ tasks:
     - |-
       cd devel/ferretdb
       rm  -f ../../{{.DEPLOY}}/ferretdb.zip
-      zip -r ../../{{.DEPLOY}}/ferretdb.zip *                                  
+      zip -r ../../{{.DEPLOY}}/ferretdb.zip *
+
+  secrets:prepare:
+    - |-
+      rm -rf secrets/nuvolaris && mkdir -p secrets/nuvolaris
+      cp ../nuvolaris/config.py  ../nuvolaris/couchdb_util.py  ../nuvolaris/user_config.py secrets/nuvolaris
+    - |-
+      cd secrets
+      rm  -f ../{{.DEPLOY}}/secrets.zip
+      zip -r ../{{.DEPLOY}}/secrets.zip *
 
   # prepares all the system related actions
   prepare:
@@ -123,4 +132,4 @@ tasks:
     - task: devel_upload:prepare
     - task: devel_download:prepare
     - task: ferretdb:prepare
-                    
+    - task: secrets:prepare

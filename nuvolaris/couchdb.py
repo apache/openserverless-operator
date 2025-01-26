@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import kopf, os, logging, json, time
+import kopf, os, logging, json
 import nuvolaris.kustomize as kus
 import nuvolaris.kube as kube
 import nuvolaris.couchdb_util as cu

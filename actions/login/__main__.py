@@ -51,9 +51,21 @@ def build_error(message: str):
 def build_response(user_data):
     body = {}
     envs = list(user_data['env'])
+    if 'userenv' in user_data:
+        userenv = list(user_data['userenv'])
+    else :
+        userenv = []
 
+    # handle user envs
+    for env in userenv:
+        body[env['key']] = env['value']
+
+    # handle system envs
     for env in envs:
-        body[env['key']]=env['value']
+        if not env['key'] in body:
+            body[env['key']]=env['value']
+        else:
+            body[f"SYSTEM_{env['key']}"] = env['value']
 
     return {
         "statusCode": 200,
@@ -70,6 +82,8 @@ def map_data(user_data):
 
     if 'env' in user_data:
         resp['env'] = user_data['env']
+    if 'userenv' in user_data:
+        resp['userenv'] = user_data['userenv']
 
     if 'quota' in user_data:
         resp['quota'] = user_data['quota']    
@@ -90,7 +104,6 @@ def main(args):
 
         if user_data:
             if bu.verify_password(password, user_data['password']):
-            # if(password == user_data['password']):
                 return build_response(map_data(user_data))
             else:
                 return build_error(f"password mismatch for user {login}")
