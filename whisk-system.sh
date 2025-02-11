@@ -28,6 +28,11 @@ cd ${HOME}/actions/login
 rm  -f ${HOME}/deploy/whisk-system/login.zip
 zip -r ${HOME}/deploy/whisk-system/login.zip *
 
+cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/nuvolaris/user_config.py ${HOME}/actions/secrets/nuvolaris
+cd ${HOME}/actions/secrets
+rm  -f ${HOME}/deploy/whisk-system/secrets.zip
+zip -r ${HOME}/deploy/whisk-system/secrets.zip *
+
 cd ${HOME}/actions/content
 mkdir -p ${HOME}/actions/content/common
 cp ${HOME}/actions/common/minio_util.py ${HOME}/actions/content/common
