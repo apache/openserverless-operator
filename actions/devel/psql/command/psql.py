@@ -21,6 +21,7 @@ import common.util as ut
 
 from common.command_data import CommandData
 from psycopg.rows import dict_row
+import json
 
 class Psql():
     """
@@ -52,7 +53,7 @@ class Psql():
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(query)
                 result = cur.fetchall()                
-                input.result(str(result))
+                input.result(json.dumps(result))
                 input.status(200)
                 return input
 
