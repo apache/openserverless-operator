@@ -15,14 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import nuvolaris.config as cfg
-import nuvolaris.couchdb_util as cu
-import logging, json
+import json
+from base64 import b64decode
 
+from command.psql import Psql
 from common.authorize import Authorize
 from common.command_data import CommandData
-from command.psql import Psql
-from base64 import b64decode
+
 
 class ApiError(Exception):
     pass
@@ -60,10 +59,10 @@ def main(args):
     WARNING: the body will be received as base64 encoded string as this action will be deployed with --web raw enabled flag
     """
     headers = args['__ow_headers']
-    if('x-impersonate-auth' not in headers):
+    if 'x-impersonate-auth' not in headers:
         return build_error("invalid request, missing mandatory header: x-impersonate-auth")
 
-    if(len(args['__ow_body']) == 0):
+    if len(args['__ow_body']) == 0:
         return build_error("invalid request, no command payload received")
     
     try:        
