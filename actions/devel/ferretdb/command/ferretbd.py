@@ -19,9 +19,16 @@
 import common.util as ut
 import json
 
-
 from pymongo import MongoClient
 from common.command_data import CommandData
+from bson import ObjectId
+
+class JSONEncoder(json.JSONEncoder):
+  def default(self, obj):
+    if isinstance(obj, ObjectId):
+      return str(obj)  # Convert ObjectId to string
+
+    return super().default(obj)
 
 class FerretDB():
     """
@@ -56,8 +63,9 @@ class FerretDB():
         db = self._get_db()
         response = db.command(input.get_raw_data())
 
-        if response:                
-            input.result(str(response))
+        if response:
+            json_output = json.dumps(response, cls=JSONEncoder, indent=2)
+            input.result(json_output)
             input.status(200)               
         else:    
             input.result(f"ferretdb/mongodb operation failed")
