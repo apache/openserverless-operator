@@ -52,7 +52,7 @@ class Psql():
             # Open a cursor to perform database operations
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(query)
-                result = cur.fetchall()                
+                result = cur.fetchall()
                 input.result(json.dumps(result))
                 input.status(200)
                 return input
