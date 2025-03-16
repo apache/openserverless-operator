@@ -38,8 +38,7 @@ def build_response(data: CommandData):
         "statusCode": meta_data['status'],
         "body": meta_data['result']
     }
-    if is_json(meta_data['result']):
-        result['headers'] = { 'Content-Type': 'application/json' }
+    print(f"{result}")
     return result
 
 def parse_body(args):
