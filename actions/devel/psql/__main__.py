@@ -18,6 +18,7 @@
 import json
 from base64 import b64decode
 
+from common.util import is_json
 from command.psql import Psql
 from common.authorize import Authorize
 from common.command_data import CommandData
@@ -26,25 +27,32 @@ from common.command_data import CommandData
 class ApiError(Exception):
     pass
 
+
 def build_error(message: str):
     return {
         "statusCode": 400,
         "body": message
     }
 
-def build_response(data:CommandData):
+
+def build_response(data: CommandData):
     meta_data = data.get_metadata()
-    return {
+    result = {
         "statusCode": meta_data['status'],
         "body": meta_data['result']
     }
+    if is_json(meta_data['result']):
+        result['headers'] = { 'Content-Type': 'application/json' }
+    return result
+
 
 def parse_body(args):
     try:
-        return b64decode(args['__ow_body']).decode().strip()        
+        return b64decode(args['__ow_body']).decode().strip()
     except Exception as e:
         print(e)
         raise ApiError("could not parse __ow_body as base64")
+
 
 def main(args):
     """
@@ -64,10 +72,11 @@ def main(args):
 
     if len(args['__ow_body']) == 0:
         return build_error("invalid request, no command payload received")
-    
-    try:        
-        user_data = Authorize(args['couchdb_host'],args['couchdb_user'],args['couchdb_password']).login(headers['x-impersonate-auth'])               
+
+    try:
+        user_data = Authorize(args['couchdb_host'], args['couchdb_user'], args['couchdb_password']).login(
+            headers['x-impersonate-auth'])
         cmd = CommandData(json.loads(parse_body(args)))
         return build_response(Psql(user_data).execute(cmd))
-    except Exception as e:        
+    except Exception as e:
         return build_error(f"failed to execute nuv devel psql. Reason: {str(e)}")

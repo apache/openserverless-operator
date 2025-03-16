@@ -16,7 +16,7 @@
 # under the License.
 #
 
-import mimetypes
+import json
 
 def get_env_value(user_data, key):
     """
@@ -32,4 +32,15 @@ def get_env_value(user_data, key):
         if env['key'] == key:
             return env['value']
 
-    return None  
+    return None
+
+def is_json(value):
+    if isinstance(value, (dict, list)):  # Already a JSON-compatible structure
+        return True
+    if isinstance(value, str):  # Try parsing if it's a string
+        try:
+            json.loads(value)
+            return True
+        except json.JSONDecodeError:
+            return False
+    return False
