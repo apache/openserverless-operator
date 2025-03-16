@@ -15,10 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import nuvolaris.config as cfg
-import nuvolaris.couchdb_util as cu
-import logging, json
 
+import json
+
+from common.util import is_json
 from common.authorize import Authorize
 from command.minio import Minio
 from common.command_data import CommandData
@@ -33,12 +33,15 @@ def build_error(message: str):
         "body": message
     }
 
-def build_response(data:CommandData):
+def build_response(data: CommandData):
     meta_data = data.get_metadata()
-    return {
+    result = {
         "statusCode": meta_data['status'],
         "body": meta_data['result']
     }
+    if is_json(meta_data['result']):
+        result['headers'] = { 'Content-Type': 'application/json' }
+    return result
 
 def parse_body(args):
     try:
