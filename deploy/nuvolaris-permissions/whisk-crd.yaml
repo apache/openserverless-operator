@@ -702,6 +702,12 @@ spec:
                     replicas:
                       description: number of total postgres replicas (1 primary, N-1 replicas). Defaulted to 1
                       type: integer
+                    auto-compaction-retention:
+                      description: defines how long to retain historical versions of keys before automatically compacting them
+                      type: string
+                    quota-backend-bytes:
+                      description: the etcd backend database has a default size limit of 2 GiB. This can be increased explicitly
+                      type: integer
                     root:
                       description: ETCD root user credentials
                       type: object

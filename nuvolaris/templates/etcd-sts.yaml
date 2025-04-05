@@ -40,6 +40,10 @@ spec:
         env:
         - name: ETCD_INITIAL_CLUSTER
           value: {{etc_initial_cluster}}
+        - name: ETCD_AUTO_COMPACTION_RETENTION
+          value: "{{etcd_auto_compaction_retention}}"
+        - name: ETCD_QUOTA_BACKEND_BYTES
+          value: "{{etcd_quota_backend_bytes}}"
         image: docker.io/bitnami/etcd:3.5.17-debian-12-r0
         imagePullPolicy: IfNotPresent
   volumeClaimTemplates:
