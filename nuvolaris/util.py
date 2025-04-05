@@ -684,6 +684,8 @@ def get_etcd_config_data():
         "storageClass": cfg.get("nuvolaris.storageclass"),
         "root_password":cfg.get("etcd.root.password") or "s0meP@ass3wd",
         "etcd_replicas":get_etcd_replica(),
+        "etcd_auto_compaction_retention": cfg.get("etcd.auto_compaction_retention") or "1",
+        "etcd_quota_backend_bytes": cfg.get("etcd.quota-backend-bytes") or "2147483648",
         "namespace":"nuvolaris",
         "container_cpu_req": cfg.get('etcd.resources.cpu-req') or "250m",
         "container_cpu_lim": cfg.get('etcd.resources.cpu-lim') or "375m",

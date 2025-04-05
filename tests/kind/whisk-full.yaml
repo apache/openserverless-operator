@@ -73,6 +73,13 @@ spec:
     invoker:
       user: controller_admin
       password: s0meP@ass2
+  etcd:
+    volume-size: 5
+    replicas: 3
+    root:
+      password: 0therPa55
+    auto-compaction-retention: 1
+    quota-backend-bytes: 8589934592
   kafka:
     host: kafka
     volume-size: 5
