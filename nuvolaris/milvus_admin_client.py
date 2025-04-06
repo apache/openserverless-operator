@@ -18,13 +18,12 @@
 import logging
 
 import nuvolaris.config as cfg
-# from pymilvus import MilvusClient, connections,  db
 from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
 
 
 class MilvusAdminClient:
     """
-    Simple Milvus Client used to perform Mivlus administration Tasks
+    Simple Milvus Client used to perform Milvus administration Tasks
     """
     def __init__(self, db_name="default"):
         self.admin_username   = cfg.get("milvus.admin.user", "MILVUS_ROOT_USER", "root")
