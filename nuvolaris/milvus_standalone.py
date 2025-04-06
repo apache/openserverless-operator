@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+import time
 
 import kopf, logging
 import nuvolaris.kube as kube
@@ -89,6 +90,13 @@ def create(owner=None):
         kube.apply(mspec)
         util.wait_for_pod_ready(
             r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')].metadata.name}")
+
+        milvus_api_host = cfg.get("milvus.host", "MILVUS_API_HOST", "nuvolaris-milvus")
+        milvus_api_port = cfg.get("milvus.host", "MILVUS_API_PORT", "19530")
+
+        logging.info("*** waiting for milvus api to be available")
+        util.wait_for_http(f"http://{milvus_api_host}:{milvus_api_port}", up_statuses=[200,401], timeout=30)
+
         res = create_default_milvus_database(data)
         logging.info("*** created a milvus standalone instance")
 
