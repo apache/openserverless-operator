@@ -16,13 +16,22 @@
 # under the License.
 #
 # this module wraps utilities functions
-import nuvolaris.kube as kube
 import logging
-import time, random, math, os
-import nuvolaris.config as cfg
+import math
+import random
+import time
 import uuid
-import nuvolaris.apihost_util as apihost_util
 from base64 import b64decode, b64encode
+from typing import List, Union
+from urllib.parse import urlparse
+
+import urllib3
+from urllib3.exceptions import NewConnectionError, MaxRetryError, ProtocolError
+
+import nuvolaris.apihost_util as apihost_util
+import nuvolaris.config as cfg
+import nuvolaris.kube as kube
+
 
 # Implements truncated exponential backoff from
 # https://cloud.google.com/storage/docs/retry-strategy#exponential-backoff
@@ -189,6 +198,74 @@ def wait_for_pod_ready(pod_name_jsonpath, timeout="600s", namespace="nuvolaris")
             time.sleep(1)
     except Exception as e:
         logging.error(e)
+
+
+def status_matches(code: int, allowed: List[Union[int, str]]) -> bool:
+    """Check if the status code matches any allowed pattern."""
+    for pattern in allowed:
+        if isinstance(pattern, int) and code == pattern:
+            return True
+        if isinstance(pattern, str) and len(pattern) == 3 and pattern.endswith("XX"):
+            if int(pattern[0]) == code // 100:
+                return True
+    return False
+
+def status_matches(code: int, allowed: List[Union[int, str]]) -> bool:
+    """Check if the status code matches any allowed pattern."""
+    for pattern in allowed:
+        if isinstance(pattern, int) and code == pattern:
+            return True
+        if isinstance(pattern, str) and len(pattern) == 3 and pattern.endswith("XX"):
+            if int(pattern[0]) == code // 100:
+                return True
+    return False
+
+def wait_for_http(url: str, timeout: int = 60, up_statuses: List[Union[int, str]] = [200]):
+    """Wait until an HTTP endpoint becomes available with an accepted status code.
+
+    Args:
+        url (str): Full URL to check (e.g. http://milvus:9091/healthz)
+        timeout (int): Total seconds to wait before giving up.
+        up_statuses (List[Union[int, str]]): Status codes or patterns considered as 'UP'.
+
+    Raises:
+        TimeoutError: If the endpoint doesn't respond with a valid status within the timeout.
+    """
+    parsed = urlparse(url)
+    scheme = parsed.scheme
+    host = parsed.hostname
+    port = parsed.port or (443 if scheme == "https" else 80)
+    path = parsed.path or "/"
+
+    if scheme == "https":
+        conn = urllib3.connectionpool.HTTPSConnectionPool(host, port=port,
+                                                          timeout=urllib3.util.Timeout(connect=5.0, read=5.0),
+                                                          retries=False)
+    else:
+        conn = urllib3.connectionpool.HTTPConnectionPool(host, port=port,
+                                                         timeout=urllib3.util.Timeout(connect=5.0, read=5.0),
+                                                         retries=False)
+
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        try:
+            response = conn.request("GET", path)
+            if status_matches(response.status, up_statuses):
+                logging.info(f"Service is up: {url} (status {response.status})")
+                return
+            else:
+                logging.warning(f"Service responded with {response.status}, not in {up_statuses}. Waiting...")
+        except (NewConnectionError, MaxRetryError):
+            logging.warning(f"Cannot connect to {url}, retrying...")
+        except ProtocolError as e:
+            if "Connection reset by peer" in str(e):
+                logging.warning("Connection reset by peer. Sleeping 2 seconds...")
+                time.sleep(2)
+                continue
+            else:
+                logging.error(f"Protocol error: {e}")
+        time.sleep(1)
 
 # return mongodb configuration parameter with default valued if not configured
 def get_mongodb_config_data():
@@ -684,6 +761,8 @@ def get_etcd_config_data():
         "storageClass": cfg.get("nuvolaris.storageclass"),
         "root_password":cfg.get("etcd.root.password") or "s0meP@ass3wd",
         "etcd_replicas":get_etcd_replica(),
+        "etcd_auto_compaction_retention": cfg.get("etcd.auto_compaction_retention") or "1",
+        "etcd_quota_backend_bytes": cfg.get("etcd.quota-backend-bytes") or "2147483648",
         "namespace":"nuvolaris",
         "container_cpu_req": cfg.get('etcd.resources.cpu-req') or "250m",
         "container_cpu_lim": cfg.get('etcd.resources.cpu-lim') or "375m",
