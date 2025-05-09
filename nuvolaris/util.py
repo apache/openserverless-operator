@@ -449,7 +449,7 @@ def get_postgres_config_data():
         'postgres_nuvolaris_user': "nuvolaris",
         'postgres_nuvolaris_password': cfg.get('postgres.nuvolaris.password') or "s0meP@ass3",
         'size': cfg.get('postgres.volume-size') or 10,
-        'replicas': cfg.get('postgres.admin.replicas') or 2,
+        'replicas': cfg.get('postgres.replicas') or 2,
         'storageClass': cfg.get('nuvolaris.storageclass'),
         'failover': cfg.get('postgres.failover') or False,
         'backup': cfg.get('postgres.backup.enabled') or False,
