@@ -120,7 +120,7 @@ def restricted_kustomize(where, *what, templates=[], templates_filter=[],data={}
               continue
             if file in templates_filter:  
               f.write(f"- {file}\n")
-        # adding extra temmplatized resources
+        # adding extra templatized resources
         for template in templates:
             out = f"deploy/{where}/__{template}"
             file = ntp.spool_template(template, out, data)
