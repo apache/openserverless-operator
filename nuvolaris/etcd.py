@@ -25,6 +25,9 @@ import os.path
 import logging
 import kopf
 
+from nuvolaris.util import get_etcd_replica
+
+
 def create(owner=None):
     logging.info("create etcd")
     data = util.get_etcd_config_data()
@@ -34,9 +37,14 @@ def create(owner=None):
     if(data['affinity'] or data['tolerations']):
        tplp.append("affinity-tolerance-sts-core-attach.yaml")
 
+    spec_templates = []
+    replicas = get_etcd_replica()
+    if replicas > 1:
+        spec_templates.append("etcd-policy.yaml")
+
     kust = kus.patchTemplates("etcd",tplp , data)
     kust += kus.patchGenericEntry("Secret","nuvolaris-etcd-secret","/data/rootPassword",util.b64_encode(data['root_password']))    
-    spec = kus.kustom_list("etcd", kust, templates=[], data=data)
+    spec = kus.kustom_list("etcd", kust, templates=spec_templates, data=data)
 
     if owner:
         kopf.append_owner_reference(spec['items'], owner)
