@@ -1,0 +1,110 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+# Source: milvus/templates/standalone-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nuvolaris-milvus-standalone
+  namespace: nuvolaris
+  labels:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: nuvolaris-milvus
+    component: "standalone"    
+  annotations:
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: milvus
+      app.kubernetes.io/instance: nuvolaris-milvus
+      component: "standalone"
+  template:
+    metadata:
+      labels:
+        name: nuvolaris-milvus
+        app.kubernetes.io/name: milvus
+        app.kubernetes.io/instance: nuvolaris-milvus
+        component: "standalone"
+      annotations:        
+        whisks.nuvolaris.org/annotate-version: "true"                       
+    spec:
+      serviceAccountName: default
+      initContainers:
+      containers:
+      - name: standalone
+        image: "milvusdb/milvus:v2.5.2"
+        imagePullPolicy: IfNotPresent
+        args: [ "milvus", "run", "standalone"]
+        ports:
+          - name: milvus
+            containerPort: 19530
+            protocol: TCP
+          - name: metrics
+            containerPort: 9091
+            protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: metrics
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: metrics
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+        resources:
+          {}
+        env:
+        volumeMounts:
+        - mountPath: /milvus/tools
+          name: tools
+        - name: milvus-config
+          mountPath: /milvus/configs/default.yaml
+          subPath: default.yaml
+          readOnly: true
+        - name: milvus-config
+          mountPath: /milvus/configs/user.yaml
+          subPath: user.yaml
+          readOnly: true
+        - name: milvus-data-disk
+          mountPath: "/var/lib/milvus"
+          subPath: 
+        - mountPath: /var/lib/milvus/data
+          name: disk
+      volumes:
+      - emptyDir: {}
+        name: tools
+      - name: milvus-config
+        configMap:
+          name: nuvolaris-milvus
+      - name: milvus-data-disk
+        persistentVolumeClaim:
+          claimName: nuvolaris-milvus
+      - name: disk
+        emptyDir: {}
