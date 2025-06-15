@@ -814,7 +814,8 @@ def get_milvus_config_data():
         'nuvolaris_password': cfg.get('milvus.nuvolaris.password') or "Nuv0therPa55",
         'milvus_max_role_num': cfg.get('milvus.proxy.max-role-num') or 10,
         'milvus_max_user_num': cfg.get('milvus.proxy.max-user-num') or 100,
-        'milvus_max_database_num': cfg.get('milvus.root-coord.max-database-num') or 64
+        'milvus_max_database_num': cfg.get('milvus.root-coord.max-database-num') or 64,
+        'slim': cfg.get('nuvolaris.slim') or False,
         }
 
     data["etcd_range"]=range(data["etcd_replicas"])
