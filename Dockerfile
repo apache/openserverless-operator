@@ -68,6 +68,7 @@ ADD --chown=nuvolaris:nuvolaris deploy/kvrocks /home/nuvolaris/deploy/kvrocks
 ADD --chown=nuvolaris:nuvolaris deploy/etcd /home/nuvolaris/deploy/etcd
 ADD --chown=nuvolaris:nuvolaris deploy/milvus-operator /home/nuvolaris/deploy/milvus-operator
 ADD --chown=nuvolaris:nuvolaris deploy/milvus /home/nuvolaris/deploy/milvus
+ADD --chown=nuvolaris:nuvolaris deploy/milvus-slim /home/nuvolaris/deploy/milvus-slim
 ADD --chown=nuvolaris:nuvolaris quota.sh /home/nuvolaris/
 
 #------------------------------------------------------------------------------
