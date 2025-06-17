@@ -32,41 +32,50 @@ from nuvolaris.user_metadata import UserMetadata
 
 
 def patchEntries(data: dict):
-    tplp = ["milvus-cfg-base.yaml", "milvus.yaml"]
+    src_folder = "milvus"
+    if data['slim']:
+        src_folder += "-slim"
+        tplp = ["milvus-cfg-slim-base.yaml"]
+    else:
+        tplp = ["milvus-cfg-base.yaml"]
+    
+    tplp.append("milvus.yaml")
 
     if (data['affinity'] or data['tolerations']):
         tplp.append("affinity-tolerance-dep-core-attach.yaml")
 
-    kust = kus.patchTemplates("milvus", tplp, data)
+    kust = kus.patchTemplates(src_folder, tplp, data)
     kust += kus.patchGenericEntry("Secret", "nuvolaris-milvus-etcd-secret", "/data/username",
                                   util.b64_encode(data['milvus_etcd_username']))
     kust += kus.patchGenericEntry("Secret", "nuvolaris-milvus-etcd-secret", "/data/password",
                                   util.b64_encode(data['milvus_etcd_password']))
-
+    
     kust += kus.patchGenericEntry("Secret", "nuvolaris-milvus-s3-secret", "/stringData/accesskey",
                                   data['milvus_s3_username'])
     kust += kus.patchGenericEntry("Secret", "nuvolaris-milvus-s3-secret", "/stringData/secretkey",
                                   data['milvus_s3_password'])
 
+    
     kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus", "/spec/storageClassName",
                                   data['storageClass'])
     kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus", "/spec/resources/requests/storage",
                                   f"{data['size']}Gi")
 
-    kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-zookeeper", "/spec/storageClassName",
-                                  data['storageClass'])
-    kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-zookeeper",
-                                  "/spec/resources/requests/storage", f"{data['zookeeper_size']}Gi")
+    if not data["slim"]:
+        kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-zookeeper", "/spec/storageClassName",
+                                    data['storageClass'])
+        kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-zookeeper",
+                                    "/spec/resources/requests/storage", f"{data['zookeeper_size']}Gi")
 
-    kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-journal", "/spec/storageClassName",
-                                  data['storageClass'])
-    kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-journal",
-                                  "/spec/resources/requests/storage", f"{data['bookie_journal_size']}Gi")
+        kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-journal", "/spec/storageClassName",
+                                    data['storageClass'])
+        kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-journal",
+                                    "/spec/resources/requests/storage", f"{data['bookie_journal_size']}Gi")
 
-    kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-ledgers", "/spec/storageClassName",
-                                  data['storageClass'])
-    kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-ledgers",
-                                  "/spec/resources/requests/storage", f"{data['bookie_ledgers_size']}Gi")
+        kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-ledgers", "/spec/storageClassName",
+                                    data['storageClass'])
+        kust += kus.patchGenericEntry("PersistentVolumeClaim", "nuvolaris-milvus-bookie-ledgers",
+                                    "/spec/resources/requests/storage", f"{data['bookie_ledgers_size']}Gi")
     return kust
 
 
@@ -76,11 +85,15 @@ def create(owner=None):
     """
     data = util.get_milvus_config_data()
     res = create_milvus_accounts(data)
-
+    dir = "milvus"
     if res:
-        logging.info("*** creating a milvus standalone instance")
+        if data['slim']:
+            dir += "-slim"
+        
+        logging.info(f"*** creating a {dir} standalone instance")
+
         kust = patchEntries(data)
-        mspec = kus.kustom_list("milvus", kust, templates=[], data=data)
+        mspec = kus.kustom_list(dir, kust, templates=[], data=data)
 
         if owner:
             kopf.append_owner_reference(mspec['items'], owner)

@@ -80,7 +80,7 @@ def whisk_create(spec, name, **kwargs):
         "static": "?", # Minio static endpoint provider
         "zookeeper": "?", #Zookeeper configuration
         "quota":"?", #Quota configuration
-        "etcd":"?"
+        "etcd":"?" #Etcdd configuration
     }
 
     runtime = cfg.get('nuvolaris.kube')
