@@ -20,9 +20,9 @@
 import os
 
 import nuvolaris.config as cfg
-import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
 import nuvolaris.minio_deploy as minio
+import nuvolaris.etcd as etcd
 import nuvolaris.testutil as tu
 from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
 from nuvolaris.user_config import UserConfig
@@ -35,9 +35,10 @@ from nuvolaris.user_metadata import UserMetadata
 !kubectl -n nuvolaris delete pvc --all
 
 # test
-assert(cfg.configure(tu.load_sample_config()))
+
+assert(cfg.configure(tu.load_sample_config("kind/whisk-slim")))
 assert(cfg.detect_storage()["nuvolaris.storageclass"])
-assert(cfg.get("nuvolaris.slim") == None or cfg.get("nuvolaris.slim") == False)
+assert(cfg.get("nuvolaris.slim") == True)
 
 # for this test minioClient and Milvus should see this env variable
 os.environ['MINIO_API_HOST']='localhost'
@@ -80,6 +81,7 @@ assert host
 assert token
 assert database
 assert port
+
 
 # test client
 client = MilvusClient(uri=f'http://localhost:{port}',token=token, db_name=database)

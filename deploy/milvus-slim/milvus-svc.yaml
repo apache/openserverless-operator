@@ -15,45 +15,31 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.git-hooks/
-__pycache__/
-__pypackages__
-.pdm.toml
-.*-version
-kubeconfig
-openwhisk-deploy-kube/
-kustomization.yaml
-playground
-examples/
-aliases
-deploy/extract/
-deploy/whisk-system/
-deploy/**/*_generated.yaml
-actions/**/*.zip
-node_modules/
-.env
-__*
-clusters/id_rsa*
-clusters/controlplane.yaml
-clusters/talosconfig
-clusters/worker.yaml
-*.kubeconfig
-run.pid
-*.off
-actions/**/nuvolaris/**/*
-!actions/**/__main__.py
-_*.yaml
-apihost.txt
-.git-hooks/
-installer
-whisk.properties
-.task/
-*.log
-.latestcheck
-_failed.txt
-deploy.tar
-actions/github/callback/common
-actions/github/webhook/common
-.direnv/
-.idea/**
-.vscode/**
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nuvolaris-milvus
+  namespace: nuvolaris
+  labels:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: nuvolaris-milvus
+    component: "standalone"
+spec:
+  type: NodePort
+  ports:
+    - name: milvus
+      port: 19530
+      nodePort: 32530
+      protocol: TCP
+      targetPort: milvus
+    - name: metrics
+      protocol: TCP
+      port: 9091
+      nodePort: 32531
+      targetPort: metrics
+  selector:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: nuvolaris-milvus
+    component: "standalone"
+  

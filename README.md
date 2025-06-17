@@ -63,7 +63,7 @@ trigger a creation of the image.
 2. With VSCode, access the development VM, open the workspace `openserverless/openserverless.code-workspace` and then
    open a terminal with `operator` subproject: this will enable the `nix` environment with direnv (provided by the VM).
 
-3. Create a fork of `githbub.com/apache/openserverless-operator`
+3. Create a fork of `github.com/apache/openserverless-operator`
 
 4. Copy .env.dist in .env and put your GitHub username in it
 
