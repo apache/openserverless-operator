@@ -60,9 +60,11 @@ spec:
     provisioner: auto #rancher.io/local-path
     ingressclass: auto #nginx
     ingresslb: auto #ingress-nginx/ingress-nginx-controller
-    slim: True
-    affinity: true 
-    tolerations: true
+    slim: true
+    affinity: false 
+    tolerations: false
+    preload:
+      only-apache: true
   couchdb:
     host: couchdb
     port: 5984
