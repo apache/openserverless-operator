@@ -17,7 +17,6 @@
 #
 import yaml
 import re
-import flatdict
 import json
 import time
 import os
