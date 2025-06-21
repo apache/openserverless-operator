@@ -1,0 +1,44 @@
+import nuvolaris.config as cfg
+import nuvolaris.runtimes_preloader as preloader
+import nuvolaris.util as util
+import nuvolaris.runtimes_util as rutil
+import nuvolaris.testutil as tu
+import nuvolaris.kube as kube
+import json
+
+def cleanup():
+    try:
+        get_ipython().system("kubectl -n nuvolaris delete all --all")
+        get_ipython().system("kubectl -n nuvolaris delete pvc --all")
+    except NameError:
+        import subprocess
+        subprocess.run(["kubectl", "-n", "nuvolaris", "delete", "all", "--all"], check=True)
+        subprocess.run(["kubectl", "-n", "nuvolaris", "delete", "pvc", "--all"], check=True)
+
+
+cleanup()
+
+# Test with Apache runtimes
+assert(cfg.configure(tu.load_sample_config()))
+assert(preloader.create())
+
+# Wait for the job to complete
+while not kube.wait("job.batch/preload-runtimes", "condition=complete"): pass
+
+runtimes_as_json = util.get_runtimes_json_from_config_map()
+data=rutil.parse_runtimes(json.loads(runtimes_as_json))
+
+assert(len(data['containers']) > 0), "Expected one or more containers in the preloader data"
+for container in data['containers']:
+    print(f"Container: {container['name']}, Image: {container['image']}")
+    assert('name' in container), "Expected 'name' in container"
+    assert('image' in container), "Expected 'image' in container"
+
+count_apache = sum(1 for container in data['containers'] if container['image'].startswith('apache/'))
+count_non_apache = len(data['containers']) - count_apache
+
+assert(count_apache > 0), "Expected at least one Apache runtime in the preloader data"
+assert(count_non_apache == 0), "Expected no non-Apache runtimes in the preloader data"
+
+assert(preloader.delete())
+cleanup()

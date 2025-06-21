@@ -25,10 +25,11 @@ import json
 
 def create(owner=None):
     logging.info(f"*** configuring runtime preloader")
+    only_apache = cfg.get("nuvolaris.preloader.only_apache", defval=True)
 
     runtimes_as_json = util.get_runtimes_json_from_config_map()
-    data=rutil.parse_runtimes(json.loads(runtimes_as_json))
-
+    data=rutil.parse_runtimes(json.loads(runtimes_as_json), only_apache)
+    
     kust = kus.patchTemplates("runtimes", ["runtimes-job-container-attach.yaml"], data)
     spec = kus.kustom_list("runtimes", kust, templates=[], data=data)
     
@@ -41,8 +42,6 @@ def create(owner=None):
 
     logging.info("*** configured runtime preloader")
     return res
-
-
 
 def delete_by_owner():
     spec = kus.build("runtimes")

@@ -21,7 +21,7 @@ import nuvolaris.kustomize as kus
 import nuvolaris.config as cfg
 import nuvolaris.util as util
 
-def find_default_container(containers: list, container_name, runtime_list):
+def find_default_container(containers: list, container_name, runtime_list, only_apache=True):
     """ Scans for the inner runtime list and add an entry into the containers for the default one if any
     :param containers, the global containers array
     :param container_name, the name that will be assigned for the containers preloader
@@ -30,26 +30,28 @@ def find_default_container(containers: list, container_name, runtime_list):
     for runtime in runtime_list:        
         if runtime['default']:
             img = runtime['image']
-            container = {
-                "name": container_name,
-                "image": f"{img['prefix']}/{img['name']}:{img['tag']}"
-                }
-            containers.append(container)    
+            is_apache = img['prefix'] == 'apache'
+            if not only_apache or is_apache:
+                container = {
+                    "name": container_name,
+                    "image": f"{img['prefix']}/{img['name']}:{img['tag']}"
+                    }
+                containers.append(container)    
 
-def parse_runtimes(runtimes_as_json):
+def parse_runtimes(runtimes_as_json, only_apache=True):
     """ parse an openwhisk runtimes json and returns a stuitable data structure to customize the preloader jon
     :param runtimes_as_json a runtime json typically extracted from a config map
     >>> import nuvolaris.testutil as tutil
     >>> runtimes_as_json = tutil.load_sample_runtimes()
     >>> data = parse_runtimes(runtimes_as_json)
-    >>> len(data['containers']) == 8
+    >>> len(data['containers']) == 5
     True
     """
     data = {}
     containers = list()
 
     for name in runtimes_as_json["runtimes"]:        
-        find_default_container(containers, name, runtimes_as_json["runtimes"][name])
+        find_default_container(containers, name, runtimes_as_json["runtimes"][name], only_apache)
            
     data['containers']=containers
     return data
