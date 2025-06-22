@@ -1,5 +1,21 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
 import nuvolaris.config as cfg
-import nuvolaris.runtimes_preloader as preloader
 import nuvolaris.util as util
 import nuvolaris.runtimes_util as rutil
 import nuvolaris.testutil as tu
@@ -20,10 +36,6 @@ cleanup()
 
 # Test with Apache runtimes
 assert(cfg.configure(tu.load_sample_config()))
-assert(preloader.create())
-
-# Wait for the job to complete
-while not kube.wait("job.batch/preload-runtimes", "condition=complete"): pass
 
 runtimes_as_json = util.get_runtimes_json_from_config_map()
 data=rutil.parse_runtimes(json.loads(runtimes_as_json))
@@ -40,5 +52,5 @@ count_non_apache = len(data['containers']) - count_apache
 assert(count_apache > 0), "Expected at least one Apache runtime in the preloader data"
 assert(count_non_apache == 0), "Expected no non-Apache runtimes in the preloader data"
 
-assert(preloader.delete())
+
 cleanup()
