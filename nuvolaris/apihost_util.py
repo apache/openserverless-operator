@@ -190,9 +190,6 @@ def get_user_static_hostname(runtime, username, apihost):
     inside the cm/config configMap prepending the user_namespace when needed.
     """
     
-    if runtime == 'kind':
-        return f"{username}.localhost"
-
     if apihost not in ["auto"]:
         return apihost
 
