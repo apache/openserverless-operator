@@ -18,9 +18,17 @@
 # this module wraps generation of kustomizations
 
 import os, io, yaml, subprocess
-import nuvolaris.kube as kube
 import nuvolaris.kustomize as nku
 import nuvolaris.template as ntp
+import nuvolaris.ops as ops
+
+def deploy_dir(where):
+    """
+    Generates the deployment directory path.
+
+    This function centralizes the directory path generation logic.
+    """
+    return ops.directory("deploy", where)
 
 # execute the kustomization of a folder under "deploy"
 # specified with `where`
@@ -46,14 +54,14 @@ def kustomize(where, *what, templates=[], data={}):
     name: test-svc
     """
     # prepare the kustomization
-    dir = f"deploy/{where}"
+    dir = deploy_dir(where)
     tgt = f"{dir}/kustomization.yaml"
     with open(tgt, "w") as f:
         f.write("apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n")
         for s in list(what):
             f.write(s)
         f.write("resources:\n")
-        dirs = os.listdir(f"deploy/{where}")
+        dirs = os.listdir(dir)
         dirs.sort()
         for file in dirs:
             if file == "kustomization.yaml":
@@ -63,7 +71,7 @@ def kustomize(where, *what, templates=[], data={}):
             f.write(f"- {file}\n")
         # adding extra temmplatized resources
         for template in templates:
-            out = f"deploy/{where}/__{template}"
+            out = f"{dir}/__{template}"
             file = ntp.spool_template(template, out, data)
             f.write(f"- __{template}\n")
     res = subprocess.run(["kustomize", "build", dir], capture_output=True)
@@ -75,7 +83,7 @@ def kustomize(where, *what, templates=[], data={}):
 # this methid will be used to extract the existing kustomization in case
 # the nuvolaris operator needs to delete a component
 def build(where):
-    dir = f"deploy/{where}"
+    dir = deploy_dir(where)
     res = subprocess.run(["kustomize", "build", dir], capture_output=True)
     return res.stdout.decode("utf-8")   
 
@@ -104,14 +112,14 @@ def restricted_kustomize(where, *what, templates=[], templates_filter=[],data={}
     name: test-svc
     """
     # prepare the kustomization
-    dir = f"deploy/{where}"
+    dir = deploy_dir(where)
     tgt = f"{dir}/kustomization.yaml"
     with open(tgt, "w") as f:
         f.write("apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n")
         for s in list(what):
             f.write(s)
         f.write("resources:\n")
-        dirs = os.listdir(f"deploy/{where}")
+        dirs = os.listdir(dir)
         dirs.sort()
         for file in dirs:
             if file == "kustomization.yaml":
@@ -122,7 +130,7 @@ def restricted_kustomize(where, *what, templates=[], templates_filter=[],data={}
               f.write(f"- {file}\n")
         # adding extra templatized resources
         for template in templates:
-            out = f"deploy/{where}/__{template}"
+            out = f"{dir}/__{template}"
             file = ntp.spool_template(template, out, data)
             f.write(f"- __{template}\n")
     res = subprocess.run(["kustomize", "build", dir], capture_output=True)
@@ -165,7 +173,7 @@ def configMapTemplate(name, where, template, data):
       files:
       - test.json=__test.json
     """
-    out = f"deploy/{where}/__{template}"
+    out = f"{deploy_dir(where)}/__{template}"
     file = ntp.spool_template(template, out, data)
     return f"""configMapGenerator:
 - name: {name}
@@ -186,7 +194,7 @@ def patchTemplate(where, template, data):
     >>> os.path.exists("deploy/test/__set-attach.yaml")
     True
     """
-    out = f"deploy/{where}/__{template}"
+    out = f"{deploy_dir(where)}/__{template}"
     file = ntp.spool_template(template, out, data)
     return f"""patches:
 - path: __{template}
@@ -207,7 +215,7 @@ def patchTemplates(where, templates=[], data={}):
     """
     paths = []
     for template in templates:
-      out = f"deploy/{where}/__{template}"
+      out = f"{deploy_dir(where)}/__{template}"
       file = ntp.spool_template(template, out, data)
       paths.append(f"- path: __{template}\n")
 
@@ -272,17 +280,17 @@ def restricted_kustom_list(where, *what, templates=[], templates_filter=[], data
 
 # load the given yaml file under deploy/{where} folder
 def raw(where, yamlfile):
-  with open(f"deploy/{where}/{yamlfile}", 'r') as f:
+  with open(f"{deploy_dir(where)}/{yamlfile}", 'r') as f:
     return list(yaml.load_all(f, yaml.Loader))
 
 def processTemplate(where,template,data,out_template=None):
     """
     merges the given template and write it under the deploy/{where} folder returning a kind list items
     """  
-    out = f"deploy/{where}/_{template}"
+    out = f"{deploy_dir(where)}/_{template}"
 
     if(out_template):
-      out = f"deploy/{where}/{out_template}"
+      out = f"{deploy_dir(where)}/{out_template}"
 
     ntp.spool_template(template, out, data)
     with open(out, 'r') as f:
@@ -293,7 +301,7 @@ def renderTemplate(where,template,data,out_template):
     """
     merges the given template and write it under the deploy/{where} folder returning the relative generated file path
     """  
-    out = f"deploy/{where}/{out_template}"
+    out = f"{deploy_dir(where)}/{out_template}"
     ntp.spool_template(template, out, data)
     return out
 
