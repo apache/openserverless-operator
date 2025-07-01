@@ -15,10 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import os, re
+import re
 
+import nuvolaris.ops as nuvprefix
 from jinja2 import Environment, FileSystemLoader
-loader = FileSystemLoader(["./nuvolaris/templates", "./nuvolaris/files", "./nuvolaris/policies"])
+
+loader = FileSystemLoader([
+    nuvprefix.directory("nuvolaris", "templates"),
+    nuvprefix.directory("nuvolaris", "files"),
+    nuvprefix.directory("nuvolaris", "policies")])
 env = Environment(loader=loader)
 
 # expand template
