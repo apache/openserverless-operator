@@ -178,12 +178,16 @@ def render_postgres_script(namespace,template,data):
     file = ntp.spool_template(template, out, data)
     return os.path.abspath(file)
 
-def exec_psql_command(pod_name,path_to_psql_script,path_to_pgpass):
+def exec_psql_command(pod_name,path_to_psql_script,path_to_pgpass,additional_psql_args=''):
     logging.info(f"passing script {path_to_psql_script} to pod {pod_name}")
     res = kube.kubectl("cp",path_to_psql_script,f"{pod_name}:{path_to_psql_script}")
     res = kube.kubectl("cp",path_to_pgpass,f"{pod_name}:/tmp/.pgpass")
     res = kube.kubectl("exec","-it",pod_name,"--","/bin/bash","-c",f"chmod 600 /tmp/.pgpass")
-    res = kube.kubectl("exec","-it",pod_name,"--","/bin/bash","-c",f"PGPASSFILE='/tmp/.pgpass' psql --username postgres --dbname postgres -f {path_to_psql_script}")
+
+    cmd = f"PGPASSFILE='/tmp/.pgpass' psql --username postgres --dbname postgres {additional_psql_args} -f {path_to_psql_script}"
+    logging.info(f"executing command: {cmd}")
+    res = kube.kubectl("exec","-it",pod_name,"--","/bin/bash","-c",cmd)
+    
     os.remove(path_to_psql_script)
     os.remove(path_to_pgpass)
     return res
@@ -209,6 +213,10 @@ def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
             if res:
                 _add_pdb_user_metadata(ucfg, user_metadata)
                 
+                path_to_pgpass = render_postgres_script(ucfg.get('namespace'),"dbname_pgpass_tpl.properties",data)
+                path_to_schema_script = render_postgres_script(ucfg.get('namespace'),"postgres_manage_user_schema_tpl.sql",data)
+                res = exec_psql_command_in_db(database,pod_name,path_to_schema_script,path_to_pgpass)
+
                 data["extensions"]=["vector"]
                 path_to_pgpass = render_postgres_script(ucfg.get('namespace'),"dbname_pgpass_tpl.properties",data)
                 path_to_extensions_script = render_postgres_script(ucfg.get('namespace'),"postgres_manage_user_extension_tpl.sql",data)
@@ -232,12 +240,17 @@ def delete_db_user(namespace, database):
         data["database"]=database
         data["mode"]="delete"
 
-        path_to_pgpass = render_postgres_script(namespace,"pgpass_tpl.properties",data)
-        path_to_mdb_script = render_postgres_script(namespace,"postgres_manage_user_tpl.sql",data)
+        
         pod_name = util.get_pod_name_by_selector("app=nuvolaris-postgres","{.items[?(@.metadata.labels.replicationRole == 'primary')].metadata.name}")
 
         if(pod_name):
-            res = exec_psql_command(pod_name,path_to_mdb_script,path_to_pgpass)
+            path_to_pgpass = render_postgres_script(namespace,"pgpass_tpl.properties",data)
+            path_to_ter_script = render_postgres_script(namespace,"postgres_terminate_tpl.sql",data)    
+            res = exec_psql_command(pod_name,path_to_ter_script,path_to_pgpass,' -q -t ')
+
+            path_to_pgpass = render_postgres_script(namespace,"pgpass_tpl.properties",data)
+            path_to_mdb_script = render_postgres_script(namespace,"postgres_manage_user_tpl.sql",data)    
+            res += exec_psql_command(pod_name,path_to_mdb_script,path_to_pgpass)
             return res 
 
         return None
