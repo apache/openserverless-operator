@@ -54,14 +54,23 @@ class MinioClient:
             error = res.stderr.decode()
             
             if returncode != 0:
+                self.last_output = error
                 logging.error(error)
             else:
+                self.last_output = output
                 logging.info(output)
 
             return returncode == 0
         except Exception as e:
-                        logging.error(e)
-                        return e
+                    logging.error(e)
+                    return e
+
+    def get_last_output(self):
+        """
+        returns the last output of the executed command
+        """
+        return self.last_output if hasattr(self, 'last_output') else None    
+    
 
     def add_user(self, username, secret_key):
         """
@@ -101,6 +110,7 @@ class MinioClient:
         assign the specified quota on the given bucket
         """        
         return util.check(self.mc("quota","set",f"{self.alias}/{bucket_name}","--size", f"{quota}m"),"assign_quota_to_bucket",True)
+        
 
     def assign_policy_to_user(self, username, policy):
         """

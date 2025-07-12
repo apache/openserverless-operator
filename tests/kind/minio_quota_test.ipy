@@ -18,10 +18,11 @@
 import os
 
 import nuvolaris.config as cfg
-import nuvolaris.kube as kube
 import nuvolaris.minio_deploy as minio
+import nuvolaris.minio_util as mutil
 import nuvolaris.testutil as tu
 import nuvolaris.util as util
+import json
 
 tu.run_proc("kubectl -n nuvolaris delete all --all")
 tu.run_proc("kubectl -n nuvolaris delete pvc --all")
@@ -30,18 +31,39 @@ tu.run_proc("kubectl -n nuvolaris delete pvc --all")
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["nuvolaris.storageclass"])
 
-# for this test minioClient should see this env variable
 os.environ['MINIO_API_HOST']='localhost'
-
 assert(minio.create())
 
 pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'minio')].metadata.name}")
 assert(pod_name)
 
-actual_minio_root_user = kube.kubectl("get", f"pods/{pod_name}", jsonpath="{.spec.containers[0].env[0].value}")
-configured_minio_root_user = cfg.get('minio.admin.user')
-assert(actual_minio_root_user[0] == configured_minio_root_user)
+minioClient = mutil.MinioClient()
+assert(minioClient.make_bucket("ftt-data"))
+assert(minioClient.make_public_bucket("ftt-web"))
+assert(minioClient.add_user("ftt","jgfkjsgcasgfjgdsafgsdkfgkaj"))
+assert(minioClient.assign_rw_bucket_policy_to_user("ftt",["ftt-web/*","ftt-data/*"]))
 
-cm_minio_url = kube.kubectl("get", f"cm/config", jsonpath="{.metadata.annotations.s3_host}")
-assert(cm_minio_url)
+assert(minioClient.assign_quota_to_bucket("ftt-data",10))
+
+# upload 7M
+tu.run_proc(f"dd if=/dev/urandom of=/tmp/__minio_test_file1 bs=1M count=7")
+minioClient.mc("cp", f"/tmp/__minio_test_file1", f"local_ftt/ftt-data/file1")
+os.remove(f"/tmp/__minio_test_file1")
+
+# check quota is 7M
+assert(minioClient.mc("du", "local/ftt-data", "--json"))
+last_output = minioClient.get_last_output()
+quota_info = json.loads(last_output)
+size = quota_info.get('size', 0)
+assert(size == 7340032)  
+
+
+tu.run_proc(f"dd if=/dev/urandom of=/tmp/__minio_test_file2 bs=1M count=15")
+res = minioClient.mc("cp", f"/tmp/__minio_test_file2", f"local_ftt/ftt-data/file2")
+assert (res is False)
+last_output = minioClient.get_last_output()
+os.remove(f"/tmp/__minio_test_file2")
+assert(last_output.index("Bucket quota exceeded") >= 0)
+
+
 assert(minio.delete())
