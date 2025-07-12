@@ -18,14 +18,8 @@
  */
 
 {% if mode == 'create' %}
-CREATE DATABASE {{database}};
-CREATE USER {{username}} WITH PASSWORD '{{password}}';
-GRANT ALL PRIVILEGES ON DATABASE {{database}} to {{username}};
-REVOKE CONNECT ON DATABASE {{database}} from public;
-{% endif %}
-
-{% if mode == 'delete' %}
-DROP DATABASE {{database}};
-DROP OWNED BY {{username}};
-DROP USER {{username}};
+-- Create schema only if not exists and owned by correct user
+CREATE SCHEMA IF NOT EXISTS {{username}}_schema;
+ALTER SCHEMA {{username}}_schema OWNER TO {{username}};
+ALTER DATABASE {{database}} SET search_path TO {{username}}_schema, pg_catalog;
 {% endif %}

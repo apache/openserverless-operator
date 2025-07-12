@@ -17,15 +17,13 @@
  * under the License.
  */
 
-{% if mode == 'create' %}
-CREATE DATABASE {{database}};
-CREATE USER {{username}} WITH PASSWORD '{{password}}';
-GRANT ALL PRIVILEGES ON DATABASE {{database}} to {{username}};
-REVOKE CONNECT ON DATABASE {{database}} from public;
-{% endif %}
+DO $$
+BEGIN
+  PERFORM pg_catalog.pg_terminate_backend(pid)
+  FROM pg_catalog.pg_stat_activity
+  WHERE pg_stat_activity.datname = '{{database}}'
+    AND pg_stat_activity.pid <> pg_catalog.pg_backend_pid();
+END;
+$$;
 
-{% if mode == 'delete' %}
-DROP DATABASE {{database}};
-DROP OWNED BY {{username}};
-DROP USER {{username}};
-{% endif %}
+

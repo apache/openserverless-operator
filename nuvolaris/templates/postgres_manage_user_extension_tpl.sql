@@ -19,7 +19,7 @@
 
 {% if mode == 'create' %}
 {% for extension in extensions -%}
-CREATE EXTENSION IF NOT EXISTS {{extension}};
+CREATE EXTENSION IF NOT EXISTS {{extension}} WITH SCHEMA {{username}}_schema;
 {% endfor %}
 {% endif %}
 

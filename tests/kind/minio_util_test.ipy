@@ -15,9 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
-
 import os
 
 import nuvolaris.config as cfg
@@ -25,6 +22,11 @@ import nuvolaris.minio_deploy as minio
 import nuvolaris.minio_util as mutil
 import nuvolaris.testutil as tu
 import nuvolaris.util as util
+
+tu.enable_debug_logging()
+
+tu.run_proc("kubectl -n nuvolaris delete all --all")
+tu.run_proc("kubectl -n nuvolaris delete pvc --all")
 
 # test
 assert(cfg.configure(tu.load_sample_config()))

@@ -37,7 +37,7 @@ mocker = tu.MockKube()
 # default output is text
 # if you specify jsonpath it will filter and parse the json output
 # returns exceptions if errors
-def kubectl(*args, namespace="nuvolaris", input=None, jsonpath=None, debugresult=True):
+def kubectl(*args, namespace="nuvolaris", input=None, jsonpath=None, debugresult=True, timeout=None):
     # support for mocked requests
     mres = mocker.invoke(*args)
     if mres:
@@ -55,7 +55,7 @@ def kubectl(*args, namespace="nuvolaris", input=None, jsonpath=None, debugresult
         
     # executing
     logging.debug(cmd)
-    res = subprocess.run(cmd, capture_output=True, input=input)
+    res = subprocess.run(cmd, capture_output=True, input=input, timeout=timeout)
 
     global returncode, output, error
     returncode = res.returncode

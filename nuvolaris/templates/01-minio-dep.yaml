@@ -43,7 +43,7 @@ spec:
       {% endif %}      
       containers:
       - name: minio
-        image: bitnami/minio:2023.3.24
+        image: bitnami/minio:2025.6.13
         securityContext:
           capabilities:
             drop:
@@ -53,11 +53,7 @@ spec:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
           runAsNonRoot: true                  
-        command:
-        - /bin/bash
-        - -c
-        args: 
-        - minio server /data --console-address :9090
+        command: ["/bin/bash", "-c", "minio server /data --console-address :9090"]
         env:
         - name: MINIO_ROOT_USER
           value: {{minio_root_user}}

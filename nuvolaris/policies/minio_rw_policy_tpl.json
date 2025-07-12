@@ -7,12 +7,7 @@
       ],
       "Effect": "Allow",
       "Resource": [
-        {% for bucket_arn in bucket_arns -%}
-          "arn:aws:s3:::{{bucket_arn}}"
-          {% if not loop.last %}
-          ,
-          {% endif %}
-        {% endfor %}
+        {% for bucket_arn in bucket_arns %}"arn:aws:s3:::{{ bucket_arn }}"{{ "," if not loop.last }}{% endfor %}
       ]
     }
   ]
