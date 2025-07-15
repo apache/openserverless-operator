@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: couchdb-init-{{ meta.name }}-{{ uuid }}
+  namespace: {{ namespace }}
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      name: couchdb-init
+      labels:
+        job: couchdb-init
+        name: couchdb-init
+      annotations:
+        whisks.nuvolaris.org/annotate-version: "true"
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: ubuntu-2204-jammy-amd64-base
+      {% if config["nuvolaris.kube.serviceAccount"] is defined %}
+      serviceAccountName: {{ config["nuvolaris.kube.serviceAccount"] }}
+      {% else %}
+      serviceAccountName: default
+      {% endif %}
+      restartPolicy: Never
+      initContainers:
+        - name: check-couchdb
+          image: curlimages/curl
+          command:
+            - sh
+            - -c
+            - >
+              until curl -sf http://couchdb.nuvolaris.svc.cluster.local:5984;
+              do echo waiting for couchdb; sleep 2; done
+      containers:
+        - name: init-couchdb
+          image: couchdb-init-job:latest
+          imagePullPolicy: Never
+          command: ["/dbinit.sh"]
+          env:
+            - name: "NUVOLARIS_CONFIG"
+              value: >
+                {{config}}

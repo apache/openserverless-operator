@@ -1,0 +1,10 @@
+apiVersion: nuvolaris.org/v1
+kind: CouchdbInstance
+metadata:
+  name: test-couchdb
+  annotations:
+    operator.nuvolaris.io/force-reconcile: "manual-$(date +%s)"
+  namespace: openserverless-system
+spec:
+  storage: 1Gi
+  replicas: 1

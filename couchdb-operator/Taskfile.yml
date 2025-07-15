@@ -1,0 +1,211 @@
+version: '3'
+
+vars:
+  NAMESPACE: openserverless-system
+  IMAGE: couchdb-operator:latest
+
+tasks:
+  default:
+    desc: "🔥 Builda, importa, deploya e applica tutto"
+    cmds:
+      - task: run
+
+
+
+  build-and-load:
+    desc: "🔨 Build e import immagine nel MicroK8s (containerd)"
+    cmds:
+      - echo "🔧 Costruisco l'immagine Docker..."
+      - docker build --no-cache -t {{.IMAGE}} -f Dockerfile .
+      - echo "📦 Salvataggio immagine su file tar..."
+      - docker save {{.IMAGE}} -o /tmp/couchdb-operator.tar
+      - echo "📥 Import nel containerd di MicroK8s..."
+      - sudo microk8s ctr image import /tmp/couchdb-operator.tar
+
+
+
+
+  run:
+    desc: "🔁 Ricompila, importa, deploya, crea e monitora tutto"
+    cmds:
+      - task: build-and-load
+      - task: reload
+      - task: apply-crd-and-instance
+      - task: logs
+
+  test-reapply:
+    desc: "♻️ Ricarica l'immagine e riapplica la risorsa esistente"
+    cmds:
+      - task: build-and-load
+      - task: reload
+      - task: apply-crd-and-instance
+      - task: logs
+
+
+  build:
+    desc: "🛠 Costruisce immagine Docker dell'operatore"
+    cmds:
+      - docker build -t {{.IMAGE}} -f Dockerfile .
+
+  push:
+    desc: "📦 Importa immagine nel containerd di MicroK8s"
+    cmds:
+      - docker save {{.IMAGE}} -o /tmp/couchdb-operator.tar
+      - sudo microk8s ctr image import /tmp/couchdb-operator.tar
+
+  reload:
+    desc: "♻️ Ricarica operatore (pod + deployment)"
+    cmds:
+      - kubectl delete pod -n {{.NAMESPACE}} -l app=couchdb-operator --ignore-not-found
+      - kubectl apply -f deployment.yaml
+
+  apply-crd-and-instance:
+    desc: "📜 Applica CRD + Istanza"
+    cmds:
+      - kubectl apply -f couchdb-crd.yaml
+      - kubectl apply -f couchdb-instance.yaml -n {{.NAMESPACE}}
+
+  logs:
+    desc: "🧾 Mostra i log dell'operatore"
+    cmds:
+      - kubectl logs -n {{.NAMESPACE}} -l app=couchdb-operator -f
+
+  jobs-status:
+    desc: "🔍 Verifica i Job CouchDB e i relativi pod"
+    cmds:
+      - echo "📦 Job nel namespace openserverless-system:"
+      - kubectl get jobs -n openserverless-system | grep couchdb-init || echo "❌ Nessun Job trovato"
+      - echo "📦 Pod associati all’ultimo Job couchdb-init:"
+      - |
+        job=$(kubectl get jobs -n openserverless-system --no-headers | grep couchdb-init | awk '{print $1}' | tail -n1)
+        if [ -n "$job" ]; then
+          kubectl get pods -n openserverless-system -l job-name=$job || echo "❌ Nessun pod trovato per il job $job"
+        else
+          echo "❌ Nessun Job trovato"
+        fi
+      - echo "📄 Log del container init-couchdb (se presente):"
+      - |
+        job=$(kubectl get jobs -n openserverless-system --no-headers | grep couchdb-init | awk '{print $1}' | tail -n1)
+        if [ -n "$job" ]; then
+          pod=$(kubectl get pods -n openserverless-system -l job-name=$job -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || echo "")
+          if [ -n "$pod" ]; then
+            kubectl logs -n openserverless-system "$pod" -c init-couchdb || echo "❌ Log non disponibile"
+          else
+            echo "❌ Nessun pod trovato per il job $job"
+          fi
+        else
+          echo "❌ Nessun Job trovato"
+        fi
+
+
+  show-objects:
+    desc: "📋 Mostra le risorse create dall'operatore nel namespace nuvolaris"
+    cmds:
+      - echo "📌 StatefulSet:"
+      - kubectl get statefulset -n nuvolaris -o wide
+      - echo ""
+      - echo "🔐 Secret:"
+      - kubectl get secret -n nuvolaris | grep couchdb-auth || echo "❌ Nessun secret trovato"
+      - echo ""
+      - echo "🧪 Job:"
+      - kubectl get job -n nuvolaris
+      - echo ""
+      - echo "📦 Pod:"
+      - kubectl get pods -n nuvolaris -o wide
+      - echo ""
+      - echo "📄 Log del job init-couchdb (se esiste):"
+      - |
+        pod=$(kubectl get pods -n nuvolaris -l job-name=couchdb-init -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || echo "")
+        if [ -n "$pod" ]; then
+          kubectl logs -n nuvolaris "$pod" -c init-couchdb || true
+        else
+          echo "❌ Nessun pod init-couchdb trovato"
+        fi
+
+
+
+
+  verify:
+    desc: Verifica che tutti gli oggetti CouchDB siano presenti e funzionanti
+    cmds:
+      - echo "🔍 Verifica Secret nel namespace 'nuvolaris'..."
+      - kubectl get secret -n nuvolaris | grep couchdb-auth || echo "❌ Secret mancante"
+
+      - echo "🔍 Verifica StatefulSet nel namespace 'nuvolaris'..."
+      - kubectl get statefulset -n nuvolaris | grep couchdb || echo "❌ StatefulSet mancante"
+
+      - echo "🔍 Verifica Job nel namespace 'nuvolaris'..."
+      - kubectl get jobs -n nuvolaris | grep couchdb-init || echo "❌ Nessun Job trovato"
+
+      - echo "🔍 Verifica pod di CouchDB (nuvolaris)..."
+      - kubectl get pods -n nuvolaris -l app=nuvolaris-couchdb -o wide
+
+      - echo "🔍 Verifica pod dell’ultimo Job couchdb-init..."
+      - |
+        job=$(kubectl get jobs -n nuvolaris --sort-by=.metadata.creationTimestamp --no-headers | grep couchdb-init | tail -n1 | awk '{print $1}')
+        if [ -n "$job" ]; then
+          pod=$(kubectl get pods -n nuvolaris --sort-by=.metadata.creationTimestamp --no-headers | grep "$job" | head -n1 | awk '{print $1}')
+          if [ -n "$pod" ]; then
+            echo "✅ Pod trovato: $pod"
+            kubectl get pod -n nuvolaris "$pod" -o wide
+          else
+            echo "❌ Nessun pod trovato per il job $job"
+          fi
+        else
+          echo "❌ Nessun Job trovato"
+        fi
+
+      - echo "🔍 Verifica stato completamento del Job..."
+      - |
+        job=$(kubectl get jobs -n nuvolaris --sort-by=.metadata.creationTimestamp --no-headers | grep couchdb-init | tail -n1 | awk '{print $1}')
+        if [ -n "$job" ]; then
+          status=$(kubectl get job "$job" -n nuvolaris -o jsonpath="{.status.succeeded}" 2>/dev/null)
+          if [ "$status" = "1" ]; then
+            echo "✅ Job completato con successo"
+          else
+            echo "❌ Job non completato"
+          fi
+        else
+          echo "❌ Job non trovato"
+        fi
+
+      - echo "📄 Log del container 'init-couchdb' del Job..."
+      - |
+        job=$(kubectl get jobs -n nuvolaris --sort-by=.metadata.creationTimestamp --no-headers | grep couchdb-init | tail -n1 | awk '{print $1}')
+        pod=$(kubectl get pods -n nuvolaris --sort-by=.metadata.creationTimestamp --no-headers | grep "$job" | head -n1 | awk '{print $1}')
+        if [ -n "$pod" ]; then
+          kubectl logs -n nuvolaris "$pod" -c init-couchdb || echo "❌ Log non disponibile"
+        else
+          echo "❌ Nessun pod trovato per il job $job"
+        fi
+
+      - echo "📄 Log del container 'check-couchdb' (initContainer)..."
+      - |
+        job=$(kubectl get jobs -n nuvolaris --sort-by=.metadata.creationTimestamp --no-headers | grep couchdb-init | tail -n1 | awk '{print $1}')
+        pod=$(kubectl get pods -n nuvolaris --sort-by=.metadata.creationTimestamp --no-headers | grep "$job" | head -n1 | awk '{print $1}')
+        if [ -n "$pod" ]; then
+          kubectl logs -n nuvolaris "$pod" -c check-couchdb || echo "❌ Log non disponibile"
+        else
+          echo "❌ Nessun pod trovato per il job $job"
+        fi
+
+      - echo "🌐 Test HTTP al servizio CouchDB nel cluster..."
+      - |
+        kubectl delete pod curlpod -n nuvolaris --ignore-not-found
+        kubectl run curlpod --rm -i --tty -n nuvolaris --image=curlimages/curl --restart=Never -- \
+          curl -sf http://couchdb.nuvolaris.svc.cluster.local:5984 || echo "❌ Servizio non raggiungibile"
+
+  
+
+  build-dbinit:
+    desc: Costruisce e carica l'immagine per il job couchdb-init
+    cmds:
+      - echo "🏗️  Costruzione immagine couchdb-init-job..."
+      - docker build -t couchdb-init-job:latest -f Dockerfile.dbinit .
+      - echo "📦  Salvataggio immagine su file..."
+      - docker save couchdb-init-job:latest > dbinit.tar
+      - echo "📤  Import dell'immagine in MicroK8s containerd..."
+      - microk8s ctr images import dbinit.tar
+
+
+

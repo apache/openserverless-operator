@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: couchdb-operator
+  namespace: openserverless-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: couchdb-operator
+  template:
+    metadata:
+      labels:
+        app: couchdb-operator
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: operator
+          image: couchdb-operator:latest
+          imagePullPolicy: Never
+          command: ["kopf", "run", "--namespace=openserverless-system", "/app/operator_handler.py"]
+          env:
+            - name: NUVOLARIS_KUBE_NAMESPACE
+              value: openserverless-system
+            - name: STORAGE_CLASS
+              value: "microk8s-hostpath"   # ✅ variabile disponibile nel container
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: operator-tmp
+              mountPath: /tmp
+      volumes:
+        - name: operator-tmp
+          emptyDir: {}

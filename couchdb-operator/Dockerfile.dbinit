@@ -1,0 +1,13 @@
+# Dockerfile.dbinit
+FROM alpine:3.19
+
+# Installa curl e bash
+RUN apk add --no-cache curl bash
+
+# Copia lo script nel punto corretto
+COPY dbinit/dbinit.sh /dbinit.sh
+RUN chmod +x /dbinit.sh
+
+# Imposta il comando di avvio
+CMD ["/dbinit.sh"]
+

@@ -1,0 +1,8 @@
+AUTH {{redis_password}}
+{% if mode == 'create'%}
+namespace add {{namespace}} {{password}}
+{% endif %}
+
+{% if mode == 'delete'%}
+namespace del {{namespace}}
+{% endif %}

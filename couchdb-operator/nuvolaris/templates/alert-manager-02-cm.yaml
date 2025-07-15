@@ -1,0 +1,113 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: nuvolaris-prometheus
+    meta.helm.sh/release-namespace: nuvolaris  
+  labels:
+    app.kubernetes.io/instance: nuvolaris-prometheus    
+    app.kubernetes.io/name: alertmanager
+  name: nuvolaris-prometheus-alertmanager
+  namespace: nuvolaris
+data:
+  alertmanager.yml: |
+    global:
+      {% if slack %}
+      slack_api_url: '{{slack_api_url}}'
+      {% endif %}
+
+    receivers:
+    {% if gmail %}
+    - name: email-receiver
+      email_configs:
+      - to: '{{email_recipients}}'
+        from: '{{email_from}}'
+        smarthost: smtp.gmail.com:587
+        auth_username: '{{gmail_username}}'
+        auth_identity: '{{gmail_username}}'
+        auth_password: '{{gmail_password}}'
+    {% endif %}      
+    
+    {% if slack %}
+    - name: slack-notifications
+      slack_configs:
+      - channel: '{{slack_channel_name}}'
+        send_resolved: true
+        icon_url: https://avatars3.githubusercontent.com/u/3380462
+        {% raw %}
+        title: |-
+          [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+          {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+            {{" "}}(
+            {{- with .CommonLabels.Remove .GroupLabels.Names }}
+              {{- range $index, $label := .SortedPairs -}}
+                {{ if $index }}, {{ end }}
+                {{- $label.Name }}="{{ $label.Value -}}"
+              {{- end }}
+            {{- end -}}
+            )
+          {{- end }}
+        text: >-
+          {{ range .Alerts -}}
+          *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+          {{ if .Annotations.description }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+          *Details:*
+            {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+            {{ end }}
+          {{ end }}
+        {% endraw %}
+    {% endif %}    
+
+    route:
+      group_interval: 5m
+      group_wait: 10s
+      {% if slack and slack_default %}
+      receiver: slack-notifications
+      {% endif %}
+      {% if gmail and gmail_default %}
+      receiver: email-receiver
+      {% endif %}      
+      repeat_interval: 10m
+
+      {% if slack or gmail %}
+      # All the above attributes are inherited by all child routes and can
+      # overwritten on each.
+      routes:
+        {% if slack %}
+        - receiver: slack-notifications
+          group_wait: 10s
+          match_re:
+            severity: critical|warning
+          continue: true
+        {% endif %}  
+
+        {% if gmail %}
+        - receiver: email-receiver
+          group_wait: 10s
+          match_re:
+            severity: critical
+          continue: true            
+        {% endif %}  
+      {% endif %}        
+
+    templates:
+    - /etc/alertmanager/*.tmpl

@@ -1,0 +1,16 @@
+# Escludi file temporanei o non utili
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.swp
+*~
+.DS_Store
+*.tar
+
+# Includi i file e directory necessari
+!operator_handler.py
+!nuvolaris/
+!nuvolaris/**/*
+
+

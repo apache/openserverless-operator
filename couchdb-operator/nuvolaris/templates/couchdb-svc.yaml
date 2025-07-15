@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb
+  namespace: {{ namespace }}
+spec:
+  selector:
+    app: nuvolaris-couchdb
+  ports:
+    - protocol: TCP
+      port: 5984
+      targetPort: 5984

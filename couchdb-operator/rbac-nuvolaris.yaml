@@ -1,0 +1,33 @@
+# 📄 sa-nuvolaris-operator.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nuvolaris-operator
+  namespace: nuvolaris
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nuvolaris-operator-role
+  namespace: nuvolaris
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nuvolaris-operator-binding
+  namespace: nuvolaris
+subjects:
+  - kind: ServiceAccount
+    name: nuvolaris-operator
+    namespace: nuvolaris
+roleRef:
+  kind: Role
+  name: nuvolaris-operator-role
+  apiGroup: rbac.authorization.k8s.io

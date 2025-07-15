@@ -1,0 +1,62 @@
+✅ 1. Vai nella directory root del progetto
+
+cd ~/workspace/openserverless-operator
+
+✅ 2. Ricostruisci l’immagine da zero (senza cache)
+
+docker build --no-cache -t couchdb-operator:latest -f test-operator/Dockerfile test-operator
+
+✅ 3. Esporta l’immagine in un file .tar
+
+docker save couchdb-operator:latest -o couchdb-operator.tar
+
+✅ 4. Importa l’immagine nel container runtime di MicroK8s
+
+microk8s ctr image import couchdb-operator.tar
+
+✅ 5. Cancella il pod dell’operatore per forzare il reload
+
+kubectl delete pod -n openserverless-system -l app=couchdb-operator
+
+✅ 6. Aspetta che il nuovo pod sia pronto
+
+kubectl wait --for=condition=ready pod -n openserverless-system -l app=couchdb-operator --timeout=60s
+
+✅ 7. Verifica che operator_handler.py sia presente nel container
+
+kubectl exec -it -n openserverless-system deploy/couchdb-operator -- ls -l /app
+
+kubectl exec -it -n openserverless-system deploy/couchdb-operator -- cat /app/operator_handler.py
+
+task build && task push && task reload
+
+task build
+task push
+task reload
+kubectl delete -f couchdb-instance.yaml
+kubectl apply -f couchdb-instance.yaml
+
+kubectl get all -n openserverless-system
+kubectl get all -n nuvolaris
+task logs
+
+# 🔍 1️⃣ Controlla se il Job è stato creato
+kubectl get jobs -n openserverless-system
+
+# 📦 2️⃣ Controlla lo stato del Pod init
+kubectl get pods -n openserverless-system | grep couchdb-init
+
+# 📋 3️⃣ Mostra immagine usata dal container init-couchdb (serve per verificare che usi quella corretta)
+kubectl get pod -n openserverless-system -l job-name=couchdb-init -o jsonpath="{.items[0].spec.containers[?(@.name=='init-couchdb')].image}"; echo
+
+# 📜 4️⃣ Leggi i log dell’init container check-couchdb
+POD=$(kubectl get pods -n openserverless-system -l job-name=couchdb-init -o jsonpath="{.items[0].metadata.name}") && \
+kubectl logs -n openserverless-system $POD -c check-couchdb --tail=30
+
+# 📜 5️⃣ Leggi i log del container init-couchdb
+kubectl logs -n openserverless-system $POD -c init-couchdb --tail=50
+
+# 🧪 6️⃣ Verifica se CouchDB ha i database
+COUCHDB_POD=$(kubectl get pods -n openserverless-system -l app=nuvolaris-couchdb -o jsonpath="{.items[0].metadata.name}") && \
+kubectl exec -n openserverless-system $COUCHDB_POD -- curl -s -u whisk_admin:some_passw0rd http://localhost:5984/_all_dbs
+
