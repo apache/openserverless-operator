@@ -110,9 +110,11 @@ def calculate_apihost(runtime_str,apiHost=None):
         elif "ip" in apiHost[0]:
             url = url._replace(netloc = ensure_host(apiHost[0]['ip']))
 
-    # in auto mode we should use the calculated ip address
+    # in auto mode we should use the calculated ip address and defaults to miniops.me
     if cfg.exists("nuvolaris.apihost") and not 'auto' == cfg.get('nuvolaris.apihost'):
         url =  url._replace(netloc = ensure_host(cfg.get("nuvolaris.apihost")))
+    else:
+        url =  url._replace(netloc = "miniops.me" )
     if cfg.exists("nuvolaris.apiport"):
         url = url._replace(netloc = f"{url.hostname}:{cfg.get('nuvolaris.apiport')}")
 

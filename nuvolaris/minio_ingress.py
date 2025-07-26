@@ -89,7 +89,7 @@ def deploy_minio_upload_route(apihost,namespace, type):
     upload.with_context_path("/api/upload")
     upload.with_rewrite_target("/")
 
-    logging.info(f"*** configuring route for upload")
+    logging.info("*** configuring route for upload")
     path_to_template_yaml = upload.render_template(namespace)
     res = kube.kubectl("apply", "-f",path_to_template_yaml)
     os.remove(path_to_template_yaml)        

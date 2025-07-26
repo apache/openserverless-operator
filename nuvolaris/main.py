@@ -41,6 +41,7 @@ import nuvolaris.monitoring as monitoring
 import nuvolaris.quota_checker_job as quota
 import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
+import nuvolaris.registry_deploy as registry
 
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, **_):
@@ -118,6 +119,17 @@ def whisk_create(spec, name, **kwargs):
             state['redis']= "error"
     else:
         state['redis'] = "off"
+
+    if cfg.get('components.registry'):
+        try:
+            msg = registry.create(owner)
+            state['registry'] = "on"
+            logging.info(msg)
+        except:
+            logging.exception("cannot create registry")
+            state['registry']= "error"
+    else:
+        state['registry'] = "off"         
 
     if cfg.get('components.tls') and not runtime in ["kind","openshift"]:
         try:
@@ -262,7 +274,7 @@ def whisk_create(spec, name, **kwargs):
             logging.exception("cannot create milvus")
             state['milvus']= "error"
     else:
-        state['milvus'] = "off"                        
+        state['milvus'] = "off"  
 
     whisk_post_create(name,state)
     state['controller']= "Ready"
@@ -346,7 +358,11 @@ def whisk_delete(spec, **kwargs):
 
     if cfg.get("components.milvus"):
         msg = milvus.delete()
-        logging.info(msg)                                                   
+        logging.info(msg) 
+
+    if cfg.get("components.registry"):
+        msg = registry.delete()
+        logging.info(msg)                                                           
     
                          
 # tested by integration test

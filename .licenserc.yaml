@@ -57,6 +57,7 @@ header:
     - 'olaris/**'
     - 'skip-test'
     - '.env.dist'
+    - '**/ow_pod_templates.yaml'
 
 
 dependency:

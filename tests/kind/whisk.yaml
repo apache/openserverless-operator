@@ -47,7 +47,9 @@ spec:
     # etcd enabled or not
     etcd: true
     # milvus enabled or not
-    milvus: true                      
+    milvus: true 
+    # milvus enabled or not
+    registry: true                          
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
@@ -176,3 +178,12 @@ spec:
       root: An0therPa55
       etcd: 97Vk2{qe8o>S
       s3: 8_d$8zCrl7£m
+  registry:    
+    mode: internal
+    volume-size: 20
+    auth:
+      username: nuvolaris
+      password: 4pwdregistry
+    hostname: auto
+    ingress:
+      enabled: true      

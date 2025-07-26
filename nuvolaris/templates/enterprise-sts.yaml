@@ -234,4 +234,4 @@ spec:
         #- name: "CONFIG_spi_LogStoreProvider"
         #  value:  "org.apache.openwhisk.core.containerpool.logging.DockerToActivationLogStoreProvider"           
         #- name: "CONFIG_spi_ArtifactStoreProvider"
-        #  value: "org.apache.openwhisk.core.database.CouchDbStoreProvider"
+        #  value: "org.apache.openwhisk.core.database.CouchDbStoreProvider"       
