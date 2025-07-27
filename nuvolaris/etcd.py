@@ -43,7 +43,7 @@ def create(owner=None):
         spec_templates.append("etcd-policy.yaml")
 
     kust = kus.patchTemplates("etcd",tplp , data)
-    kust += kus.patchGenericEntry("Secret","nuvolaris-etcd-secret","/data/rootPassword",util.b64_encode(data['root_password']))    
+    kust += kus.patchGenericEntry("Secret","nuvolaris-etcd-secret","/data/rootPassword",util.b64_encode(data['root_password']))   
     spec = kus.kustom_list("etcd", kust, templates=spec_templates, data=data)
 
     if owner:

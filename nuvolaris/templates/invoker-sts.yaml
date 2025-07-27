@@ -59,7 +59,7 @@ spec:
           limits:
             memory: "{{container_mem_lim}}"
             cpu : "{{container_cpu_lim}}"
-        {% endif %}        
+        {% endif %}
         env:
 
           - name:  "CONFIG_whisk_info_date"
@@ -303,6 +303,23 @@ spec:
           - name: "CONFIG_whisk_kubernetes_userPodNodeAffinity_value"
             value: "{{kubernetes_user_pod_affinity_value}}"
 
+          {% if usePrivateRegistry %}
+          - name: "CONFIG_whisk_kubernetes_podTemplate"
+            value: "file:/templates/ow_pod_templates.yaml"
+          {% endif %}              
+
         ports:
         - name: invoker
           containerPort: {{invoker_port}}
+        volumeMounts:
+        - mountPath: /templates/ow_pod_templates.yaml
+          name: templates
+          subPath: ow_pod_templates.yaml         
+      volumes:
+        - name: templates
+          configMap:
+            name: openwhisk-pod-templates
+            defaultMode: 511
+            items:
+              - key: ow_pod_templates.yaml
+                path: ow_pod_templates.yaml            

@@ -73,6 +73,14 @@ def check_minio_ingresses(response: dict, item: dict):
         if(item['new']):
             response["minio-ingresses"]="update"
 
+def check_registry_ingresses(response: dict, item: dict):
+    """
+    Forces an update of registry-ingress if needed
+    """
+    if item['path']=='spec.registry.ingress.enabled':
+        if(item['new']):
+            response["registry-ingresses"]="update"
+
 def evaluate_differences(response: dict, differences: list):
     """
     Iterate over the difference list to find which components the
@@ -91,6 +99,7 @@ def evaluate_differences(response: dict, differences: list):
         check_component(response, d,"spec.components.quota","quota")
         check_component(response, d,"spec.components.etcd","etcd")
         check_component(response, d,"spec.components.milvus","milvus")
+        check_component(response, d,"spec.components.registry","registry")
         openwhisk(response, d)           
         endpoint(response, d)
         check_minio_ingresses(response, d)

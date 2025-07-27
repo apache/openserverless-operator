@@ -35,6 +35,7 @@ import nuvolaris.invoker as invoker
 import nuvolaris.quota_checker_job as quota
 import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
+import nuvolaris.registry_deploy as registry
 
 def patch_preloader(owner: None):
     try:
@@ -157,7 +158,11 @@ def patch(diff, status, owner=None, name=None):
 
     if "milvus" in what_to_do:
         milvus.patch(status,what_to_do['milvus'], owner)
-        components_updated = True                              
+        components_updated = True 
+
+    if "registry" in what_to_do:
+        registry.patch(status,what_to_do['milvus'], owner)
+        components_updated = True                                      
 
     # handle update action on openwhisk
     if "openwhisk" in what_to_do and what_to_do['openwhisk'] == "update":        
@@ -173,7 +178,5 @@ def patch(diff, status, owner=None, name=None):
         minio.patch_ingresses(status,what_to_do['minio-ingresses'], owner)
 
     if components_updated:
-        operator_util.whisk_post_create(name)
-    
-        
+        operator_util.whisk_post_create(name)        
     

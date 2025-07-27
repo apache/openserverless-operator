@@ -89,7 +89,8 @@ def getEnterpriseControllerConfigData():
         "container_cpu_lim": cfg.get('configs.controller.resources.cpu-lim') or "2",
         "container_mem_req": cfg.get('configs.controller.resources.mem-req') or "1G",
         "container_mem_lim": cfg.get('configs.controller.resources.mem-lim') or "2G",
-        "container_manage_resources": cfg.exists('configs.controller.resources.cpu-req')      
+        "container_manage_resources": cfg.exists('configs.controller.resources.cpu-req'),
+        "usePrivateRegistry":cfg.get('components.registry') or False,      
     }
     
     util.get_controller_image_data(data)
@@ -148,6 +149,7 @@ def getEnterpriseInvokerConfigData():
         "kubernetes_user_pod_affinity_enabled":cfg.get('configs.invoker.kubernetes.user_pod_affinity_enabled') and "true" or "false",
         "kubernetes_user_pod_affinity_key":cfg.get('configs.invoker.kubernetes.user_pod_affinity_key') or "nuvolaris-role",
         "kubernetes_user_pod_affinity_value":cfg.get('configs.invoker.kubernetes.user_pod_affinity_value') or "invoker",
+        "usePrivateRegistry":cfg.get('components.registry') or False,
     }
 
     util.get_controller_image_data(data)

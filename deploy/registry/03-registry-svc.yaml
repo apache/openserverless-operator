@@ -15,32 +15,17 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-import json
-
-def get_env_value(user_data, key):
-    """
-    Check if inside the given user_data object there is an env item with the
-    given name and returns the value if any.
-    :param user_data
-    :param key
-    :return None if the given key it is not prese
-    """    
-    envs = list(user_data['env'])
-
-    for env in envs:
-        if env['key'] == key:
-            return env['value']
-
-    return None
-
-def is_json(value):
-    if isinstance(value, (dict, list)):  # Already a JSON-compatible structure
-        return True
-    if isinstance(value, str):  # Try parsing if it's a string
-        try:
-            json.loads(value)
-            return True
-        except json.JSONDecodeError:
-            return False
-    return False
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nuvolaris-registry-svc
+  namespace: nuvolaris
+spec:
+  selector:
+    app: registry
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
