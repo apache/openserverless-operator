@@ -26,6 +26,7 @@ metadata:
     app: registry
 spec:
   replicas: 1
+  serviceName: nuvolaris-registry-svc
   selector:
     matchLabels:
       app: registry
