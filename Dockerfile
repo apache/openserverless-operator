@@ -53,12 +53,10 @@ ADD --chown=nuvolaris:nuvolaris deploy/postgres-operator-deploy /home/nuvolaris/
 ADD --chown=nuvolaris:nuvolaris deploy/ferretdb /home/nuvolaris/deploy/ferretdb
 ADD --chown=nuvolaris:nuvolaris deploy/runtimes /home/nuvolaris/deploy/runtimes
 ADD --chown=nuvolaris:nuvolaris deploy/postgres-backup /home/nuvolaris/deploy/postgres-backup
-ADD --chown=nuvolaris:nuvolaris run.sh dbinit.sh cron.sh whisk-system.sh /home/nuvolaris/
-ADD --chown=nuvolaris:nuvolaris pyproject.toml uv.lock opsfile.yml prereq.yml profile_default/startup/00-init.ipy /home/nuvolaris/
-
-# prepares the required folders to deploy the whisk-system actions
-RUN mkdir /home/nuvolaris/deploy/whisk-system
+ADD --chown=nuvolaris:nuvolaris run.sh dbinit.sh cron.sh whisk-system.sh pyproject.toml uv.lock opsfile.yml prereq.yml /home/nuvolaris/
+RUN mkdir -p /home/nuvolaris/deploy/whisk-system /home/nuvolaris/profile_default/startup
 ADD --chown=nuvolaris:nuvolaris actions /home/nuvolaris/actions
+ADD --chown=nuvolaris:nuvolaris profile_default/startup/00-init.ipy /home/nuvolaris/profile_default/startup
 
 # enterprise specific
 ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-enterprise /home/nuvolaris/deploy/openwhisk-enterprise
@@ -138,12 +136,16 @@ ENV PATH="$HOME/.local/bin":\
 # Copy the home
 COPY --from=sources --chown=nuvolaris:nuvolaris ${HOME} ${HOME}
 
-# Create the ops op plugin and initialize
-RUN ln -sf "$HOME" "$HOME/.ops/olaris-op" && ops op setup
-
 # prepares the required folders to deploy the whisk-system actions
 RUN mkdir -p /home/nuvolaris/deploy/whisk-system && \
     ./whisk-system.sh && \
     cd deploy && tar cvf ../deploy.tar *
+
+# Create the ops op plugin and initialize prerequisites
+RUN \
+   ops -t && ops setup && \
+   ln -sf "$HOME" "$HOME/.ops/olaris-op" && \
+   ops op && ops op setup && \
+   echo quit | ops op cli
 
 CMD ["./run.sh"]
