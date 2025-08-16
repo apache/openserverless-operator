@@ -24,6 +24,7 @@ RUN groupadd --gid 1001 nuvolaris && \
 
 USER nuvolaris
 WORKDIR /home/nuvolaris
+
 # install the operator
 ADD --chown=nuvolaris:nuvolaris nuvolaris/*.py /home/nuvolaris/nuvolaris/
 ADD --chown=nuvolaris:nuvolaris nuvolaris/files /home/nuvolaris/nuvolaris/files
@@ -52,7 +53,8 @@ ADD --chown=nuvolaris:nuvolaris deploy/postgres-operator-deploy /home/nuvolaris/
 ADD --chown=nuvolaris:nuvolaris deploy/ferretdb /home/nuvolaris/deploy/ferretdb
 ADD --chown=nuvolaris:nuvolaris deploy/runtimes /home/nuvolaris/deploy/runtimes
 ADD --chown=nuvolaris:nuvolaris deploy/postgres-backup /home/nuvolaris/deploy/postgres-backup
-ADD --chown=nuvolaris:nuvolaris run.sh dbinit.sh cron.sh pyproject.toml poetry.lock whisk-system.sh /home/nuvolaris/
+ADD --chown=nuvolaris:nuvolaris run.sh dbinit.sh cron.sh whisk-system.sh /home/nuvolaris/
+ADD --chown=nuvolaris:nuvolaris pyproject.toml uv.lock opsfile.yml prereq.yml profile_default/startup/00-init.ipy /home/nuvolaris/
 
 # prepares the required folders to deploy the whisk-system actions
 RUN mkdir /home/nuvolaris/deploy/whisk-system
@@ -74,31 +76,6 @@ ADD --chown=nuvolaris:nuvolaris deploy/seaweedfs /home/nuvolaris/deploy/seaweedf
 ADD --chown=nuvolaris:nuvolaris quota.sh /home/nuvolaris/
 
 #------------------------------------------------------------------------------
-# Python dependencies
-FROM python:3.12-slim-bullseye AS deps
-
-# --- Install Poetry ---
-ARG POETRY_VERSION=1.8.5
-ENV POETRY_HOME=/opt/poetry
-ENV POETRY_NO_INTERACTION=1
-ENV POETRY_VIRTUALENVS_IN_PROJECT=1
-ENV POETRY_VIRTUALENVS_CREATE=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV POETRY_CACHE_DIR=/opt/.cache
-ENV PATH=${POETRY_HOME}/bin:$PATH
-
-WORKDIR /home/nuvolaris
-COPY --chown=nuvolaris:nuvolaris pyproject.toml poetry.lock /home/nuvolaris/
-RUN echo "Installing poetry" && \
-    # Install minimal dependencies
-    echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
-    apt-get update && apt-get install -y --no-install-recommends \
-    curl gnupg zip unzip && \
-    curl -sSL https://install.python-poetry.org | python - && \
-    cd /home/nuvolaris && poetry install --no-root --no-interaction --no-ansi && rm -rf $POETRY_CACHE_DIR
-
-#------------------------------------------------------------------------------
 # Final stage
 FROM python:3.12-slim-bullseye
 
@@ -110,13 +87,10 @@ ENV INVOKER_IMAGE=ghcr.io/nuvolaris/openwhisk-invoker
 ENV INVOKER_TAG=3.1.0-mastrogpt.2402101445
 ENV OPERATOR_IMAGE=${OPERATOR_IMAGE_DEFAULT}
 ENV OPERATOR_TAG=${OPERATOR_TAG_DEFAULT}
+
+# configure dpkg && timezone
 ENV TZ=Europe/London
 ENV HOME=/home/nuvolaris
-ENV VIRTUAL_ENV=/home/nuvolaris/.venv
-ENV POETRY_HOME=/opt/poetry
-ENV POETRY_CACHE_DIR=/opt/.cache
-ENV PATH=$POETRY_HOME/bin:$HOME/.venv/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/sbin:/bin:/usr/sbin/
-# configure dpkg && timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     # add nuvolaris user
     groupadd --gid 1001 nuvolaris && \
@@ -125,36 +99,51 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     # Install minimal dependencies
     echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt-get update && apt-get install -y --no-install-recommends \
-    curl gnupg zip unzip && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* && \
-    # install kubectl
-    KVER="v1.23.0" && \
-    ARCH="$(dpkg --print-architecture)" && \
-    curl -sL "https://dl.k8s.io/release/$KVER/bin/linux/$ARCH/kubectl" -o /usr/bin/kubectl && chmod +x /usr/bin/kubectl && \
-    VER="v4.5.7" && \
-    curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$VER/kustomize_${VER}_linux_${ARCH}.tar.gz" | tar xzvf - -C /usr/bin && \
-    # openwhisk cli
-    WSK_VERSION=1.2.0 && \
-    WSK_BASE=https://github.com/apache/openwhisk-cli/releases/download && \
-    curl -sL "$WSK_BASE/$WSK_VERSION/OpenWhisk_CLI-$WSK_VERSION-linux-$ARCH.tgz" | tar xzvf - -C /usr/bin/ && \
-    # install minio
-    MINIO_BASE=https://dl.min.io/client/mc/release/linux && \
-    MC_VER=RELEASE.2025-05-21T01-59-54Z && \
-    curl -sL "$MINIO_BASE-$ARCH/archive/mc.${MC_VER}" -o /usr/bin/mc && chmod +x /usr/bin/mc && \
-    # install taskfile
-    curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/bin
+    curl gnupg zip unzip openssh-client && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* 
 
 USER nuvolaris
 WORKDIR /home/nuvolaris
-# Copy virtualenv
-COPY --from=deps --chown=nuvolaris:nuvolaris ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-# Copy poetry
-COPY --from=deps --chown=nuvolaris:nuvolaris ${POETRY_HOME} ${POETRY_HOME}
+
+## saving those scripts just in case - now managed by ops prereqs
+# ex install openwhisk cli - using the ops wrapper instead
+#WSK_VERSION=1.2.0 && \
+#WSK_BASE=https://github.com/apache/openwhisk-cli/releases/download && \
+# curl -sL "$WSK_BASE/$WSK_VERSION/OpenWhisk_CLI-$WSK_VERSION-linux-$ARCH.tgz" | tar xzvf - -C /usr/bin/ && \
+# ex install minio - archived binaries disappered... - installed by ops prereqs
+# MINIO_BASE=https://dl.min.io/client/mc/release/linux && \
+# MC_VER=RELEASE.2025-05-21T01-59-54Z && \
+# curl -sL "$MINIO_BASE-$ARCH/archive/mc.${MC_VER}" -o /usr/bin/mc && chmod +x /usr/bin/mc && \
+# ex install kubectl - installed by ops prereq now
+#KVER="v1.23.0" && \
+#ARCH="$(dpkg --print-architecture)" && \
+#curl -sL "https://dl.k8s.io/release/$KVER/bin/linux/$ARCH/kubectl" -o /usr/bin/kubectl && chmod +x /usr/bin/kubectl && \
+#VER="v4.5.7" && \
+#curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$VER/kustomize_${VER}_linux_${ARCH}.tar.gz" | tar xzvf - -C /usr/bin && \
+
+RUN \
+    # install ops, wsk wrapper and task and create the op plugin from the home dir
+    VER="0.1.0-2501041342.dev";\
+    URL="https://raw.githubusercontent.com/apache/openserverless-cli/refs/tags/v$VER/install.sh" ;\
+    curl -sL $URL | VERSION="$VER" bash ;\
+    echo -e '#!/bin/bash\nops -wsk "$@"' >$HOME/.local/bin/wsk ; chmod +x $HOME/.local/bin/wsk ;\
+    curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b $HOME/.local/bin/task 
+
+# env with l
+ENV PATH="$HOME/.local/bin":\
+"$HOME/.ops/linux-$(dpkg --print-architecture)/bin":\
+"$HOME/.venv/bin":\
+/usr/local/bin:/usr/bin:/sbin:/bin:/usr/sbin/
+
 # Copy the home
 COPY --from=sources --chown=nuvolaris:nuvolaris ${HOME} ${HOME}
-RUN poetry install --only main --no-interaction --no-ansi && rm -rf ${POETRY_CACHE_DIR}
+
+# Create the ops op plugin and initialize
+RUN ln -sf "$HOME" "$HOME/.ops/olaris-op" && ops op setup
+
 # prepares the required folders to deploy the whisk-system actions
 RUN mkdir -p /home/nuvolaris/deploy/whisk-system && \
     ./whisk-system.sh && \
     cd deploy && tar cvf ../deploy.tar *
+
 CMD ["./run.sh"]

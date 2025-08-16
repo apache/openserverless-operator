@@ -17,6 +17,15 @@
 #
 %load_ext autoreload
 %autoreload 2
+
+import os
+os.chdir(os.getenv("OPS_PWD", "."))
+
+import dotenv
+dotenv.load_dotenv(os.path.join(os.getenv("OPS_PWD", "."), ".env"))
+dotenv.load_dotenv(os.path.join(os.getenv("OPS_PWD", "."), "tests", ".env"))
+
+
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -38,3 +47,6 @@ kns='kubectl config  set-context --current --namespace'
 
 def yd(r):
     print(yaml.dump(r))
+
+
+print(os.getcwd())

@@ -1,51 +1,39 @@
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
-#
-[tool.poetry]
+[project]
 name = "nuvolaris"
 version = "2.0.0"
 description = "Apache OpenServerless operator"
-authors = ["Michele Sciabarra <michele@sciabarra.com>","Francesco Timperi Tiberi <francesco@nuvolaris.io>"]
+authors = [
+    { name = "Michele Sciabarra", email = "michele@sciabarra.com" },
+    { name = "Francesco Timperi Tiberi", email = "francesco@nuvolaris.io" },
+    { name = "Bruno Salzano", email = "d4rkstar@gmail.com" },
+]
+requires-python = ">=3.12, <3.13"
 license = "Apache-2.0"
+dependencies = [
+    "kopf[full-auth]>=1.36.1,<2",
+    "PyYAML~=6.0",
+    "pykube>=0.15.0,<0.16",
+    "Jinja2>=3.0.3,<4",
+    "requests>=2.32.4,<3",
+    "flatdict>=4.0.1,<5",
+    "croniter>=1.3.5,<2",
+    "minio>=7.1.13,<8",
+    "backoff>=2.2.1,<3",
+    "psycopg-binary>=3.1.18,<4",
+    "psycopg>=3.1.18,<4",
+    "redis>=5.0.4,<6",
+    "bcrypt>=4.2.1,<5",
+    "python-dotenv>=1.1.1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-kopf = {extras = ["full-auth"], version = "^1.36.1"}
-PyYAML = "^6.0"
-pykube = "^0.15.0"
-Jinja2 = "^3.0.3"
-requests = "^2.32.4"
-flatdict = "^4.0.1"
-croniter = "^1.3.5"
-minio = "^7.1.13"
-backoff = "^2.2.1"
-psycopg-binary = "^3.1.18"
-psycopg = "^3.1.18"
-redis = "^5.0.4"
-bcrypt = "^4.2.1"
-
-[tool.poetry.group.dev.dependencies]
-ipython = "^8.15.0"
-
-[tool.poetry.scripts]
+[project.scripts]
 dbinit = "nuvolaris.couchdb:init"
 actionexecutor = "nuvolaris.actionexecutor:start"
 quota_checker = "nuvolaris.quota_checker:start"
 
+[dependency-groups]
+dev = ["ipython>=8.15.0,<9"]
+
 [build-system]
-requires = ["poetry-core>=1.5.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

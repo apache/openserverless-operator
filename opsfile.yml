@@ -1,4 +1,3 @@
-#!/bin/bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,5 +14,28 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
-uv run actionexecutor -v
+
+version: '3'
+# Licensed to the Apache Software Foundation (ASF) under one
+
+vars:
+  OS: '{{OS}}'
+  ARCH: '{{ARCH}}'
+
+tasks:
+
+  cli:
+    silent: true
+    desc: run cli commands
+    cmds:
+      - |
+        export IPYTHONDIR="$(pwd)"
+        export PYTHONPATH="$(pwd)"
+        uv run ipython
+
+  setup:
+    silent: true
+    desc: setup the environment
+    cmds:
+      - uv venv
+      - uv pip install -r pyproject.toml

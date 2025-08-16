@@ -1,0 +1,124 @@
+version: 3
+
+vars:
+  OS: "{{or .__OS OS}}"
+  ARCH: "{{or .__ARCH ARCH}}"
+  ARC: '{{if eq .OS "windows"}}.zip{{else}}.tar.gz{{end}}'
+  EXE: '{{if eq .OS "windows"}}.exe{{else}}{{end}}'
+  DRY: ""
+
+tasks:
+ 
+  download-and-extract:
+     requires:
+       vars: 
+       - FILE
+       - URL
+       - OUT
+     cmds:
+     - echo "{{.OUT}} {{.FILE}} {{.URL}} {{.FILETAR}}" 
+     - curl -sL "{{.URL}}" -o {{.FILE}}
+     - extract "{{.FILE}}" "{{.OUT}}{{.EXE}}"
+     - remove "{{.FILE}}"
+
+  download:
+    requires:
+      vars:
+        - URL
+        - OUT
+    cmds:
+      - curl -sL -o"{{.OUT}}" "{{.URL}}"
+      - executable "{{.OUT}}"
+
+    
+  test:
+    vars:
+      DIR: "{{.OPS_PWD}}/bin/{{.OS}}-{{.ARCH}}"
+    cmds:
+    - |
+      {{.DRY}} rm -Rvf "{{.DIR}}"
+      mkdir -p "{{.DIR}}"
+      cd "{{.DIR}}"
+      {{.DRY}} ops -task -t ../../prereq.yml -d "{{.DIR}}" all
+    - task: check
+      
+  check:
+    vars:
+      DIR: "{{.OPS_PWD}}/bin/{{.OS}}-{{.ARCH}}"
+      FILETYPE:
+        sh: |
+          case "{{.OS}}" in
+          (windows) echo application/vnd.microsoft.portable-executable ;;
+          (darwin)  echo application/x-mach-binary ;;
+          (linux)   echo application/x-executable ;;
+          (*) unknown ;;
+          esac
+    sources:
+      - '{{.DIR}}/*'
+    status:
+      - false
+    cmds:
+    - for: sources
+      cmd: filetype -m "{{.ITEM}}" | rg {{.FILETYPE}}
+ 
+  tests:
+   - __OS=linux   __ARCH=amd64 ops -task -t prereq.yml test
+   - __OS=linux   __ARCH=arm64 ops -task -t prereq.yml test
+   - __OS=darwin  __ARCH=amd64 ops -task -t prereq.yml test
+   - __OS=darwin  __ARCH=arm64 ops -task -t prereq.yml test
+   - __OS=windows __ARCH=amd64 ops -task -t prereq.yml test
+
+  kustomize:
+    desc: install kustomize
+    vars:
+      VERSION: "5.7.1"
+      FILE:  "kustomize_v{{.VERSION}}_{{.OS}}_{{.ARCH}}{{.ARC}}"
+      URL: "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv{{.VERSION}}/{{.FILE}}"
+      OUT: kustomize
+    cmds:
+    - curl -sL "{{.URL}}" -o "tmp_{{.FILE}}"
+    - task: download-and-extract
+      vars:
+        FILE: "{{.FILE}}"
+        URL: "{{.URL}}"
+        OUT: "{{.OUT}}"
+    
+  unzip:
+    desc: ensure unzip is available
+    vars:
+       VERSION: 5.52-1
+       ZIP_EXE: "https://stahlworks.com/dev/unzip.exe"
+    cmds:
+    - |
+      case "{{.OS}}-{{.ARCH}}" in
+      darwin-*) touch unzip ;;
+      linux-*)
+        cat >unzip <<EOF
+      #!/bin/bash
+      if test -x /bin/unzip -o -x /usr/bin/unzip -o -x /usr/local/bin/unzip
+      then rm "\$0" ; exec unzip "\$@"
+      else echo "Please install unzip in your system." ; exit 1
+      fi
+      EOF
+        executable unzip
+      ;; 
+      windows-*)
+         curl -sL "{{.UNZIP_EXE}}" -o unzip.exe
+         executable unzip.exe
+      ;;
+      esac
+
+  mc:
+    desc: install mc
+    vars:
+      VERSION: "latest"
+      OUT: mc
+      URL: "https://dl.min.io/client/mc/release/{{.OS}}-{{.ARCH}}/{{.OUT}}"
+    cmds:
+    - curl -sL "{{.URL}}" -o "{{.OUT}}"
+    - executable "{{.OUT}}"
+
+
+  all:
+    - task: mc
+    - task: kustomize    
