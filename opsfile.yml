@@ -39,3 +39,7 @@ tasks:
     cmds:
       - uv venv
       - uv pip install -r pyproject.toml
+
+  clusters:
+    silent: true
+    desc: setup the environment

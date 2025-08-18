@@ -20,6 +20,10 @@
 
 # Apache OpenServerless Operator
 
+NOTE: this readme is outdated and needs to be updated, not everyhing is still relevant.
+
+---
+
 In this readme there are information for developers.
 
 We describe how to build and test the operator in our development environment
