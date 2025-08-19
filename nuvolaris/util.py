@@ -34,6 +34,7 @@ import nuvolaris.config as cfg
 import nuvolaris.kube as kube
 import nuvolaris.template as template
 
+
 # Implements truncated exponential backoff from
 # https://cloud.google.com/storage/docs/retry-strategy#exponential-backoff
 def nuv_retry(deadline_seconds=120, max_backoff=5):
@@ -889,5 +890,4 @@ def get_seaweedds_filer_host():
      seaweedfs_filer_host   = cfg.get("seaweedfs.host", "SEAWEEDFS_API_HOST", "seaweedfs")
      seaweedfs_filer_port   = cfg.get("seaweedfs.port", "SEAWEEDFS_API_PORT", "9090")
      return f"http://{seaweedfs_filer_host}:{seaweedfs_filer_port}"
-
 

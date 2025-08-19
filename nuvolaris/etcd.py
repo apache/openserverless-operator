@@ -27,7 +27,6 @@ import kopf
 
 from nuvolaris.util import get_etcd_replica
 
-
 def create(owner=None):
     logging.info("create etcd")
     data = util.get_etcd_config_data()
@@ -174,3 +173,22 @@ def patch(status, action, owner=None):
             status['whisk_create']['etcd']='error'
         else:            
             status['whisk_create']['etcd']='error'
+
+import fire
+from  nuvolaris.operator_util import LoadConfig
+
+class Etcd(LoadConfig): 
+    def create(self, replicas: int = 0):
+        """ 
+        [<replicas>]
+        """
+        if replicas > 0:
+            print("setting replicas to:", replicas)
+            cfg.put("etcd.replicas", replicas)
+        print(create(self.owner))
+
+    def delete(self):
+       print(delete(self.owner))
+
+if __name__ == "__main__":
+    fire.Fire(Etcd)

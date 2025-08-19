@@ -24,15 +24,6 @@ vars:
 
 tasks:
 
-  cli:
-    silent: true
-    desc: run cli commands
-    cmds:
-      - |
-        export IPYTHONDIR="$(pwd)"
-        export PYTHONPATH="$(pwd)"
-        uv run ipython
-
   setup:
     silent: true
     desc: setup the environment
@@ -40,6 +31,20 @@ tasks:
       - uv venv
       - uv pip install -r pyproject.toml
 
+  cli:
+    silent: true
+    desc: launch a cli for interactive development
+    cmds:
+      - |
+        export IPYTHONDIR="$(pwd)"
+        export PYTHONPATH="$(pwd)"
+        uv run ipython
+
+
   clusters:
     silent: true
-    desc: setup the environment
+    desc: install clusters
+
+  nuvolaris:
+    silent: true
+    desc: install nuvolaris services

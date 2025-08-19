@@ -32,8 +32,8 @@ tasks:
   create: 
     desc: create
     cmds:
-    - kind create cluster --name "{{.NAME}}"
-    - kind get kubeconfig --name="{{.NAME}}" >{{.KUBEFILE}}
+    - kind create cluster --name "{{.NAME}}" #--config kind.yaml
+    - kind get kubeconfig --name="{{.NAME}}"  >{{.KUBEFILE}}
     - cp "{{.KUBEFILE}}" "$OPS_TMP/kubeconfig"
     - kubectl --namespace=ingress-nginx  --kubeconfig "{{.KUBEFILE}}" apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml 
 
