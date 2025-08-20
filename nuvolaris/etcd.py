@@ -16,14 +16,17 @@
 # under the License.
 #
 
+import nuvolaris.operator_util as operator_util
 import nuvolaris.kustomize as kus
 import nuvolaris.kube as kube
 import nuvolaris.config as cfg
 import nuvolaris.template as ntp
 import nuvolaris.util as util
+import sys
 import os.path
 import logging
 import kopf
+
 
 from nuvolaris.util import get_etcd_replica
 
@@ -42,7 +45,10 @@ def create(owner=None):
         spec_templates.append("etcd-policy.yaml")
 
     kust = kus.patchTemplates("etcd",tplp , data)
-    kust += kus.patchGenericEntry("Secret","nuvolaris-etcd-secret","/data/rootPassword",util.b64_encode(data['root_password']))   
+    kust += kus.patchGenericEntry("Secret","nuvolaris-etcd-secret","/data/rootPassword",util.b64_encode(data['root_password']))
+    # change prefix
+    if prefix is not None and prefix != "":
+        kust += kus.namePrefix(prefix)
     spec = kus.kustom_list("etcd", kust, templates=spec_templates, data=data)
 
     if owner:
@@ -76,7 +82,6 @@ def exec_etcd_script(pod_name,path_to_etcd_script):
     os.remove(path_to_etcd_script)    
     return res
     
-
 def create_etcd_user(username:str, password:str, prefix:str):
     """
     Creates a new ETCD username with the given password and assign redwrite permission on the given prefix
@@ -109,7 +114,7 @@ def create_etcd_user(username:str, password:str, prefix:str):
 
 def delete_db_user(username):
     """
-    Reomves the specified user from the ETCD instance.
+    Removes the specified user from the ETCD instance.
     """
     logging.info(f"removing ETCD user {username}")
     try:
@@ -174,21 +179,27 @@ def patch(status, action, owner=None):
         else:            
             status['whisk_create']['etcd']='error'
 
-import fire
-from  nuvolaris.operator_util import LoadConfig
-
-class Etcd(LoadConfig): 
-    def create(self, replicas: int = 0):
-        """ 
-        [<replicas>]
-        """
-        if replicas > 0:
-            print("setting replicas to:", replicas)
-            cfg.put("etcd.replicas", replicas)
-        print(create(self.owner))
-
-    def delete(self):
-       print(delete(self.owner))
 
 if __name__ == "__main__":
-    fire.Fire(Etcd)
+    [_create, _delete, replicas, prefix, storageClass] = sys.argv[1:]
+
+    owner = kube.get("wsk/controller")
+    if not owner:
+        print("cannot find a config in kubernetes\nplease use ops setup kubernetes configure")
+        sys.exit(1)
+    spec = owner.get("spec")
+    operator_util.config_from_spec(spec)
+
+    if _create == "true":
+        print("etcd create")
+        if replicas != "":
+            print("setting replicas to:", replicas)
+            cfg.put("etcd.replicas", int(replicas))
+        if storageClass != "":
+            print("setting storage class to:", storageClass)
+            cfg.put("nuvolaris.storage", storageClass)
+
+        print(create(owner))
+    if _delete == "true":
+        print(delete(owner))
+ 

@@ -8,4 +8,4 @@ tasks:
     desc: etcd
     dir: ..
     cmds:
-      - uv run nuvolaris/etcd.py {{.CLI_ARGS}}
+      - uv run nuvolaris/etcd.py  "{{.create}}" "{{.delete}}"  "{{.__replicas}}" "{{.__prefix}}" "{{.__storageclass}}"
