@@ -21,6 +21,7 @@ import math
 import random
 import time
 import uuid
+import os
 from base64 import b64decode, b64encode
 from typing import List, Union
 from urllib.parse import urlparse
@@ -523,8 +524,10 @@ def get_storage_static_config_data():
         minio_port=cfg.get('minio.port') or "9000"
         data['storage_url']=f"http://{minio_host}.nuvolaris.svc.cluster.local:{minio_port}"
 
-    if cfg.get('components.cosi'):
-        data['storage_url']=apihost_util.add_suffix_to_url(get_object_storage_rgw_url(),"cluster.local")
+    if cfg.get('components.seaweedfs'):
+        seaweedfs_api_host   = cfg.get("seaweedfs.host") or "seaweedfs"
+        seaweedfs_api_port   = cfg.get("seaweedfs.port") or "9000"
+        data['storage_url']=f"http://{seaweedfs_api_host}.nuvolaris.svc.cluster.local:{seaweedfs_api_port}"
 
     storage_static_affinity_tolerations_data(data)
     return data
@@ -588,7 +591,12 @@ def postgres_backup_affinity_tolerations_data(data):
 # populate specific affinity data for registry
 def registry_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
-    data["pod_anti_affinity_name"] = "registry"    
+    data["pod_anti_affinity_name"] = "registry"
+
+# populate specific affinity data for seaweedfs
+def seaweedfs_affinity_tolerations_data(data):
+    common_affinity_tolerations_data(data)
+    data["pod_anti_affinity_name"] = "seaweedfs"        
 
 # wait for a pod name using a label selector and eventually an optional jsonpath
 @nuv_retry()
@@ -797,6 +805,7 @@ def get_milvus_config_data():
         'milvus_s3_username': 'miniomilvus',
         'milvus_s3_password': cfg.get('milvus.password.s3') or "s0meP@ass3",
         'milvus_bucket_name': 'vectors',
+        'milvus_bucket_quota': cfg.get('milvus.volume-size.bucket') or 10240,
         'milvus_bucket_prefix': 'milvus/nuvolaris-milvus',
         'size': cfg.get('milvus.volume-size.cluster') or 10,
         'zookeeper_size': cfg.get('milvus.volume-size.zookeeper') or 10,
@@ -813,6 +822,14 @@ def get_milvus_config_data():
         'milvus_max_database_num': cfg.get('milvus.root-coord.max-database-num') or 64,
         'slim': cfg.get('nuvolaris.slim') or False,
         }
+    
+    if cfg.get('components.minio'):
+        data["bucket_server_hostname"]="nuvolaris-minio"
+        data["bucket_server_port"]="9000"
+
+    if cfg.get('components.seaweedfs'):
+        data["bucket_server_hostname"]="seaweedfs"
+        data["bucket_server_port"]="9000"        
 
     data["etcd_range"]=range(data["etcd_replicas"])
     milvus_standalone_affinity_tolerations_data(data)
@@ -841,5 +858,36 @@ def get_registry_config_data():
     data['repoSvcHostname'] = "nuvolaris-registry-svc:5000"
     registry_affinity_tolerations_data(data)
     return data
+
+def find_content_path(filename):
+    absolute_path = os.path.dirname(__file__)
+    relative_path = "../deploy/content"
+    return os.path.join(absolute_path, relative_path, filename)
+
+# return seaweedfs configuration parameters with default values if not configured
+def get_seaweedfs_config_data():
+    data = {
+        "applypodsecurity":get_enable_pod_security(),
+        "name":"seaweedfs",
+        "container":"seaweedfs",
+        "seaweedfs_host": cfg.get('seaweedfs.host') or 'seaweedfs',
+        "size": cfg.get('seaweedfs.volume-size') or "60",
+        "default_bucket_quota": cfg.get('seaweedfs.default-bucket-quota') or "1024",
+        "storage_class": cfg.get("nuvolaris.storageclass"),
+        "pvcName":"seaweedfs-pvc",
+        "seaweedfs_nuv_user": cfg.get('seaweedfs.nuvolaris.user') or "nuvolaris",
+        "seaweedfs_nuv_password": cfg.get('seaweedfs.nuvolaris.password') or "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
+        "seaweedfs_s3_ingress_enabled": cfg.get('seaweedfs.ingress.s3-enabled') or False,
+        "seaweedfs_console_ingress_enabled": cfg.get('seaweedfs.ingress.console-enabled') or False,
+        "seaweedfs_s3_ingress_hostname": cfg.get('seaweedfs.ingress.s3-hostname') or "auto",
+        "seaweedfs_console_ingress_hostname": cfg.get('seaweedfs.ingress.console-hostname') or "auto"
+    }
+    seaweedfs_affinity_tolerations_data(data)
+    return data
+
+def get_seaweedds_filer_host():
+     seaweedfs_filer_host   = cfg.get("seaweedfs.host", "SEAWEEDFS_API_HOST", "seaweedfs")
+     seaweedfs_filer_port   = cfg.get("seaweedfs.port", "SEAWEEDFS_API_PORT", "9090")
+     return f"http://{seaweedfs_filer_host}:{seaweedfs_filer_port}"
 
 

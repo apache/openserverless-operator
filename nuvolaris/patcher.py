@@ -36,6 +36,7 @@ import nuvolaris.quota_checker_job as quota
 import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
 import nuvolaris.registry_deploy as registry
+import nuvolaris.seaweedfs_deploy as seaweedfs
 
 def patch_preloader(owner: None):
     try:
@@ -176,6 +177,9 @@ def patch(diff, status, owner=None, name=None):
 
     if "minio-ingresses" in what_to_do and what_to_do['minio-ingresses'] == "update":
         minio.patch_ingresses(status,what_to_do['minio-ingresses'], owner)
+
+    if "seaweedfs-ingresses" in what_to_do and what_to_do['seaweedfs-ingresses'] == "update":
+        seaweedfs.patch_ingresses(status,what_to_do['seaweedfs-ingresses'], owner)        
 
     if components_updated:
         operator_util.whisk_post_create(name)        

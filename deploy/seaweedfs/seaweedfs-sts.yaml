@@ -14,48 +14,45 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: redis
+  name: seaweedfs
   namespace: nuvolaris
 spec:
+  serviceName: "seaweedfs"
   replicas: 1
   selector:
     matchLabels:
-      name: redis
-  serviceName: redis
+      app: seaweedfs
   template:
     metadata:
       labels:
-        name: redis
-        app: redis
-      annotations:
-        whisks.nuvolaris.org/annotate-version: "true"         
+        app: seaweedfs
     spec:
-      restartPolicy: Always
-      {% if applypodsecurity %}
-      securityContext:
-        fsGroup: 1001 
-        runAsUser: 1001 #default BITNAMI user     
-      {% endif %}
       containers:
-      - name: redis
-        image: bitnamisecure/valkey:latest
-        command: ["/bin/sh","-c","redis-server /redis-master/redis.conf"]
-        env:
-        - name: MASTER
-          value: "true"
-        ports:
-        - containerPort: 6379
-        volumeMounts:
-        - mountPath: /redis-master
-          name: config
+        - name: seaweedfs
+          image: chrislusf/seaweedfs:3.97
+          ports:
+            - containerPort: 9000 # S3
+            - containerPort: 9090 # Filer
+            - containerPort: 9333 # Master
+          command: ["weed"]
+          args:
+            - "server"
+            - "-s3"
+            - "-s3.port=9000"
+            - "-filer"
+            - "-filer.port=9090"
+            - "-master.port=9333"
+            - "-dir=/data"
+            - "-volume.max=0"
+            - "-master.volumeSizeLimitMB=1024"
+          volumeMounts:
+            - name: seaweedfs-data
+              mountPath: /data
       volumes:
-        - name: config
-          configMap:
-            name: redis-cm
-            items:
-            - key: redis-conf
-              path: redis.conf
+        - name: seaweedfs-data
+          persistentVolumeClaim:
+            claimName: seaweedfs-pvc

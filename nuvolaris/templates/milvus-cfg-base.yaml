@@ -50,8 +50,8 @@ data:
       type: etcd 
          
     minio:
-      address: nuvolaris-minio
-      port: 9000
+      address: {{bucket_server_hostname}}
+      port: {{bucket_server_port}}
       accessKeyID: {{milvus_s3_username}}
       secretAccessKey: {{milvus_s3_password}}
       useSSL: false

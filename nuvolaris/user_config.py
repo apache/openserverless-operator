@@ -17,6 +17,7 @@
 #
 import flatdict, json, os
 import logging
+import nuvolaris.config as cfg
 
 class UserConfig:
     _config = {}

@@ -29,6 +29,7 @@ import nuvolaris.openwhisk as openwhisk
 from nuvolaris.milvus_admin_client import MilvusAdminClient
 from nuvolaris.user_config import UserConfig
 from nuvolaris.user_metadata import UserMetadata
+from nuvolaris.seaweedfs_util import SeaweedfsClient
 
 
 def patchEntries(data: dict):
@@ -105,7 +106,7 @@ def create(owner=None):
             r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'nuvolaris-milvus')].metadata.name}")
 
         milvus_api_host = cfg.get("milvus.host", "MILVUS_API_HOST", "nuvolaris-milvus")
-        milvus_api_port = cfg.get("milvus.host", "MILVUS_API_PORT", "19530")
+        milvus_api_port = cfg.get("milvus.port", "MILVUS_API_PORT", "19530")
 
         logging.info("*** waiting for milvus api to be available")
         util.wait_for_http(f"http://{milvus_api_host}:{milvus_api_port}", up_statuses=[200,401], timeout=30)
@@ -117,14 +118,11 @@ def create(owner=None):
     return res
 
 
-def create_milvus_accounts(data: dict):
+def create_minio_milvus_account(data: dict):
     """"
-    Creates technical accounts for ETCD and MINIO
+    Creates technical accounts for MINIO
     """
     try:
-        # currently we use the ETCD root password, so we skip the ETCD user creation.
-        # res = util.check(etcd.create_etcd_user(data['milvus_etcd_username'],data['milvus_etcd_password'],data['milvus_etcd_prefix']),"create_etcd_milvus_user",True)
-
         minioClient = mutil.MinioClient()
         bucket_policy_names = []
         bucket_policy_names.append(f"{data['milvus_bucket_name']}/*")
@@ -135,8 +133,33 @@ def create_milvus_accounts(data: dict):
         return util.check(minioClient.assign_rw_bucket_policy_to_user(data["milvus_s3_username"], bucket_policy_names),
                           "assign_milvus_s3_bucket_policy", res)
     except Exception as ex:
-        logging.error("Could not create milvus ETCD and MINIO accounts", ex)
-        return False
+        logging.error("Could not create milvus MINIO accounts", ex)
+        return False 
+
+def create_seaweedfs_milvus_account(data: dict):
+    """"
+    Creates technical accounts for SEAWEEDFS
+    """
+    try:
+        seaweedfsClient = SeaweedfsClient()
+        res = util.check(seaweedfsClient.make_bucket(data["milvus_bucket_name"],data["milvus_bucket_quota"]),"make_milvus_bucket",True)
+        return util.check(seaweedfsClient.add_user(data["milvus_s3_username"],data["milvus_s3_username"],data["milvus_s3_password"],data["milvus_bucket_name"]),"add_milvus_user",res)
+    except Exception as ex:
+        logging.error("Could not create milvus SEAWEEDFS accounts", ex)
+        return False        
+
+def create_milvus_accounts(data: dict):
+    """"
+    Creates technical accounts for ETCD and MINIO
+    """
+    # currently we use the ETCD root password, so we skip the ETCD user creation.
+    # res = util.check(etcd.create_etcd_user(data['milvus_etcd_username'],data['milvus_etcd_password'],data['milvus_etcd_prefix']),"create_etcd_milvus_user",True)
+
+    if cfg.get('components.minio'):
+        return create_minio_milvus_account(data)
+    
+    if cfg.get('components.seaweedfs'):
+        return create_seaweedfs_milvus_account(data)
 
 
 def create_default_milvus_database(data):

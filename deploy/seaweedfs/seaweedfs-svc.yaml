@@ -14,43 +14,29 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
-apiVersion: apps/v1
-kind: StatefulSet
+---
+apiVersion: v1
+kind: Service
 metadata:
-  name: redis
+  name: seaweedfs
   namespace: nuvolaris
 spec:
-  replicas: 1
+  type: NodePort
+  ports:
+    - name: s3-api
+      port: 9000
+      targetPort: 9000
+      nodePort: 32090
+      protocol: TCP
+    - name: filer
+      port: 9090
+      targetPort: 9090
+      nodePort: 32091
+      protocol: TCP
+    - name: master
+      port: 9333
+      targetPort: 9333
+      nodePort: 32093
+      protocol: TCP
   selector:
-    matchLabels:
-      name: redis
-  serviceName: redis
-  template:
-    metadata:
-      labels:
-        name: redis
-        app: redis
-      annotations:
-        whisks.nuvolaris.org/annotate-version: "true"       
-    spec:
-      restartPolicy: Always    
-      containers:
-      - name: redis
-        image: bitnamisecure/valkey:latest
-        command: ["/bin/sh","-c","redis-server /redis-master/redis.conf"]
-        env:
-        - name: MASTER
-          value: "true"
-        ports:
-        - containerPort: 6379
-        volumeMounts:
-        - mountPath: /redis-master
-          name: config
-      volumes:
-        - name: config
-          configMap:
-            name: redis-cm
-            items:
-            - key: redis-conf
-              path: redis.conf
+    app: seaweedfs
