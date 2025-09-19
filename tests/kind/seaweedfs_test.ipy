@@ -43,4 +43,4 @@ assert(seaweedfs_deploy.create())
 pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'seaweedfs')].metadata.name}")
 assert(pod_name)
 
-#assert(seaweedfs_deploy.delete())
+assert(seaweedfs_deploy.delete())
