@@ -73,6 +73,14 @@ def check_minio_ingresses(response: dict, item: dict):
         if(item['new']):
             response["minio-ingresses"]="update"
 
+def check_seaweedfs_ingresses(response: dict, item: dict):
+    """
+    Forces an update of seaweed-ingresses if needed
+    """
+    if(item['path']=='spec.seaweedfs.ingress.s3-enabled' or item['path']=='spec.seaweedfs.ingress.console-enabled'):
+        if(item['new']):
+            response["seaweedfs-ingresses"]="update"            
+
 def check_registry_ingresses(response: dict, item: dict):
     """
     Forces an update of registry-ingress if needed
@@ -100,9 +108,11 @@ def evaluate_differences(response: dict, differences: list):
         check_component(response, d,"spec.components.etcd","etcd")
         check_component(response, d,"spec.components.milvus","milvus")
         check_component(response, d,"spec.components.registry","registry")
+        check_component(response, d,"spec.components.seaweedfs","seaweedfs")
         openwhisk(response, d)           
         endpoint(response, d)
         check_minio_ingresses(response, d)
+        check_seaweedfs_ingresses(response, d)
         
 def detect_component_changes(kopf_diff):
     """

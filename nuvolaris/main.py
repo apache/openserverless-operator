@@ -42,6 +42,7 @@ import nuvolaris.quota_checker_job as quota
 import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
 import nuvolaris.registry_deploy as registry
+import nuvolaris.seaweedfs_deploy as seaweedfs
 
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, **_):
@@ -84,6 +85,10 @@ def whisk_create(spec, name, **kwargs):
         "etcd":"?" #Etcdd configuration
     }
 
+    if cfg.get('components.minio') and cfg.get('components.seaweedfs'):
+        state['controller']= "NotValid"
+        raise kopf.PermanentError("Storage support for MINIO and SEAWEEDFS could not be activated simultaneously.")    
+
     runtime = cfg.get('nuvolaris.kube')
     logging.info(f"kubernetes engine in use={runtime}")
 
@@ -93,7 +98,7 @@ def whisk_create(spec, name, **kwargs):
             state['preloader']= "on"
             logging.info(msg)
         except:
-            logging.exception("could not create runtime preloader batach")
+            logging.exception("could not create runtime preloader batch")
             state['preloader']= "error"
     else:
         state['preloader']= "off"   
@@ -164,6 +169,13 @@ def whisk_create(spec, name, **kwargs):
         state['minio'] = "on"
     else:
         state['minio'] = "off"
+
+    if cfg.get('components.seaweedfs'):
+        msg = seaweedfs.create(owner)
+        logging.info(msg)
+        state['seaweedfs'] = "on"
+    else:
+        state['seaweedfs'] = "off"         
 
     if cfg.get('components.static'):
         msg = static.create(owner)
@@ -331,6 +343,10 @@ def whisk_delete(spec, **kwargs):
     if cfg.get("components.minio"):
         msg = minio.delete()
         logging.info(msg)
+
+    if cfg.get("components.seaweedfs"):
+        msg = seaweedfs.delete()
+        logging.info(msg)        
 
     if cfg.get('components.postgres'):
         msg = postgres.delete()

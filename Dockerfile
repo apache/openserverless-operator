@@ -70,6 +70,7 @@ ADD --chown=nuvolaris:nuvolaris deploy/milvus-operator /home/nuvolaris/deploy/mi
 ADD --chown=nuvolaris:nuvolaris deploy/milvus /home/nuvolaris/deploy/milvus
 ADD --chown=nuvolaris:nuvolaris deploy/milvus-slim /home/nuvolaris/deploy/milvus-slim
 ADD --chown=nuvolaris:nuvolaris deploy/registry /home/nuvolaris/deploy/registry
+ADD --chown=nuvolaris:nuvolaris deploy/seaweedfs /home/nuvolaris/deploy/seaweedfs
 ADD --chown=nuvolaris:nuvolaris quota.sh /home/nuvolaris/
 
 #------------------------------------------------------------------------------

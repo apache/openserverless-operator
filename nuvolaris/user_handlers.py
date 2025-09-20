@@ -33,6 +33,7 @@ import nuvolaris.redis as redis
 import nuvolaris.storage_static as static
 import nuvolaris.user_patcher as user_patcher
 import nuvolaris.userdb_util as userdb
+import nuvolaris.seaweedfs_deploy as seaweedfs
 from nuvolaris.quota_checker import REDIS_DB_QUOTA_ANNOTATION
 from nuvolaris.user_config import UserConfig
 from nuvolaris.user_metadata import UserMetadata
@@ -71,7 +72,10 @@ def whisk_user_create(spec, name, patch, **kwargs):
     if(cfg.get('components.minio') and (ucfg.get('object-storage.data.enabled') or ucfg.get('object-storage.route.enabled'))):        
         minio_deploy.create_ow_storage(state, ucfg, user_metadata, owner)
 
-    if(cfg.get('components.minio') and ucfg.get('object-storage.route.enabled') and cfg.get('components.static')):
+    if(cfg.get('components.seaweedfs') and (ucfg.get('object-storage.data.enabled') or ucfg.get('object-storage.route.enabled'))):        
+        seaweedfs.create_ow_storage(state, ucfg, user_metadata, owner)        
+
+    if((cfg.get('components.minio') or cfg.get('components.seaweedfs')) and ucfg.get('object-storage.route.enabled') and cfg.get('components.static')):
         res = static.create_ow_static_endpoint(ucfg,user_metadata, owner)
         logging.info("OpenWhisk static endpoint for %s added = %s", ucfg.get('namespace'), res)
         state['static']= res
@@ -126,7 +130,11 @@ def whisk_user_delete(spec, name, **kwargs):
         res = minio_deploy.delete_ow_storage(ucfg)
         logging.info(f"OpenWhisk namespace {ucfg.get('namespace')} MINIO storage removed = {res}")
 
-    if(cfg.get('components.minio') and ucfg.get('object-storage.route.enabled') and cfg.get('components.static')):
+    if(cfg.get('components.seaweedfs') and (ucfg.get('object-storage.data.enabled') or ucfg.get('object-storage.route.enabled'))):        
+        res = seaweedfs.delete_ow_storage(ucfg)
+        logging.info(f"OpenWhisk namespace {ucfg.get('namespace')} SEAWEEDFS storage removed = {res}")         
+
+    if((cfg.get('components.minio') or cfg.get('components.seaweedfs')) and ucfg.get('object-storage.route.enabled') and cfg.get('components.static')):
         res = static.delete_ow_static_endpoint(ucfg)
         logging.info(f"OpenWhisk static endpoint for {ucfg.get('namespace')} removed = {res}")
 

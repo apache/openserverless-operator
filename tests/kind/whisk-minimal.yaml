@@ -33,17 +33,25 @@ spec:
     # start mongodb
     mongodb: false
     # start redis
-    redis: false      
+    redis: true      
     # start cron based action parser
     cron: false 
     # tls enabled or not
     tls: false
     # minio enabled or not
-    minio: true 
+    minio: false 
     # minio static enabled or not
     static: true
     # postgres enabled or not
-    postgres: false          
+    postgres: false
+    # etcd enabled or not
+    etcd: false
+    # milvus enabled or not
+    milvus: false
+    # registry enabled or not
+    registry: false
+    # seaweedfs enabled or not
+    seaweedfs: true                 
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
@@ -54,6 +62,7 @@ spec:
     provisioner: auto #rancher.io/local-path
     ingressclass: auto #nginx
     ingresslb: auto #ingress-nginx/ingress-nginx-controller
+    slim: true
   couchdb:
     host: couchdb
     port: 5984
@@ -123,11 +132,33 @@ spec:
     nuvolaris:
       user: nuvolaris
       password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
-  postgres:    
-    volume-size: 5
-    replicas: 2
-    admin:      
-      password: 0therPa55
-      replica-password: 0therPa55RR
+  milvus:    
+    volume-size:
+      cluster: 20
+      zookeeper: 15
+      journal: 20
+      ledgers: 25
+    replicas: 1
+    password:
+      root: An0therPa55
+      etcd: 97Vk2{qe8o>S
+      s3: 8_d$8zCrl7£m
+  registry:    
+    mode: internal
+    volume-size: 20
+    auth:
+      username: nuvolaris
+      password: 4pwdregistry
+    hostname: auto
+    ingress:
+      enabled: false
+  seaweedfs:
+    volume-size: 60  
     nuvolaris:
-      password: s0meP@ass3                   
+      user: nuvolaris
+      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+    ingress:
+      s3-enabled: true
+      s3-hostname: auto
+      console-enabled: false
+      console-hostname: auto                             
