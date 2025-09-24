@@ -25,7 +25,8 @@ spec:
   selector:
     app: registry
   ports:
-    - protocol: TCP
+    - nodePort: 32000
+      protocol: TCP
       port: 5000
       targetPort: 5000
-  type: ClusterIP
+  type: NodePort
