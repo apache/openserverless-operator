@@ -152,7 +152,7 @@ spec:
                       type: boolean
                     seaweedfs:
                       description: deploys an S3 compatible layer using a standalone deployment of seaweedfs
-                      type: boolean                                                                    
+                      type: boolean                                                                     
                   required:
                     - openwhisk
                     - couchdb
@@ -754,10 +754,11 @@ spec:
                             type: integer
                           ledgers:
                             description: pulsar bookie ledgers instance volume size
-                            type: integer 
+                            type: integer
                           bucket:
                             description: used to setup a quota on the S3 bucket when running under seaweedfs (default to 10240MB)
                             type: integer                                                                                                                                                                 
+                            type: integer                                                                                                                                      
                     replicas:
                       description: number of total milvus replicas. Defaulted to 1
                       type: integer
@@ -997,4 +998,9 @@ spec:
           type: string
           priority: 0
           jsonPath: .status.whisk_create.registry
-          description: Registry                                                                                                              
+          description: Registry 
+        - name: Seaweedfs
+          type: string
+          priority: 0
+          jsonPath: .status.whisk_create.seaweedfs
+          description: Seaweedfs                                                                                                                        

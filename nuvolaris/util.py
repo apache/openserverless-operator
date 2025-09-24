@@ -761,7 +761,7 @@ def get_etcd_config_data():
         "applypodsecurity":get_enable_pod_security(),
         "name": "nuvolaris-etcd",
         "container": "nuvolaris-etcd",
-        "size": cfg.get("etcd.volume-size", "REDIS_VOLUME_SIZE", 5),
+        "size": cfg.get("etcd.volume-size", "STORAGE_SIZE_ETCD", 5),
         "storageClass": cfg.get("nuvolaris.storageclass"),
         "root_password":cfg.get("etcd.root.password") or "s0meP@ass3wd",
         "etcd_replicas":get_etcd_replica(),
