@@ -259,7 +259,11 @@ def delete_ow_milvus(ucfg):
 
 
 def delete_by_owner():
-    spec = kus.build("milvus")
+    data = util.get_milvus_config_data()
+    dir = "milvus"
+    if data['slim']:
+        dir += "-slim"
+    spec = kus.build(dir)
     res = kube.delete(spec)
     logging.info(f"delete milvus: {res}")
     return res
