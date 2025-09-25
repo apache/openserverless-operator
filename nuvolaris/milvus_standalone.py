@@ -161,6 +161,47 @@ def create_milvus_accounts(data: dict):
     if cfg.get('components.seaweedfs'):
         return create_seaweedfs_milvus_account(data)
 
+def delete_minio_milvus_account(data: dict):
+    """
+    Deletes technical accounts for MINIO
+    """
+    try:
+        logging.info("removing milvus minio technical accounts.")
+        minioClient = mutil.MinioClient()
+        res = util.check(minioClient.remove_user(data["milvus_s3_username"]), "remove_user", True)
+        return util.check(minioClient.force_bucket_remove(data["milvus_bucket_name"]), "force_bucket_remove", res)
+        
+    except Exception as ex:
+        logging.error("Could not delete milvus MINIO accounts", ex)
+        return False 
+
+def delete_seaweedfs_milvus_account(data: dict):
+    """
+    Delete technical accounts for SEAWEEDFS
+    """
+    try:
+        logging.info("removing milvus seaweedfs technical accounts.")
+        seaweedfsClient = SeaweedfsClient()
+        res = util.check(seaweedfsClient.delete_user(data["milvus_s3_username"]), "delete_user", True)
+        return util.check(seaweedfsClient.force_bucket_remove(data["milvus_bucket_name"]), "force_bucket_remove", res)
+        
+    except Exception as ex:
+        logging.error("Could not delete milvus SEAWEEDFS accounts", ex)
+        return False
+
+def delete_milvus_accounts(data: dict):
+    """"
+    Deletes technical accounts for ETCD and MINIO
+    """
+    # currently we use the ETCD root password, so we skip the ETCD user deletion.
+    
+    logging.info("removing milvus technical accounts.")
+    if cfg.get('components.minio'):
+        return delete_minio_milvus_account(data)
+    
+    if cfg.get('components.seaweedfs'):
+        return delete_seaweedfs_milvus_account(data)
+
 
 def create_default_milvus_database(data):
     """
@@ -258,13 +299,13 @@ def delete_ow_milvus(ucfg):
     return res
 
 
-def delete_by_owner():
-    data = util.get_milvus_config_data()
+def delete_by_owner(data):
     dir = "milvus"
     if data['slim']:
         dir += "-slim"
     spec = kus.build(dir)
     res = kube.delete(spec)
+
     logging.info(f"delete milvus: {res}")
     return res
 
@@ -278,10 +319,13 @@ def delete_by_spec():
 
 
 def delete(owner=None):
+    data = util.get_milvus_config_data()
     if owner:
-        return delete_by_owner()
+        res = delete_by_owner(data)
     else:
-        return delete_by_spec()
+        res = delete_by_spec()
+    
+    return delete_milvus_accounts(data)
 
 
 def patch(status, action, owner=None):
