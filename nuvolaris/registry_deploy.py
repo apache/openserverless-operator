@@ -69,7 +69,13 @@ def create_internal_registry(data, owner=None):
     kust += registrySecret.generateHtPasswordPatch()
 
     #path the registry pull secret
-    registryPullSecret = ImagePullSecretData(data['registryUsername'],data['registryPassword'],data['repoHostname'])
+    repoInternalHost = data['repoHostname']
+    if kube.detect_kind():
+        # when repo is kind, the registry pull secret will point
+        # to the node port exposed on the node
+        repoInternalHost = "127.0.0.1:32000"
+    
+    registryPullSecret = ImagePullSecretData(data['registryUsername'],data['registryPassword'],repoInternalHost)
     registryPullSecret.with_secret_name("registry-pull-secret")    
     kust += registryPullSecret.generatePullSecretPatch()
 

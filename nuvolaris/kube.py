@@ -170,4 +170,13 @@ def rollout(name, namespace="nuvolaris"):
     try:
         return kubectl("rollout", "restart", name, namespace=namespace)
     except:
-        return None            
+        return None
+    
+def detect_kind():
+    try:
+        is_kind = kubectl("get","node/nuvolaris-control-plane",
+                          namespace=None,
+                          jsonpath='{.metadata.labels.nuvolaris\\.io/kube}')
+        return is_kind and "kind" in is_kind
+    except:
+        return False

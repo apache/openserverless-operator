@@ -82,7 +82,8 @@ def whisk_create(spec, name, **kwargs):
         "static": "?", # Minio static endpoint provider
         "zookeeper": "?", #Zookeeper configuration
         "quota":"?", #Quota configuration
-        "etcd":"?" #Etcdd configuration
+        "etcd":"?", #Etcd configuration
+        "milvus":"?" #Milvus configuration
     }
 
     if cfg.get('components.minio') and cfg.get('components.seaweedfs'):

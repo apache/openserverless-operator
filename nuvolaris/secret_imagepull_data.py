@@ -66,7 +66,7 @@ class ImagePullSecretData:
         uses the given template to render a final ImagePull secret template and returns the path to the template
         """
         logging.info(f"*** Rendering ImagePull secret template with name {self._data['secret_name']} via template {tpl}")
-        out = f"/tmp/__{namespace}_{tpl}"
+        out = f"/tmp/__{namespace}_{self._data['secret_name']}_{tpl}"
         file = ntp.spool_template(tpl, out, self._data)
         return os.path.abspath(file)
     

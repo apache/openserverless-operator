@@ -26,6 +26,7 @@ data:
     apiVersion: v1
     kind: Pod
     spec:
+      imagePullPolicy: Always 
       imagePullSecrets:
       - name: registry-pull-secret
 
