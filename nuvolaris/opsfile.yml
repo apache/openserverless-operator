@@ -1,0 +1,11 @@
+version: '3'
+
+
+tasks:
+
+  etcd:
+    silent: true
+    desc: etcd
+    dir: ..
+    cmds:
+      - uv run nuvolaris/etcd.py  "{{.create}}" "{{.delete}}"  "{{.__replicas}}" "{{.__prefix}}" "{{.__storageclass}}"

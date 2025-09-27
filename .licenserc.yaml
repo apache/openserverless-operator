@@ -46,7 +46,7 @@ header:
     - '**/license-eye'
     - '**/id_rsa*'
     - '**/.gitkeep'
-    - 'poetry.lock'
+    - 'uv.lock'
     - '**/__*'
     - '.github/ngrok'
     - 'ngrok'

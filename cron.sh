@@ -16,4 +16,4 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-poetry run actionexecutor -v
+uv run actionexecutor -v

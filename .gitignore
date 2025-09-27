@@ -57,3 +57,4 @@ actions/github/webhook/common
 .direnv/
 .idea/**
 .vscode/**
+profile_default/history.sqlite

@@ -15,26 +15,32 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-version: '3'
+%load_ext autoreload
+%autoreload 2
 
-#dotenv: ['../.env']
-tasks:
+import sys, os, dotenv, logging
+rootdir = os.getcwd()
+dotenv.load_dotenv(os.path.join(rootdir, ".env"))
+dotenv.load_dotenv(os.path.join(rootdir, "tests", ".env"))
 
-  create: init.sh
+logging.basicConfig(level=logging.DEBUG)
 
-  destroy: init.sh destroy
+import sys, os, os.path, yaml, json
+import nuvolaris.kube as kube
+import nuvolaris.kustomize as kus
+import nuvolaris.config as cfg
+import nuvolaris.couchdb as cdb
+import nuvolaris.templates as tpl
+import requests as req
+import nuvolaris.testutil as tu
 
-  list: kind get clusters
+k='kubectl -n nuvolaris'
+ka='kubectl -n nuvolaris apply'
+kd='kubectl -n nuvolaris delete'
+kde='kubectl -n nuvolaris describe'
+kg='kubectl -n nuvolaris get'
+kns='kubectl config  set-context --current --namespace'
 
-  get-config: kind get kubeconfig --name=nuvolaris >kind.kubeconfig
-  
-  config: 
-    - task: get-config
-    - cp kind.kubeconfig ~/.kube/config
-    - kubectl get nodes
+def yd(r):
+    print(yaml.dump(r))
 
-  labels: kubectl get nodes -ojsonpath='{.items[].metadata.labels}' | jq .
-
-  ingress: 
-    cmds:
-      - kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml 

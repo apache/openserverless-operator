@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import logging
+import sys, logging
 import nuvolaris.openwhisk as openwhisk
 import nuvolaris.kube as kube
 import nuvolaris.userdb_util as userdb
@@ -132,4 +132,15 @@ def patch_operator_status(status,component, status_code):
         logging.debug(f"patching component {component} with code = {status_code} from event handler {status}")
         status['whisk_create'][component]=status_code
     except Exception as e:
-        logging.error('*** failed to patch_operator_status: %s' % e)  
+        logging.error('*** failed to patch_operator_status: %s' % e)
+
+
+# base class to load config from the kubernetes cluster
+class LoadConfig:
+    def __init__(self):
+        self.owner = kube.get("wsk/controller")
+        if not self.owner:
+            print("cannot find a config in kubernetes\nplease use ops setup kubernetes configure")
+            sys.exit(1)
+        spec = self.owner.get("spec")
+        config_from_spec(spec)

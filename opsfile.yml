@@ -14,27 +14,37 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
-%load_ext autoreload
-%autoreload 2
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
-import sys, os, os.path, yaml, json
-import nuvolaris.kube as kube
-import nuvolaris.kustomize as kus
-import nuvolaris.config as cfg
-import nuvolaris.couchdb as cdb
-import nuvolaris.templates as tpl
-import requests as req
-import nuvolaris.testutil as tu
+version: '3'
+# Licensed to the Apache Software Foundation (ASF) under one
 
-k='kubectl -n nuvolaris'
-ka='kubectl -n nuvolaris apply'
-kd='kubectl -n nuvolaris delete'
-kde='kubectl -n nuvolaris describe'
-kg='kubectl -n nuvolaris get'
-kns='kubectl config  set-context --current --namespace'
+vars:
+  OS: '{{OS}}'
+  ARCH: '{{ARCH}}'
 
-def yd(r):
-    print(yaml.dump(r))
+tasks:
+
+  setup:
+    silent: true
+    desc: setup the environment
+    cmds:
+      - uv venv
+      - uv pip install -r pyproject.toml
+
+  cli:
+    silent: true
+    desc: launch a cli for interactive development
+    cmds:
+      - |
+        export IPYTHONDIR="$(pwd)"
+        export PYTHONPATH="$(pwd)"
+        uv run ipython
+
+
+  clusters:
+    silent: true
+    desc: install clusters
+
+  nuvolaris:
+    silent: true
+    desc: install nuvolaris services
