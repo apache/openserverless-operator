@@ -1393,7 +1393,7 @@ spec:
       serviceAccountName: "default"
       containers:
         - name: etcd
-          image: docker.io/milvusdb/etcd:3.5.16-r1
+          image: docker.io/bitnamilegacy/etcd:3.5.17-debian-12-r0
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
