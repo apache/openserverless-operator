@@ -43,7 +43,7 @@ spec:
       {% endif %}      
       containers:
       - name: minio
-        image: bitnami/minio:2025.6.13
+        image: bitnamilegacy/minio:2025.6.13
         securityContext:
           capabilities:
             drop:
