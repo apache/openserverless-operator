@@ -125,7 +125,7 @@ RUN \
     URL="https://raw.githubusercontent.com/apache/openserverless-cli/refs/tags/v$VER/install.sh" ;\
     curl -sL $URL | VERSION="$VER" bash ;\
     echo -e '#!/bin/bash\nops -wsk "$@"' >$HOME/.local/bin/wsk ; chmod +x $HOME/.local/bin/wsk ;\
-    curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b $HOME/.local/bin/task 
+    curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b $HOME/.local/bin 
 
 # env with l
 ARG TARGETARCH

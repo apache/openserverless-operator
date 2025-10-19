@@ -84,7 +84,7 @@ tasks:
       - configure-env
     cmds:
       - mkdir -p ~/.kube ; touch ~/.kube/config
-      - poetry install
+      #- poetry install
     status:
       - test -e $GOBIN/kopf
       
@@ -234,7 +234,7 @@ tasks:
       - |
         for test in nuvolaris/{{.T}}*.py
         do  echo "*** [{{.KUBE}}] $test"
-            poetry run python3 -m doctest $test {{.CLI_ARGS}}
+            uv run ipython -m doctest $test {{.CLI_ARGS}}
         done
     silent: true
 
@@ -251,7 +251,7 @@ tasks:
             if test -e "$test"
             then  echo "*** [{{.KUBE}}] $test"
                   rm -f deploy/*/kustomization.yaml deploy/*/__*
-                  if poetry run ipython $test {{.CLI_ARGS}}
+                  if uv run ipython $test {{.CLI_ARGS}}
                   then  echo "OK: $test"
                   else  echo "FAIL: $test"
                         echo $test >>_failed.txt
@@ -284,7 +284,7 @@ tasks:
     - task: dtest
 
   debug: 
-    - poetry run ipython profile create
+    - uv run ipython profile create
     - cp test_profile.ipy ~/.ipython/profile_default/startup/
     - task: uitest
 

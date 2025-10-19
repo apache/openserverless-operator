@@ -18,7 +18,7 @@
 version: '3'
 
 vars:
-  NAME: "nuvolaris-dev"
+  NAME: "nuvolaris"
   KUBEFILE: "{{.OPS_TMP}}/kind-dev.kubeconfig"
   DRY: ""
 
@@ -36,7 +36,12 @@ tasks:
     - kind get kubeconfig --name="{{.NAME}}"  >{{.KUBEFILE}}
     - cp "{{.KUBEFILE}}" "$OPS_TMP/kubeconfig"
     - kubectl --namespace=ingress-nginx  --kubeconfig "{{.KUBEFILE}}" apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml 
-
+  
+  ingress:
+    desc: temporary fix to create ingress
+    cmds:
+    - kubectl --namespace=ingress-nginx  --kubeconfig "{{.KUBEFILE}}" apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml 
+  
   destroy: 
     desc: destroy
     cmds:

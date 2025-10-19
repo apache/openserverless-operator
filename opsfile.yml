@@ -16,7 +16,6 @@
 # under the License.
 
 version: '3'
-# Licensed to the Apache Software Foundation (ASF) under one
 
 vars:
   OS: '{{OS}}'
@@ -24,7 +23,7 @@ vars:
 
 tasks:
 
-  setup:
+  setup-env:
     silent: true
     desc: setup the environment
     cmds:
