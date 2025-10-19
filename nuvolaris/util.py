@@ -781,7 +781,7 @@ def get_etcd_config_data():
     return data
 
 def get_etcd_replica():
-    return cfg.get("etcd.replicas") or 1
+    return int(cfg.get("etcd.replicas") or 1) 
 
 # populate specific affinity data for milvus controller manager
 def milvus_manager_affinity_tolerations_data(data):

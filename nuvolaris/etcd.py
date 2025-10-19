@@ -30,7 +30,7 @@ import kopf
 
 from nuvolaris.util import get_etcd_replica
 
-def create(owner=None):
+def create(owner=None, prefix=None):
     logging.info("create etcd")
     data = util.get_etcd_config_data()
     
@@ -192,6 +192,7 @@ if __name__ == "__main__":
 
     if _create == "true":
         print("etcd create")
+        
         if replicas != "":
             print("setting replicas to:", replicas)
             cfg.put("etcd.replicas", int(replicas))
@@ -199,7 +200,7 @@ if __name__ == "__main__":
             print("setting storage class to:", storageClass)
             cfg.put("nuvolaris.storage", storageClass)
 
-        print(create(owner))
+        print(create(owner, prefix))
     if _delete == "true":
         print(delete(owner))
  

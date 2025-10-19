@@ -55,3 +55,9 @@ dev = ["ipython>=8.15.0,<9"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.poetry]
+name = "nuvolaris"
+version = "2.0.0"
+description = "Apache OpenServerless operator"
+authors = ["Michele Sciabarra <michele@sciabarra.com>", "Francesco Timperi Tiberi <francesco@nuvolaris.io>", "Bruno Salzano <d4rkstar@gmail.com>"]

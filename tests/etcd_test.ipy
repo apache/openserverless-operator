@@ -28,3 +28,7 @@ cfg.detect_storage()
 assert(etcd.create())
 assert(kube.get("po/nuvolaris-etcd-0"))
 assert(etcd.delete())
+
+assert(etcd.create(owner=None, prefix="testing"))
+assert(kube.get("po/testing-nuvolaris-etcd-0"))
+assert(etcd.delete())

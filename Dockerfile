@@ -128,10 +128,13 @@ RUN \
     curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b $HOME/.local/bin/task 
 
 # env with l
-ENV PATH="$HOME/.local/bin":\
-"$HOME/.ops/linux-$(dpkg --print-architecture)/bin":\
-"$HOME/.venv/bin":\
-/usr/local/bin:/usr/bin:/sbin:/bin:/usr/sbin/
+ARG TARGETARCH
+ENV PATH="$HOME/.local/bin:$HOME/.ops/linux-${TARGETARCH}/bin:$HOME/.venv/bin:/usr/local/bin:/usr/bin:/sbin:/bin:/usr/sbin/"
+
+# later, in a RUN step, create the symlink to the actual arch dir
+RUN mkdir -p "$HOME/.ops" && \
+    mkdir -p "$HOME/.ops/linux-$(dpkg --print-architecture)/bin" && \
+    ln -sfn "$HOME/.ops/linux-$(dpkg --print-architecture)/bin" "$HOME/.ops/bin"
 
 # Copy the home
 COPY --from=sources --chown=nuvolaris:nuvolaris ${HOME} ${HOME}
