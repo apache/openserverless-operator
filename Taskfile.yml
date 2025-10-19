@@ -41,6 +41,9 @@ includes:
     taskfile: TaskfileBuild.yml
   o:
     taskfile: TaskfileOlaris.yml
+  kind:
+    taskfile: clusters/kind/opsfile.yml
+    dir: clusters    
   eks:
     taskfile: clusters/eks.yml
     dir: clusters
