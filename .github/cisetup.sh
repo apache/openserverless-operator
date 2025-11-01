@@ -22,7 +22,6 @@ sudo apt-get -y install curl wget jq
 mkdir -p "$HOME/.local/bin"
 export PATH="$HOME/.local/bin:$PATH"
 
-# add ops bin (~/.ops/<os>-<arch>/bin). os is uname -s lowercase, map common arch names
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"
 case "$arch" in
@@ -39,8 +38,15 @@ URL="https://raw.githubusercontent.com/apache/openserverless-cli/refs/tags/v$VER
 curl -sL $URL | VERSION="$VER" bash ;\
 echo -e '#!/bin/bash\nops -wsk "$@"' >$HOME/.local/bin/wsk ; chmod +x $HOME/.local/bin/wsk ;\
 curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b $HOME/.local/bin; \
-task --version && ops -t
+task --version; \
+echo "Installing ops prereq from $HOME" &&  ops -t
+
+# install prerequisites to run operator tests
+cd $GITHUB_WORKSPACE
+echo "Installing operator prereq from $GITHUB_WORKSPACE" && ops -t
 
 # Persist ops path for GitHub Actions steps
 echo "$RESOLVED_OPS_BIN" >> "$GITHUB_PATH"
 echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+

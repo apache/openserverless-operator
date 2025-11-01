@@ -26,6 +26,7 @@ on:
 jobs:
   check:
     name: Check OpenServerless Operator
+    #runs-on: [ self-hosted, Linux, X64 ]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -54,9 +55,8 @@ jobs:
         run: bash .github/cisetup.sh
       - name: Kind
         run: |
-          cd $HOME && \
-          ops setup docker create && 
-          kind export kubeconfig --name nuvolaris
+          cd $HOME && ops setup docker create && \
+          kind export kubeconfig --name nuvolaris 
       - name: Install
         run: task setup
       - name: BuildAndLoad
@@ -74,5 +74,9 @@ jobs:
         run: task utest
         continue-on-error: false
       - name: Integration Test
-        run: task itest
+        run: ops -t && task itest
         continue-on-error: false
+      - name: Cleanup cluster
+        if: always()
+        run: |
+          kind delete cluster --name nuvolaris

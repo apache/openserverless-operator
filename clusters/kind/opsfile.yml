@@ -19,7 +19,7 @@ version: '3'
 
 vars:
   NAME: "nuvolaris"
-  KUBEFILE: "{{.OPS_TMP}}/kind-dev.kubeconfig"
+  KUBEFILE: "{{.OPS_TMP}}/kind.kubeconfig"
   DRY: ""
 
 env:

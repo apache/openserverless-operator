@@ -27,8 +27,8 @@ on:
 jobs:
   image:
     name: Build OpenServerless Operator Image
-    #runs-on: ubuntu-22.04
-    runs-on: [ self-hosted, Linux, X64 ]
+    runs-on: ubuntu-22.04
+    #runs-on: [ self-hosted, Linux, X64 ]
     steps:
       - name: Remove unnecessary files
         run: |
@@ -92,4 +92,4 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Image
-        run: task buildx-and-push TAG="$IMG_TAG"     
+        run: task buildx-and-push TAG="$IMG_TAG"
