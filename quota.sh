@@ -16,4 +16,4 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-poetry run quota_checker -v
+uv run quota_checker -v

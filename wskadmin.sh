@@ -45,4 +45,4 @@ EOF
 }
 
 configure
-poetry run python tools/cli/wsk/wskadmin.py "$@"
+uv run python tools/cli/wsk/wskadmin.py "$@"

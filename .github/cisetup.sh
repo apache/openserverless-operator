@@ -16,23 +16,37 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+cd $HOME
 sudo apt-get -y install curl wget jq
-WSK_VERSION=1.2.0
-WSK_BASE=https://github.com/apache/openwhisk-cli/releases/download
-ARCH=amd64
-WSK_URL="$WSK_BASE/$WSK_VERSION/OpenWhisk_CLI-$WSK_VERSION-linux-$ARCH.tgz"
-curl -sSL https://install.python-poetry.org | python3.12 -
-curl -sSL "$WSK_URL" | tar xzvf - -C ~/.local/bin/
-VER="v4.5.4"
-ARCH="$(dpkg --print-architecture)"
-URL="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F$VER/kustomize_${VER}_linux_${ARCH}.tar.gz"
-curl -sL $URL | tar tzvf - -C ~/.local/bin
-YQ_VER=v4.27.2
-YQ_BIN=yq_linux_amd64
-sudo wget https://github.com/mikefarah/yq/releases/download/${YQ_VER}/${YQ_BIN} -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
-MC_VER=RELEASE.2025-05-21T01-59-54Z
-sudo wget https://dl.min.io/client/mc/release/linux-${ARCH}/archive/mc.${MC_VER} -O /usr/bin/mc && sudo chmod +x /usr/bin/mc
-#URL="https://dl.k8s.io/release/$VER/bin/linux/$ARCH/kubectl"
-#curl -sSL "$URL" | sudo tee /usr/local/bin/kubectl && sudo chmod +x /usr/bin/kubectl
-#kubectl version
+# ensure local bin exists and is on PATH for this script
+mkdir -p "$HOME/.local/bin"
+export PATH="$HOME/.local/bin:$PATH"
+
+os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+arch="$(uname -m)"
+case "$arch" in
+    x86_64) arch=amd64 ;;
+    aarch64|arm64) arch=arm64 ;;
+    armv7l) arch=armv7 ;;
+    i386|i686) arch=386 ;;
+esac
+RESOLVED_OPS_BIN="$HOME/.ops/${os}-${arch}/bin"
+
+# install ops, wsk wrapper and task
+VER="0.1.0-2501041342.dev";\
+URL="https://raw.githubusercontent.com/apache/openserverless-cli/refs/tags/v$VER/install.sh" ;\
+curl -sL $URL | VERSION="$VER" bash ;\
+echo -e '#!/bin/bash\nops -wsk "$@"' >$HOME/.local/bin/wsk ; chmod +x $HOME/.local/bin/wsk ;\
+curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b $HOME/.local/bin; \
+task --version; \
+echo "Installing ops prereq from $HOME" &&  ops -t
+
+# install prerequisites to run operator tests
+cd $GITHUB_WORKSPACE
+echo "Installing operator prereq from $GITHUB_WORKSPACE" && ops -t
+
+# Persist ops path for GitHub Actions steps
+echo "$RESOLVED_OPS_BIN" >> "$GITHUB_PATH"
+echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+

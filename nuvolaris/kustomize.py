@@ -346,4 +346,19 @@ def patchGenericEntry(kind, name, path, value, op="replace",apiVersion="v1"):
       path: {path}
       value: {value}
 """
-   
+  
+def namePrefix(prefix):
+  """
+  generate a namePrefix entry for kustomization
+
+  >>> import nuvolaris.kustomize as ku
+  >>> print(ku.namePrefix("deploymentprefix-"), end='')
+  namePrefix: deploymentprefix-
+  >>> print(ku.namePrefix("deploymentprefix"), end='')
+  namePrefix: deploymentprefix-
+  """
+  if not prefix.endswith("-"):
+    prefix = prefix + "-"
+  return f"namePrefix: {prefix}\n"
+
+
