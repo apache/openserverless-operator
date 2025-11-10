@@ -1,0 +1,150 @@
+# ==============================================================================
+# SPARK CRD EXTENSION
+# ==============================================================================
+# This snippet should be added to deploy/nuvolaris-permissions/whisk-crd.yaml
+# in the spec.versions[0].schema.openAPIV3Schema.properties.spec.properties section
+# ==============================================================================
+
+components:
+  type: object
+  properties:
+    # ... existing components ...
+    
+    spark:
+      description: "Enable/disable Apache Spark cluster deployment"
+      type: boolean
+
+# Spark configuration section
+spark:
+  description: "Apache Spark cluster configuration"
+  type: object
+  properties:
+    image:
+      description: "Docker image for Spark (master, worker, history server)"
+      type: string
+      default: "apache/spark:3.5.0"
+    
+    version:
+      description: "Spark version"
+      type: string
+      default: "3.5.0"
+    
+    master:
+      description: "Spark Master configuration"
+      type: object
+      properties:
+        replicas:
+          description: "Number of master replicas (1 or 3 for HA)"
+          type: integer
+          minimum: 1
+          maximum: 3
+          default: 1
+        
+        memory:
+          description: "Memory allocation for master (e.g., 1g, 2g)"
+          type: string
+          default: "1g"
+        
+        cpu:
+          description: "CPU allocation for master (e.g., 1000m)"
+          type: string
+          default: "1000m"
+        
+        port:
+          description: "Spark master port"
+          type: integer
+          default: 7077
+        
+        webui-port:
+          description: "Spark master web UI port"
+          type: integer
+          default: 8080
+    
+    worker:
+      description: "Spark Worker configuration"
+      type: object
+      properties:
+        replicas:
+          description: "Number of worker replicas"
+          type: integer
+          minimum: 1
+          default: 2
+        
+        memory:
+          description: "Memory allocation per worker (e.g., 2g, 4g)"
+          type: string
+          default: "2g"
+        
+        cpu:
+          description: "CPU allocation per worker (e.g., 2000m)"
+          type: string
+          default: "2000m"
+        
+        cores:
+          description: "Number of cores per worker"
+          type: integer
+          minimum: 1
+          default: 2
+        
+        webui-port:
+          description: "Spark worker web UI port"
+          type: integer
+          default: 8081
+    
+    history-server:
+      description: "Spark History Server configuration"
+      type: object
+      properties:
+        enabled:
+          description: "Enable Spark History Server"
+          type: boolean
+          default: true
+        
+        port:
+          description: "History Server web UI port"
+          type: integer
+          default: 18080
+        
+        volume-size:
+          description: "Storage size for event logs in Gi"
+          type: integer
+          minimum: 1
+          default: 10
+    
+    event-log:
+      description: "Spark event logging configuration"
+      type: object
+      properties:
+        enabled:
+          description: "Enable event logging"
+          type: boolean
+          default: true
+        
+        dir:
+          description: "Directory for event logs"
+          type: string
+          default: "/tmp/spark-events"
+    
+    ha:
+      description: "High Availability configuration"
+      type: object
+      properties:
+        enabled:
+          description: "Enable HA mode (requires Zookeeper)"
+          type: boolean
+          default: false
+        
+        zookeeper-url:
+          description: "Zookeeper connection URL for HA"
+          type: string
+          default: ""
+    
+    user:
+      description: "Spark user"
+      type: string
+      default: "spark"
+    
+    uid:
+      description: "Spark user ID"
+      type: integer
+      default: 185

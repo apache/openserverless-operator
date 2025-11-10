@@ -28,6 +28,7 @@ import nuvolaris.cronjob as cron
 import nuvolaris.ferretdb as mongodb
 import nuvolaris.issuer as issuer
 import nuvolaris.endpoint as endpoint
+import nuvolaris.spark as spark
 import nuvolaris.minio_deploy as minio
 import nuvolaris.zookeeper as zookeeper
 import nuvolaris.kafka as kafka
@@ -83,7 +84,8 @@ def whisk_create(spec, name, **kwargs):
         "zookeeper": "?", #Zookeeper configuration
         "quota":"?", #Quota configuration
         "etcd":"?", #Etcd configuration
-        "milvus":"?" #Milvus configuration
+        "milvus":"?", #Milvus configuration
+        "spark":"?" #Spark configuration
     }
 
     if cfg.get('components.minio') and cfg.get('components.seaweedfs'):
@@ -287,7 +289,20 @@ def whisk_create(spec, name, **kwargs):
             logging.exception("cannot create milvus")
             state['milvus']= "error"
     else:
-        state['milvus'] = "off"  
+        state['milvus'] = "off"
+
+    # Deploy Spark cluster
+    if cfg.get('components.spark'):
+        try:
+            logging.info("deploying spark cluster")
+            msg = spark.create(owner)
+            state['spark'] = "on"
+            logging.info(msg)
+        except Exception as e:
+            logging.exception("cannot create spark cluster")
+            state['spark'] = "error"
+    else:
+        state['spark'] = "off"
 
     whisk_post_create(name,state)
     state['controller']= "Ready"
@@ -375,7 +390,16 @@ def whisk_delete(spec, **kwargs):
 
     if cfg.get("components.milvus"):
         msg = milvus.delete()
-        logging.info(msg) 
+        logging.info(msg)
+
+    # Delete Spark cluster
+    if cfg.get("components.spark"):
+        try:
+            logging.info("deleting spark cluster")
+            msg = spark.delete()
+            logging.info(msg)
+        except Exception as e:
+            logging.exception("failed to delete spark cluster")
 
     if cfg.get("components.registry"):
         msg = registry.delete()

@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-config
+  namespace: nuvolaris
+  labels:
+    app: spark
+data:
+  spark-defaults.conf: |
+    spark.master                     spark://spark-master:7077
+    spark.eventLog.enabled           true
+    spark.eventLog.dir               /tmp/spark-events
+    spark.history.fs.logDirectory    /tmp/spark-events
+    spark.history.ui.port            18080
+    spark.serializer                 org.apache.spark.serializer.KryoSerializer
+    spark.driver.memory              1g
+    spark.executor.memory            2g
+    spark.executor.cores             2
+    spark.cores.max                  4
+    spark.sql.warehouse.dir          /tmp/spark-warehouse
+    spark.driver.extraJavaOptions    -Dlog4j.configuration=file:///opt/spark/conf/log4j.properties
+    spark.executor.extraJavaOptions  -Dlog4j.configuration=file:///opt/spark/conf/log4j.properties
+  
+  spark-env.sh: |
+    #!/usr/bin/env bash
+    
+    export SPARK_MASTER_HOST=spark-master
+    export SPARK_MASTER_PORT=7077
+    export SPARK_MASTER_WEBUI_PORT=8080
+    export SPARK_WORKER_WEBUI_PORT=8081
+    export SPARK_WORKER_PORT=7078
+    export SPARK_WORKER_CORES=2
+    export SPARK_WORKER_MEMORY=2g
+    export SPARK_DAEMON_MEMORY=1g
+    export SPARK_HISTORY_OPTS="-Dspark.history.fs.logDirectory=/tmp/spark-events"
+  
+  log4j.properties: |
+    # Set everything to be logged to the console
+    log4j.rootCategory=INFO, console
+    log4j.appender.console=org.apache.log4j.ConsoleAppender
+    log4j.appender.console.target=System.err
+    log4j.appender.console.layout=org.apache.log4j.PatternLayout
+    log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n
+    
+    # Set the default spark-shell log level to WARN
+    log4j.logger.org.apache.spark.repl.Main=WARN
+    
+    # Settings to quiet third party logs
+    log4j.logger.org.spark_project.jetty=WARN
+    log4j.logger.org.spark_project.jetty.util.component.AbstractLifeCycle=ERROR
+    log4j.logger.org.apache.spark.repl.SparkIMain$exprTyper=INFO
+    log4j.logger.org.apache.spark.repl.SparkILoop$SparkILoopInterpreter=INFO
+    log4j.logger.org.apache.parquet=ERROR
+    log4j.logger.parquet=ERROR
+    
+    # SPARK-9183: Settings to avoid annoying messages when looking up nonexistent UDFs
+    log4j.logger.org.apache.hadoop.hive.metastore.RetryingHMSHandler=FATAL
+    log4j.logger.org.apache.hadoop.hive.ql.exec.FunctionRegistry=ERROR

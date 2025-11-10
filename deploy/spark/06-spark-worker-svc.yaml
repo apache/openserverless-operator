@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-worker
+  namespace: nuvolaris
+  labels:
+    app: spark
+    component: spark-worker
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service
+  selector:
+    app: spark
+    component: spark-worker
+  ports:
+  - name: worker
+    port: 7078
+    targetPort: 7078
+    protocol: TCP
+  - name: webui
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
