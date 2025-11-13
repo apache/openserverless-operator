@@ -52,10 +52,9 @@ ADD --chown=nuvolaris:nuvolaris deploy/postgres-operator-deploy /home/nuvolaris/
 ADD --chown=nuvolaris:nuvolaris deploy/ferretdb /home/nuvolaris/deploy/ferretdb
 ADD --chown=nuvolaris:nuvolaris deploy/runtimes /home/nuvolaris/deploy/runtimes
 ADD --chown=nuvolaris:nuvolaris deploy/postgres-backup /home/nuvolaris/deploy/postgres-backup
+ADD --chown=nuvolaris:nuvolaris deploy/spark /home/nuvolaris/deploy/spark
 ADD --chown=nuvolaris:nuvolaris run.sh dbinit.sh cron.sh pyproject.toml poetry.lock whisk-system.sh /home/nuvolaris/
 
-# prepares the required folders to deploy the whisk-system actions
-RUN mkdir /home/nuvolaris/deploy/whisk-system
 ADD --chown=nuvolaris:nuvolaris actions /home/nuvolaris/actions
 
 # enterprise specific
@@ -89,7 +88,8 @@ ENV POETRY_CACHE_DIR=/opt/.cache
 ENV PATH=${POETRY_HOME}/bin:$PATH
 
 WORKDIR /home/nuvolaris
-COPY --chown=nuvolaris:nuvolaris pyproject.toml poetry.lock /home/nuvolaris/
+# Use numeric UID:GID to avoid requiring user in this stage
+COPY --chown=1001:1001 pyproject.toml poetry.lock /home/nuvolaris/
 RUN echo "Installing poetry" && \
     # Install minimal dependencies
     echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
@@ -144,6 +144,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     # install taskfile
     curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/bin
 
+# ensure whisk-system deploy folder exists and owned by nuvolaris
+RUN install -d -o 1001 -g 1001 /home/nuvolaris/deploy/whisk-system
+
 USER nuvolaris
 WORKDIR /home/nuvolaris
 # Copy virtualenv
@@ -153,8 +156,7 @@ COPY --from=deps --chown=nuvolaris:nuvolaris ${POETRY_HOME} ${POETRY_HOME}
 # Copy the home
 COPY --from=sources --chown=nuvolaris:nuvolaris ${HOME} ${HOME}
 RUN poetry install --only main --no-interaction --no-ansi && rm -rf ${POETRY_CACHE_DIR}
-# prepares the required folders to deploy the whisk-system actions
-RUN mkdir -p /home/nuvolaris/deploy/whisk-system && \
-    ./whisk-system.sh && \
+# initialize whisk-system content
+RUN ./whisk-system.sh && \
     cd deploy && tar cvf ../deploy.tar *
 CMD ["./run.sh"]
