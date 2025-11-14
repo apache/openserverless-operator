@@ -14,6 +14,7 @@ import nuvolaris.kustomize as kus
 import nuvolaris.kube as kube
 import nuvolaris.config as cfg
 import nuvolaris.util as util
+import nuvolaris.template as ntp
 import nuvolaris.operator_util as operator_util
 import time
 import subprocess
@@ -26,64 +27,70 @@ def get_spark_config_data():
     Returns:
         Dict with complete Spark configuration
     """
-    namespace = cfg.get('nuvolaris.namespace', default='nuvolaris')
+    namespace = cfg.get('nuvolaris.namespace', defval='nuvolaris')
     
+    # Nota: config.get accetta il nome del parametro defval e NON "default".
+    # Le chiamate precedenti con default= generavano TypeError e impedivano la creazione del cluster Spark.
     data = {
         # Basic configuration
         "name": "spark",
         "namespace": namespace,
         
         # Spark images
-        "spark_image": cfg.get('spark.image', default='apache/spark:3.5.0'),
-        "spark_version": cfg.get('spark.version', default='3.5.0'),
+        "spark_image": cfg.get('spark.image', defval='apache/spark:3.5.0'),
+        "spark_version": cfg.get('spark.version', defval='3.5.0'),
         
         # Master configuration
-        "master_replicas": cfg.get('spark.master.replicas', default=1),
-        "master_memory": cfg.get('spark.master.memory', default='1g'),
-        "master_cpu": cfg.get('spark.master.cpu', default='1000m'),
-        "master_port": cfg.get('spark.master.port', default=7077),
-        "master_webui_port": cfg.get('spark.master.webui-port', default=8080),
+        "master_replicas": cfg.get('spark.master.replicas', defval=1),
+        "master_memory": cfg.get('spark.master.memory', defval='1g'),
+        "master_cpu": cfg.get('spark.master.cpu', defval='1000m'),
+        "master_port": cfg.get('spark.master.port', defval=7077),
+        "master_webui_port": cfg.get('spark.master.webui-port', defval=8080),
         
         # Worker configuration
-        "worker_replicas": cfg.get('spark.worker.replicas', default=2),
-        "worker_memory": cfg.get('spark.worker.memory', default='2g'),
-        "worker_cpu": cfg.get('spark.worker.cpu', default='2000m'),
-        "worker_cores": cfg.get('spark.worker.cores', default=2),
-        "worker_webui_port": cfg.get('spark.worker.webui-port', default=8081),
+        "worker_replicas": cfg.get('spark.worker.replicas', defval=2),
+        "worker_memory": cfg.get('spark.worker.memory', defval='2g'),
+        "worker_cpu": cfg.get('spark.worker.cpu', defval='2000m'),
+        "worker_cores": cfg.get('spark.worker.cores', defval=2),
+        "worker_webui_port": cfg.get('spark.worker.webui-port', defval=8081),
         
         # History Server configuration
-        "history_enabled": cfg.get('spark.history-server.enabled', default=True),
-        "history_port": cfg.get('spark.history-server.port', default=18080),
-        "history_volume_size": cfg.get('spark.history-server.volume-size', default=10),
+        "history_enabled": cfg.get('spark.history-server.enabled', defval=True),
+        "history_port": cfg.get('spark.history-server.port', defval=18080),
+        "history_volume_size": cfg.get('spark.history-server.volume-size', defval=10),
         
         # Storage configuration
-        "event_log_enabled": cfg.get('spark.event-log.enabled', default=True),
-        "event_log_dir": cfg.get('spark.event-log.dir', default='/tmp/spark-events'),
+        "event_log_enabled": cfg.get('spark.event-log.enabled', defval=True),
+        "event_log_dir": cfg.get('spark.event-log.dir', defval='/tmp/spark-events'),
+        "storage_class": cfg.get("nuvolaris.storageclass"),
         
         # High Availability (optional)
-        "ha_enabled": cfg.get('spark.ha.enabled', default=False),
-        "ha_zookeeper_url": cfg.get('spark.ha.zookeeper-url', default=''),
+        "ha_enabled": cfg.get('spark.ha.enabled', defval=False),
+        "ha_zookeeper_url": cfg.get('spark.ha.zookeeper-url', defval=''),
         
-        # Affinity and tolerations
-        "affinity": cfg.get('affinity', default=False),
-        "affinity_core_node_label": cfg.get('affinity-core-node-label', default='nuvolaris'),
-        "tolerations": cfg.get('tolerations', default=False),
+        # Standard OpenServerless patterns
+        "affinity": cfg.get('affinity', defval=False),
+        "affinity_core_node_label": cfg.get('affinity-core-node-label', defval='nuvolaris'),
+        "tolerations": cfg.get('tolerations', defval=False),
         
-        # Security
-        "spark_user": cfg.get('spark.user', default='spark'),
-        "spark_uid": cfg.get('spark.uid', default=185),
+        # Security (standard pattern)
+        "spark_user": cfg.get('spark.user', defval='spark'),
+        "spark_uid": cfg.get('spark.uid', defval=185),
     }
+    
+    # Add standard OpenServerless affinity/tolerations data
+    util.couch_affinity_tolerations_data(data)
     
     return data
 
 
 def create(owner=None):
     """
-    Deploy Apache Spark cluster on Kubernetes
+    Deploy Apache Spark cluster on Kubernetes using standard OpenServerless patterns
     
     Creates:
     - Spark Master (StatefulSet with optional HA)
-    - Spark Workers (StatefulSet)
+    - Spark Workers (StatefulSet)  
     - Spark History Server (Deployment with PVC)
     - Required Services
     - ConfigMaps for configuration
@@ -99,45 +106,47 @@ def create(owner=None):
     # 1. Collect configuration
     data = get_spark_config_data()
     
-    # 2. Define templates to apply
-    tplp = [
-        "00-spark-rbac.yaml",           # ServiceAccount, Role, RoleBinding
-        "01-spark-configmap.yaml",      # Spark configuration
-        "02-spark-history-pvc.yaml",    # PVC for History Server
-        "03-spark-master-sts.yaml",     # Master StatefulSet
-        "04-spark-master-svc.yaml",     # Master Service
-        "05-spark-worker-sts.yaml",     # Worker StatefulSet
-        "06-spark-worker-svc.yaml",     # Worker Service (headless)
-    ]
+    # 2. Process Jinja2 templates (standard OpenServerless pattern)
+    kus.processTemplate("spark", "spark-configmap-tpl.yaml", data, "spark-configmap.yaml")
+    kus.processTemplate("spark", "spark-master-sts-tpl.yaml", data, "spark-master-sts.yaml")
     
-    # Add History Server if enabled
+    # Process History Server templates if enabled
     if data['history_enabled']:
-        tplp.append("07-spark-history-dep.yaml")
-        tplp.append("08-spark-history-svc.yaml")
+        kus.processTemplate("spark", "spark-history-pvc-tpl.yaml", data, "spark-history-pvc.yaml") 
+        kus.processTemplate("spark", "spark-history-dep-tpl.yaml", data, "spark-history-dep.yaml")
     
-    # 3. Generate kustomization with patches
+    # 3. Define kustomize patches (standard pattern)
+    tplp = ["set-attach.yaml"]
+    
+    # 4. Add affinity/tolerations if enabled (standard pattern)
+    if data.get('affinity') or data.get('tolerations'):
+        tplp.append("affinity-tolerance-sts-core-attach.yaml")
+    
+    # 5. Generate kustomization
     kust = kus.patchTemplates("spark", tplp, data)
     
-    # 4. Additional Jinja2 templates
-    templates = []
-    if data['affinity']:
-        templates.append('affinity-tolerance-sts-core-attach.yaml')
+    # 6. Build complete specification using standard OpenServerless pattern
+    templates = ["spark-rbac.yaml"]  # Static Jinja2 templates to include
+    templates_filter = ["spark-configmap.yaml", "spark-master-sts.yaml"]  # Generated templates to filter
     
-    # 5. Build complete specification
-    spec = kus.kustom_list("spark", kust, templates=templates, data=data)
+    if data['history_enabled']:
+        templates_filter.extend(["spark-history-pvc.yaml", "spark-history-dep.yaml"])
     
-    # 6. Apply owner reference for garbage collection
+    spec = kus.restricted_kustom_list("spark", kust, templates=templates, 
+                                     templates_filter=templates_filter, data=data)
+    
+    # 7. Apply owner reference for garbage collection  
     if owner:
         kopf.append_owner_reference(spec['items'], owner)
     else:
         # Save spec for delete without owner
         cfg.put("state.spark.spec", spec)
     
-    # 7. Deploy to Kubernetes
+    # 8. Deploy to Kubernetes
     res = kube.apply(spec)
     logging.info("spark manifests applied")
     
-    # 8. Wait for Master to be ready
+    # 9. Wait for components to be ready (standard pattern)
     logging.info("waiting for spark master to be ready...")
     util.wait_for_pod_ready(
         "{.items[?(@.metadata.labels.component == 'spark-master')].metadata.name}",
@@ -145,25 +154,7 @@ def create(owner=None):
     )
     logging.info("spark master is ready")
     
-    # 9. Wait for Workers to be ready
-    logging.info("waiting for spark workers to be ready...")
-    time.sleep(10)  # Give workers time to start connecting
-    util.wait_for_pod_ready(
-        "{.items[?(@.metadata.labels.component == 'spark-worker')].metadata.name}",
-        timeout=300
-    )
-    logging.info("spark workers are ready")
-    
-    # 10. Wait for History Server if enabled
-    if data['history_enabled']:
-        logging.info("waiting for spark history server to be ready...")
-        util.wait_for_pod_ready(
-            "{.items[?(@.metadata.labels.component == 'spark-history')].metadata.name}",
-            timeout=180
-        )
-        logging.info("spark history server is ready")
-    
-    # 11. Post-configuration
+    # 10. Post-configuration
     configure_spark(data)
     
     logging.info("*** spark cluster created successfully")
@@ -377,3 +368,473 @@ def get_cluster_info():
     except Exception as e:
         logging.error(f"error getting cluster info: {e}")
         return {"error": str(e)}
+
+
+# ==================== SparkJob CRD Handlers ====================
+
+@kopf.on.create('nuvolaris.org', 'v1', 'sparkjobs')
+def create_sparkjob(spec, name, namespace, status, **kwargs):
+    """
+    Handle SparkJob creation - submit Spark application to cluster
+    
+    Args:
+        spec: SparkJob specification from CRD
+        name: SparkJob resource name
+        namespace: Kubernetes namespace
+        status: Status object to update
+        **kwargs: Additional kopf arguments
+    
+    Returns:
+        Status dict with job information
+    """
+    logging.info(f"*** creating SparkJob {name} in namespace {namespace}")
+    
+    try:
+        # 1. Validate SparkJob specification
+        job_config = _validate_sparkjob_spec(spec, name)
+        
+        # 2. Create Kubernetes Job for Spark driver
+        driver_job = _create_spark_driver_job(job_config, name, namespace)
+        
+        # 3. Submit job to cluster
+        result = kube.apply(driver_job)
+        
+        # 4. Get application ID and update status
+        app_id = _get_spark_application_id(name, namespace)
+        
+        # 5. Build success status
+        status_dict = _build_sparkjob_status('Running', 'SparkJob submitted to cluster', 
+                                           app_id=app_id, start_time=True, existing_status=status)
+        
+        # Add additional fields  
+        status_dict['driverPod'] = f"{name}-driver"
+        status_dict['sparkUI'] = {
+            'driverUI': f"http://{name}-driver:4040",
+            'historyUI': f"http://spark-history:18080"
+        }
+        
+        logging.info(f"SparkJob {name} submitted successfully with application ID: {app_id}")
+        return status_dict
+        
+    except Exception as e:
+        logging.error(f"failed to create SparkJob {name}: {e}")
+        status_dict = _build_sparkjob_status('Failed', f'Job creation failed: {str(e)}', existing_status=status)
+        return status_dict
+
+
+@kopf.on.delete('nuvolaris.org', 'v1', 'sparkjobs')
+def delete_sparkjob(spec, name, namespace, **kwargs):
+    """
+    Handle SparkJob deletion - cleanup driver job and associated resources
+    
+    Args:
+        spec: SparkJob specification from CRD
+        name: SparkJob resource name  
+        namespace: Kubernetes namespace
+        **kwargs: Additional kopf arguments
+    """
+    logging.info(f"*** deleting SparkJob {name} in namespace {namespace}")
+    
+    try:
+        # 1. Delete the Kubernetes Job for Spark driver
+        delete_job_spec = {
+            'apiVersion': 'batch/v1',
+            'kind': 'Job', 
+            'metadata': {
+                'name': f"{name}-driver",
+                'namespace': namespace
+            }
+        }
+        
+        result = kube.delete(delete_job_spec)
+        
+        # 2. Kill running Spark application if still active
+        app_id = spec.get('status', {}).get('applicationId')
+        if app_id:
+            _kill_spark_application(app_id, namespace)
+        
+        logging.info(f"SparkJob {name} deleted successfully")
+        return {'message': f'SparkJob {name} deleted'}
+        
+    except Exception as e:
+        logging.error(f"failed to delete SparkJob {name}: {e}")
+        # Don't raise - allow deletion to proceed even if cleanup fails
+        return {'message': f'SparkJob {name} deletion completed with warnings: {e}'}
+
+
+@kopf.on.field('nuvolaris.org', 'v1', 'sparkjobs', field='spec')
+def update_sparkjob(old, new, name, namespace, **kwargs):
+    """
+    Handle SparkJob specification updates
+    
+    Args:
+        old: Previous specification
+        new: New specification  
+        name: SparkJob resource name
+        namespace: Kubernetes namespace
+        **kwargs: Additional kopf arguments
+    """
+    logging.info(f"*** updating SparkJob {name} in namespace {namespace}")
+    
+    # For now, SparkJob updates are not supported - would need to restart the job
+    logging.warning(f"SparkJob {name} specification changed, but updates are not supported")
+    logging.info("To apply changes, delete and recreate the SparkJob")
+    
+    return {'message': 'SparkJob updates not supported - delete and recreate to apply changes'}
+
+
+def _validate_sparkjob_spec(spec, job_name):
+    """
+    Validate and normalize SparkJob specification
+    
+    Args:
+        spec: Raw SparkJob spec from CRD
+        job_name: Name of the SparkJob resource
+    
+    Returns:
+        Dict with validated and normalized job configuration
+    
+    Raises:
+        ValueError: If specification is invalid
+    """
+    # Default configuration
+    config = {
+        'name': job_name,
+        'application': {},
+        'spark': {
+            'master': 'spark://spark-master:7077',
+            'conf': {},
+            'driver': {
+                'cores': 0.5,
+                'memory': '512m',
+                'serviceAccount': 'spark'
+            },
+            'executor': {
+                'instances': 2,
+                'cores': 1, 
+                'memory': '1g'
+            }
+        },
+        'execution': {
+            'restartPolicy': 'OnFailure',
+            'timeout': 3600,
+            'backoffLimit': 3
+        },
+        'dependencies': {
+            'jars': [],
+            'files': [],
+            'pyFiles': []
+        },
+        'monitoring': {
+            'enabled': True,
+            'eventLog': True,
+            'historyServer': True
+        }
+    }
+    
+    # Merge user specification
+    def merge_dict(target, source):
+        for key, value in source.items():
+            if isinstance(value, dict) and key in target:
+                merge_dict(target[key], value)
+            else:
+                target[key] = value
+    
+    if spec:
+        merge_dict(config, spec)
+    
+    # Validate required fields
+    if not config['application'].get('mainApplicationFile'):
+        raise ValueError("application.mainApplicationFile is required")
+    
+    # Validate source configuration
+    app_source = config['application'].get('source', {})
+    source_type = app_source.get('type', 'url')
+    
+    if source_type == 'configMap' and not app_source.get('configMapRef'):
+        raise ValueError("application.source.configMapRef is required for configMap source type")
+    elif source_type == 'secret' and not app_source.get('secretRef'):
+        raise ValueError("application.source.secretRef is required for secret source type")
+    elif source_type == 'url' and not app_source.get('url'):
+        raise ValueError("application.source.url is required for url source type")
+    elif source_type == 'inline' and not app_source.get('content'):
+        raise ValueError("application.source.content is required for inline source type")
+    
+    logging.info(f"validated SparkJob configuration for {job_name}")
+    return config
+
+
+def _convert_k8s_memory_to_jvm(k8s_memory):
+    """
+    Convert Kubernetes memory format (like '1Gi') to JVM format (like '1g')
+    """
+    if k8s_memory.endswith('Gi'):
+        return k8s_memory[:-2] + 'g'
+    elif k8s_memory.endswith('Mi'):
+        return k8s_memory[:-2] + 'm' 
+    elif k8s_memory.endswith('Ki'):
+        return k8s_memory[:-2] + 'k'
+    else:
+        # Already in JVM format or simple number
+        return k8s_memory
+
+
+def _create_spark_driver_job(job_config, job_name, namespace):
+    """
+    Create Kubernetes Job specification for Spark driver
+    
+    Args:
+        job_config: Validated SparkJob configuration
+        job_name: Name of the SparkJob resource
+        namespace: Kubernetes namespace
+    
+    Returns:
+        Dict with Kubernetes Job specification
+    """
+    app = job_config['application']
+    spark = job_config['spark']
+    execution = job_config['execution']
+    deps = job_config['dependencies']
+    monitoring = job_config['monitoring']
+    
+    # Build spark-submit command with JVM-compatible memory formats
+    jvm_driver_memory = _convert_k8s_memory_to_jvm(spark['driver']['memory'])
+    jvm_executor_memory = _convert_k8s_memory_to_jvm(spark['executor']['memory'])
+    
+    submit_cmd = [
+        '/opt/spark/bin/spark-submit',
+        '--master', spark['master'],
+        '--name', job_name,
+        '--driver-cores', str(spark['driver']['cores']),
+        '--driver-memory', jvm_driver_memory,
+        '--num-executors', str(spark['executor']['instances']),
+        '--executor-cores', str(spark['executor']['cores']), 
+        '--executor-memory', jvm_executor_memory,
+        '--deploy-mode', 'client'  # Client mode for Kubernetes Jobs
+    ]
+    
+    # Add Spark configuration
+    for key, value in spark['conf'].items():
+        submit_cmd.extend(['--conf', f'{key}={value}'])
+    
+    # Add event logging configuration if enabled
+    if monitoring['eventLog']:
+        submit_cmd.extend([
+            '--conf', 'spark.eventLog.enabled=true',
+            '--conf', 'spark.eventLog.dir=/tmp/spark-events'
+        ])
+    
+    # Add dependencies
+    if deps['jars']:
+        submit_cmd.extend(['--jars', ','.join(deps['jars'])])
+    if deps['files']:
+        submit_cmd.extend(['--files', ','.join(deps['files'])])
+    if deps['pyFiles']:
+        submit_cmd.extend(['--py-files', ','.join(deps['pyFiles'])])
+    
+    # Add main class if specified (for Java/Scala) - MUST come before JAR file
+    if app.get('mainClass'):
+        submit_cmd.extend(['--class', app['mainClass']])
+    
+    # Add main application file
+    submit_cmd.append(app['mainApplicationFile'])
+    
+    # Add application arguments
+    if app.get('arguments'):
+        submit_cmd.extend(app['arguments'])
+    
+    # Create Job specification
+    job_spec = {
+        'apiVersion': 'batch/v1',
+        'kind': 'Job',
+        'metadata': {
+            'name': f"{job_name}-driver",
+            'namespace': namespace,
+            'labels': {
+                'app': 'spark',
+                'component': 'driver',
+                'sparkjob': job_name
+            }
+        },
+        'spec': {
+            'backoffLimit': execution['backoffLimit'],
+            'activeDeadlineSeconds': execution['timeout'],
+            'template': {
+                'metadata': {
+                    'labels': {
+                        'app': 'spark',
+                        'component': 'driver', 
+                        'sparkjob': job_name
+                    }
+                },
+                'spec': {
+                    'restartPolicy': execution['restartPolicy'],
+                    'serviceAccountName': spark['driver']['serviceAccount'],
+                    'containers': [{
+                        'name': 'spark-driver',
+                        'image': cfg.get('spark.image', defval='apache/spark:3.5.0'),
+                        'command': submit_cmd,
+                        'env': [
+                            {'name': 'SPARK_USER', 'value': 'spark'},
+                            {'name': 'SPARK_APPLICATION_ID', 'value': job_name}
+                        ],
+                        'resources': {
+                            'requests': {
+                                'cpu': f"{int(spark['driver']['cores']) * 100}m",
+                                'memory': spark['driver']['memory']
+                            },
+                            'limits': {
+                                'cpu': f"{int(spark['driver']['cores']) * 100}m",
+                                'memory': spark['driver']['memory']
+                            }
+                        },
+                        'volumeMounts': []
+                    }],
+                    'volumes': []
+                }
+            }
+        }
+    }
+    
+    # Add event log volume if enabled
+    if monitoring['eventLog'] and monitoring['historyServer']:
+        job_spec['spec']['template']['spec']['containers'][0]['volumeMounts'].append({
+            'name': 'spark-events',
+            'mountPath': '/tmp/spark-events'
+        })
+        job_spec['spec']['template']['spec']['volumes'].append({
+            'name': 'spark-events',
+            'persistentVolumeClaim': {
+                'claimName': 'spark-history-pvc'
+            }
+        })
+    
+    return job_spec
+
+
+def _build_sparkjob_status(phase, message, app_id=None, start_time=False, existing_status=None):
+    """
+    Build SparkJob status dictionary
+    
+    Args:
+        phase: Job phase (Pending, Running, Succeeded, Failed)
+        message: Status message
+        app_id: Spark application ID (optional)
+        start_time: Whether to set start time (optional)
+        existing_status: Existing status to update (optional)
+        
+    Returns:
+        Dictionary with status fields
+    """
+    import datetime
+    
+    # Start with existing status or empty dict
+    status_dict = existing_status.copy() if existing_status else {}
+    
+    # Set basic fields
+    status_dict['phase'] = phase
+    status_dict['message'] = message
+    
+    # Initialize conditions if not present
+    if 'conditions' not in status_dict:
+        status_dict['conditions'] = []
+    
+    # Add/update condition
+    condition = {
+        'type': 'Ready',
+        'status': 'True' if phase == 'Running' else 'False',
+        'lastTransitionTime': datetime.datetime.utcnow().isoformat() + 'Z',
+        'reason': phase,
+        'message': message
+    }
+    
+    # Remove old conditions of same type and add new one
+    status_dict['conditions'] = [c for c in status_dict['conditions'] if c['type'] != 'Ready']
+    status_dict['conditions'].append(condition)
+    
+    # Add application ID if provided
+    if app_id:
+        status_dict['applicationId'] = app_id
+    
+    # Add start time if requested
+    if start_time:
+        status_dict['startTime'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    
+    # Add completion time if job is finished
+    if phase in ['Succeeded', 'Failed']:
+        status_dict['completionTime'] = datetime.datetime.utcnow().isoformat() + 'Z'
+        
+    return status_dict
+
+
+def _get_spark_application_id(job_name, namespace):
+    """
+    Get Spark application ID from driver pod logs
+    
+    Args:
+        job_name: SparkJob resource name
+        namespace: Kubernetes namespace
+    
+    Returns:
+        String with application ID or None if not found
+    """
+    try:
+        # Wait a bit for the driver to start
+        time.sleep(5)
+        
+        # Get logs from driver pod
+        result = subprocess.run(
+            ['kubectl', 'logs', '-n', namespace,
+             f'job/{job_name}-driver',
+             '--tail=100'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        if result.returncode == 0:
+            # Parse application ID from logs (format: application_1234567890_0001)
+            lines = result.stdout.split('\n')
+            for line in lines:
+                if 'Submitted application' in line and 'application_' in line:
+                    # Extract application ID
+                    parts = line.split()
+                    for part in parts:
+                        if part.startswith('application_'):
+                            return part
+        
+        # If not found in initial logs, return generated ID
+        return f"application_{int(time.time())}_{job_name}"
+        
+    except Exception as e:
+        logging.warning(f"could not determine application ID for {job_name}: {e}")
+        return f"application_{int(time.time())}_{job_name}"
+
+
+def _kill_spark_application(app_id, namespace):
+    """
+    Kill running Spark application
+    
+    Args:
+        app_id: Spark application ID
+        namespace: Kubernetes namespace
+    """
+    try:
+        # Try to kill via Spark master
+        result = subprocess.run(
+            ['kubectl', 'exec', '-n', namespace,
+             'spark-master-0', '--',
+             'curl', '-X', 'POST',
+             f'http://localhost:8080/app/kill/?id={app_id}'],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        
+        if result.returncode == 0:
+            logging.info(f"killed Spark application {app_id}")
+        else:
+            logging.warning(f"failed to kill application {app_id}: {result.stderr}")
+            
+    except Exception as e:
+        logging.warning(f"error killing Spark application {app_id}: {e}")

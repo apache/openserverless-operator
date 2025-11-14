@@ -51,7 +51,7 @@ tasks:
     - > 
       kind load docker-image 
       ${MY_OPERATOR_IMAGE:-{{.OPERATOR_IMAGE}}}:{{.OPERATOR_TAG}} 
-      --name=nuvolaris
+      --name=$(kind get clusters | head -1)
 
   buildx-and-push:
     - > 

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nuvolaris-operator-spark
+  namespace: nuvolaris
+  labels:
+    app: nuvolaris-operator
+    spark-integrated: "true"
+  annotations:
+    whisks.nuvolaris.org/annotate-version: "true"
+spec:
+  serviceAccount: nuvolaris-operator
+  containers:
+    - name: nuvolaris-operator
+      # Immagine dell'operatore con Spark  
+      # Template sostituisce MY_OPERATOR_IMAGE_SPARK con immagine appropriata
+      image: ${MY_OPERATOR_IMAGE_SPARK}
+      imagePullPolicy: IfNotPresent
+      command: ["./run.sh"]
+      args: ["--verbose"]
+      env:
+        - name: ENABLE_SPARK
+          value: "true"
+      securityContext:
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi

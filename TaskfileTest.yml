@@ -82,8 +82,13 @@ tasks:
     silent: false
     cmds:
     - kubectl config set-context --current --namespace nuvolaris
-    - >
-      cat tests/{{.KUBE}}/{{.WHISK}}.yaml | envsubst | kubectl apply -f -
+    - |
+      FILE="tests/{{.KUBE}}/{{.WHISK}}.yaml";
+      if [ ! -f "$FILE" ]; then
+        echo "Manifest $FILE non trovato, fallback a tests/{{.KUBE}}/whisk.yaml";
+        FILE="tests/{{.KUBE}}/whisk.yaml";
+      fi
+      cat "$FILE" | envsubst | kubectl apply -f -
     - |
       while ! kubectl -n nuvolaris wait --for=condition=ready pod/couchdb-0 2>/dev/null
       do sleep 5 ; echo $((N++)) waiting couchdb...
