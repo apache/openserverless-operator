@@ -30,14 +30,25 @@ spec:
           - /bin/bash
           - -c
           - |
-            # Copy config files
-            cp /etc/spark-config/* /opt/spark/conf/
+            # Prepare directories
+            mkdir -p /opt/spark/conf /opt/spark/logs /opt/spark/work
             
-            # Start Spark Master
+            # Copy config files if present
+            if ls /etc/spark-config/* >/dev/null 2>&1; then
+              cp -r /etc/spark-config/* /opt/spark/conf/ || true
+            fi
+            
+            # Start Spark Master (daemon mode disabled to keep process in foreground)
+            export SPARK_NO_DAEMONIZE=true
             /opt/spark/sbin/start-master.sh
             
-            # Keep container running and tail logs
-            tail -f /opt/spark/logs/*
+            # Fallback sleep if no logs yet
+            if ! ls /opt/spark/logs/* >/dev/null 2>&1; then
+              echo "No logs yet, sleeping..."; sleep 5;
+            fi
+            
+            # Keep container running
+            tail -F /opt/spark/logs/* || sleep infinity
         ports:
         - name: master
           containerPort: 7077
@@ -48,8 +59,8 @@ spec:
         env:
         - name: SPARK_MODE
           value: "master"
-        - name: SPARK_MASTER_HOST
-          value: "spark-master"
+        - name: SPARK_LOCAL_IP
+          value: "0.0.0.0"
         - name: SPARK_MASTER_PORT
           value: "7077"
         - name: SPARK_MASTER_WEBUI_PORT
@@ -57,14 +68,14 @@ spec:
         - name: SPARK_DAEMON_MEMORY
           value: "1g"
         - name: SPARK_NO_DAEMONIZE
-          value: "false"
+          value: "true"
         resources:
           requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
             cpu: 500m
             memory: 1Gi
-          limits:
-            cpu: 1000m
-            memory: 2Gi
         volumeMounts:
         - name: spark-config
           mountPath: /etc/spark-config
@@ -72,6 +83,8 @@ spec:
           mountPath: /opt/spark/work
         - name: spark-logs
           mountPath: /opt/spark/logs
+        - name: spark-events
+          mountPath: /tmp/spark-events
         livenessProbe:
           httpGet:
             path: /
@@ -94,3 +107,6 @@ spec:
         emptyDir: {}
       - name: spark-logs
         emptyDir: {}
+      - name: spark-events
+        persistentVolumeClaim:
+          claimName: spark-history-pvc

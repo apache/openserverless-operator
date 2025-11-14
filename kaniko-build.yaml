@@ -30,7 +30,7 @@ spec:
       - name: kaniko
         image: gcr.io/kaniko-project/executor:latest
         args: 
-          - --context=git://github.com/${GITHUB_USER}/openserverless-operator
+          - --context=git://github.com/${GITHUB_USER}/openserverless-operator#feature/add-spark-operator
           - --destination=docker-registry.kube-system.svc.cluster.local:5000/${GITHUB_USER}/openserverless-operator:${TAG}
           - --insecure
           - --insecure-registry=docker-registry

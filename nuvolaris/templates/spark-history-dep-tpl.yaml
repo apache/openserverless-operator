@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: spark-history
-  namespace: nuvolaris
+  namespace: {{namespace}}
   labels:
     app: spark
     component: spark-history
@@ -20,26 +20,23 @@ spec:
     spec:
       serviceAccountName: spark
       securityContext:
-        fsGroup: 185
+        fsGroup: {{spark_uid}}
       containers:
       - name: spark-history
-        image: apache/spark:3.5.0
+        image: {{spark_image}}
         imagePullPolicy: IfNotPresent
         command:
           - /bin/bash
           - -c
           - |
             # Prepare directories
-            mkdir -p /opt/spark/conf /opt/spark/logs
+            mkdir -p /opt/spark/conf /opt/spark/logs {{event_log_dir}}
+            chmod 777 {{event_log_dir}}
             
             # Copy config files if present
             if ls /etc/spark-config/* >/dev/null 2>&1; then
               cp -r /etc/spark-config/* /opt/spark/conf/ || true
             fi
-            
-            # Create event log directory
-            mkdir -p /tmp/spark-events
-            chmod 777 /tmp/spark-events
             
             # Start History Server
             /opt/spark/sbin/start-history-server.sh
@@ -48,13 +45,13 @@ spec:
             tail -f /opt/spark/logs/*
         ports:
         - name: webui
-          containerPort: 18080
+          containerPort: {{history_port}}
           protocol: TCP
         env:
         - name: SPARK_NO_DAEMONIZE
           value: "false"
         - name: SPARK_HISTORY_OPTS
-          value: "-Dspark.history.fs.logDirectory=/tmp/spark-events -Dspark.history.ui.port=18080"
+          value: "-Dspark.history.fs.logDirectory={{event_log_dir}} -Dspark.history.ui.port={{history_port}}"
         resources:
           requests:
             cpu: 150m
@@ -66,7 +63,7 @@ spec:
         - name: spark-config
           mountPath: /etc/spark-config
         - name: spark-events
-          mountPath: /tmp/spark-events
+          mountPath: {{event_log_dir}}
         - name: spark-logs
           mountPath: /opt/spark/logs
         livenessProbe:
