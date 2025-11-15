@@ -7,12 +7,13 @@ metadata:
     app: spark
     component: spark-history
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: spark
     component: spark-history
   ports:
-  - name: webui
-    port: 18080
-    targetPort: 18080
-    protocol: TCP
+    - name: webui
+      port: 18080
+      targetPort: 18080
+      nodePort: 31808
+      protocol: TCP

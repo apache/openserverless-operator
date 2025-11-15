@@ -29,8 +29,8 @@ spec:
   serviceAccount: nuvolaris-operator
   containers:
   - name: nuvolaris-operator
-    # usa l'immagine costruita da Kaniko nel registro locale del cluster (kube-system)
-    image: docker-registry.kube-system.svc.cluster.local:5000/$GITHUB_USER/openserverless-operator:$TAG
+    # usa l'immagine construita con Spark integration
+    image: ghcr.io/mobs75/openserverless-operator:dev-spark-v6
     imagePullPolicy: Always
     command: ["./run.sh"]
     args: ["--verbose"]

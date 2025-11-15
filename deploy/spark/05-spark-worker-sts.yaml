@@ -64,13 +64,13 @@ spec:
         - name: SPARK_WORKER_CORES
           value: "2"
         - name: SPARK_WORKER_MEMORY
-          value: "1g"
+          value: "2048m"
         - name: SPARK_WORKER_PORT
           value: "7078"
         - name: SPARK_WORKER_WEBUI_PORT
           value: "8081"
         - name: SPARK_DAEMON_MEMORY
-          value: "1g"
+          value: "512m"
         - name: SPARK_NO_DAEMONIZE
           value: "true"
         resources:

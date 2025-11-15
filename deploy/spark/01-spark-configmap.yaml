@@ -13,10 +13,10 @@ data:
     spark.history.fs.logDirectory    /tmp/spark-events
     spark.history.ui.port            18080
     spark.serializer                 org.apache.spark.serializer.KryoSerializer
-    spark.driver.memory              1g
-    spark.executor.memory            2g
-    spark.executor.cores             2
-    spark.cores.max                  4
+    spark.driver.memory              512m
+    spark.executor.memory            384m
+    spark.executor.cores             1
+    spark.cores.max                  2
     spark.sql.warehouse.dir          /tmp/spark-warehouse
     spark.driver.extraJavaOptions    -Dlog4j.configuration=file:///opt/spark/conf/log4j.properties
     spark.executor.extraJavaOptions  -Dlog4j.configuration=file:///opt/spark/conf/log4j.properties

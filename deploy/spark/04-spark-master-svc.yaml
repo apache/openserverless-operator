@@ -7,16 +7,18 @@ metadata:
     app: spark
     component: spark-master
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: spark
     component: spark-master
   ports:
-  - name: master
-    port: 7077
-    targetPort: 7077
-    protocol: TCP
-  - name: webui
-    port: 8080
-    targetPort: 8080
-    protocol: TCP
+    - name: master
+      port: 7077
+      targetPort: 7077
+      nodePort: 30707
+      protocol: TCP
+    - name: webui
+      port: 8080
+      targetPort: 8080
+      nodePort: 30808
+      protocol: TCP

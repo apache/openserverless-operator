@@ -21,3 +21,49 @@ spec:
     port: 8081
     targetPort: 8081
     protocol: TCP
+
+---
+# Individual Worker 0 Service with NodePort
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-worker-0
+  namespace: nuvolaris
+  labels:
+    app: spark
+    component: spark-worker
+spec:
+  type: NodePort
+  selector:
+    app: spark
+    component: spark-worker
+    statefulset.kubernetes.io/pod-name: spark-worker-0
+  ports:
+  - name: webui
+    port: 8081
+    targetPort: 8081
+    nodePort: 31081
+    protocol: TCP
+
+---
+# Individual Worker 1 Service with NodePort
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-worker-1
+  namespace: nuvolaris
+  labels:
+    app: spark
+    component: spark-worker
+spec:
+  type: NodePort
+  selector:
+    app: spark
+    component: spark-worker
+    statefulset.kubernetes.io/pod-name: spark-worker-1
+  ports:
+  - name: webui
+    port: 8081
+    targetPort: 8081
+    nodePort: 31082
+    protocol: TCP

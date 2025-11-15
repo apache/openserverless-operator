@@ -87,75 +87,57 @@ def get_spark_config_data():
 def create(owner=None):
     """
     Deploy Apache Spark cluster on Kubernetes using standard OpenServerless patterns
-    
-    Creates:
-    - Spark Master (StatefulSet with optional HA)
-    - Spark Workers (StatefulSet)  
-    - Spark History Server (Deployment with PVC)
-    - Required Services
-    - ConfigMaps for configuration
-    
-    Args:
-        owner: Owner reference for garbage collection
-    
-    Returns:
-        Result message from deployment
     """
     logging.info("*** creating spark cluster")
     
-    # 1. Collect configuration
-    data = get_spark_config_data()
+    # Apply all manifests in deploy/spark directory directly (exclude non-K8s files)
+    import glob
+    import os
     
-    # 2. Process Jinja2 templates (standard OpenServerless pattern)
-    kus.processTemplate("spark", "spark-configmap-tpl.yaml", data, "spark-configmap.yaml")
-    kus.processTemplate("spark", "spark-master-sts-tpl.yaml", data, "spark-master-sts.yaml")
+    spark_dir = "deploy/spark"
+    yaml_files = glob.glob(f"{spark_dir}/*.yaml")
+    yaml_files.sort()  # Apply in alphabetical order
     
-    # Process History Server templates if enabled
-    if data['history_enabled']:
-        kus.processTemplate("spark", "spark-history-pvc-tpl.yaml", data, "spark-history-pvc.yaml") 
-        kus.processTemplate("spark", "spark-history-dep-tpl.yaml", data, "spark-history-dep.yaml")
+    all_manifests = []
+    for yaml_file in yaml_files:
+        filename = os.path.basename(yaml_file)
+        # Skip CRD extension files and kustomization files
+        if filename in ["kustomization.yaml", "spark-crd-extension.yaml"]:
+            continue
+            
+        with open(yaml_file, 'r') as f:
+            content = f.read()
+            # Parse YAML content
+            import yaml
+            docs = list(yaml.load_all(content, yaml.SafeLoader))
+            for doc in docs:
+                if doc and 'kind' in doc and 'apiVersion' in doc:  # Valid K8s manifest
+                    all_manifests.append(doc)
     
-    # 3. Define kustomize patches (standard pattern)
-    tplp = ["set-attach.yaml"]
+    # Create the list object for kubectl apply
+    spec = {
+        "apiVersion": "v1", 
+        "kind": "List", 
+        "items": all_manifests
+    }
     
-    # 4. Add affinity/tolerations if enabled (standard pattern)
-    if data.get('affinity') or data.get('tolerations'):
-        tplp.append("affinity-tolerance-sts-core-attach.yaml")
-    
-    # 5. Generate kustomization
-    kust = kus.patchTemplates("spark", tplp, data)
-    
-    # 6. Build complete specification using standard OpenServerless pattern
-    templates = ["spark-rbac.yaml"]  # Static Jinja2 templates to include
-    templates_filter = ["spark-configmap.yaml", "spark-master-sts.yaml"]  # Generated templates to filter
-    
-    if data['history_enabled']:
-        templates_filter.extend(["spark-history-pvc.yaml", "spark-history-dep.yaml"])
-    
-    spec = kus.restricted_kustom_list("spark", kust, templates=templates, 
-                                     templates_filter=templates_filter, data=data)
-    
-    # 7. Apply owner reference for garbage collection  
+    # 3. Apply owner reference for garbage collection  
     if owner:
         kopf.append_owner_reference(spec['items'], owner)
     else:
-        # Save spec for delete without owner
         cfg.put("state.spark.spec", spec)
     
-    # 8. Deploy to Kubernetes
+    # 5. Deploy to Kubernetes
     res = kube.apply(spec)
     logging.info("spark manifests applied")
     
-    # 9. Wait for components to be ready (standard pattern)
+    # 6. Wait for components to be ready
     logging.info("waiting for spark master to be ready...")
     util.wait_for_pod_ready(
         "{.items[?(@.metadata.labels.component == 'spark-master')].metadata.name}",
         timeout=300
     )
     logging.info("spark master is ready")
-    
-    # 10. Post-configuration
-    configure_spark(data)
     
     logging.info("*** spark cluster created successfully")
     return res

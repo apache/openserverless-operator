@@ -292,7 +292,9 @@ def whisk_create(spec, name, **kwargs):
         state['milvus'] = "off"
 
     # Deploy Spark cluster
-    if cfg.get('components.spark'):
+    spark_enabled = cfg.get('components.spark')
+    logging.info(f"*** Spark deployment check: components.spark = {spark_enabled}")
+    if spark_enabled:
         try:
             logging.info("deploying spark cluster")
             msg = spark.create(owner)
@@ -303,6 +305,7 @@ def whisk_create(spec, name, **kwargs):
             state['spark'] = "error"
     else:
         state['spark'] = "off"
+        logging.info("*** Spark deployment skipped: components.spark is False")
 
     whisk_post_create(name,state)
     state['controller']= "Ready"
