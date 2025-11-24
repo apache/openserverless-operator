@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-history
+  namespace: {{namespace}}
+  labels:
+    app: spark
+    component: spark-history
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark
+      component: spark-history
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: spark-history
+    spec:
+      serviceAccountName: spark
+      securityContext:
+        fsGroup: {{spark_uid}}
+      containers:
+      - name: spark-history
+        image: {{spark_image}}
+        imagePullPolicy: IfNotPresent
+        command:
+          - /bin/bash
+          - -c
+          - |
+            # Prepare directories
+            mkdir -p /opt/spark/conf /opt/spark/logs {{event_log_dir}}
+            chmod 777 {{event_log_dir}}
+            
+            # Copy config files if present
+            if ls /etc/spark-config/* >/dev/null 2>&1; then
+              cp -r /etc/spark-config/* /opt/spark/conf/ || true
+            fi
+            
+            # Start History Server
+            /opt/spark/sbin/start-history-server.sh
+            
+            # Keep container running and tail logs
+            tail -f /opt/spark/logs/*
+        ports:
+        - name: webui
+          containerPort: {{history_port}}
+          protocol: TCP
+        env:
+        - name: SPARK_NO_DAEMONIZE
+          value: "false"
+        - name: SPARK_HISTORY_OPTS
+          value: "-Dspark.history.fs.logDirectory={{event_log_dir}} -Dspark.history.ui.port={{history_port}}"
+        resources:
+          requests:
+            cpu: 150m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 512Mi
+        volumeMounts:
+        - name: spark-config
+          mountPath: /etc/spark-config
+        - name: spark-events
+          mountPath: {{event_log_dir}}
+        - name: spark-logs
+          mountPath: /opt/spark/logs
+        livenessProbe:
+          httpGet:
+            path: /
+            port: webui
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: webui
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+      volumes:
+      - name: spark-config
+        configMap:
+          name: spark-config
+      - name: spark-events
+        persistentVolumeClaim:
+          claimName: spark-history-pvc
+      - name: spark-logs
+        emptyDir: {}

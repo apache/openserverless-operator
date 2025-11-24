@@ -343,15 +343,31 @@ tasks:
   install-registry:
     desc: install a local registry
     cmds:
-    - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
-    - sudo systemctl restart k3s
-    - helm repo add twuni https://helm.twun.io
-    - > 
-      helm install docker-registry twuni/docker-registry 
-      --namespace kube-system  
-      --set image.tag=2.8.3
-      --set service.type=NodePort
-      --set service.nodePort=30050
+    - |
+      if [ -d /etc/rancher/k3s ]; then 
+        echo "k3s detected: updating registries.yaml";
+        sudo cp registries.yaml /etc/rancher/k3s/registries.yaml;
+        sudo systemctl restart k3s;
+      else
+        echo "k3s not detected: skipping k3s registries config";
+      fi
+      - |
+        set -e
+        if helm repo add twuni https://helm.twun.io && \
+           helm install docker-registry twuni/docker-registry \
+             --namespace kube-system \
+             --set image.tag=2.8.3 \
+             --set service.type=ClusterIP \
+             --set service.port=5000; then
+          echo "Helm registry installed"
+        else
+          echo "Helm registry failed, applying fallback manifests..."
+          kubectl -n kube-system apply -f deploy/kube-system-registry/registry-deploy.yaml
+          kubectl -n kube-system apply -f deploy/kube-system-registry/registry-svc.yaml
+          kubectl -n kube-system rollout status deployment/docker-registry --timeout=180s || true
+        fi
+        # Espone anche NodePort per pull da runtime host
+        kubectl -n kube-system apply -f deploy/kube-system-registry/registry-nodeport.yaml || true
     status:
     - kubectl -n kube-system get po -l app=docker-registry | grep docker-registry
 
@@ -372,7 +388,21 @@ tasks:
     - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
     - kubectl -n default delete job/kaniko-build || true
     - kubectl -n default apply -f _kaniko-build.yaml
-    - kubectl wait po --for=condition=ready -l app=kaniko-build -n default 
+    - kubectl -n default wait --for=condition=complete job/kaniko-build --timeout=600s
+
+  kaniko-build-patched:
+    desc: build (patched Dockerfile) con initContainer per whisk-system fix
+    env:
+      TAG:
+        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
+      GITHUB_USER:
+        sh: if [ -n "$GITHUB_USER" ]; then echo "$GITHUB_USER"; else whoami; fi
+    cmds:
+    - envsubst < kaniko-build-patched.yaml > _kaniko-build-patched.yaml
+    - kubectl -n default delete job/kaniko-build-patched || true
+    - kubectl -n default apply -f _kaniko-build-patched.yaml
+    - kubectl -n default logs -f $(kubectl -n default get pods -l app=kaniko-build-patched -o jsonpath='{.items[0].metadata.name}') --container kaniko || true
+    - kubectl -n default wait --for=condition=complete job/kaniko-build-patched --timeout=900s || (echo "Kaniko patched build failed" && exit 1)
 
   build-logs:
     desc: show logs of the latest build
@@ -393,8 +423,240 @@ tasks:
       TAG: 
         sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
+    - kubectl -n nuvolaris apply -f deploy/nuvolaris-permissions || true
     - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
-    - kubectl apply -f _operator-deploy.yaml
+    - kubectl -n nuvolaris apply -f _operator-deploy.yaml
+    - kubectl -n nuvolaris wait --for=condition=Ready pod/nuvolaris-operator --timeout=180s || true
+    - kubectl -n nuvolaris get pod nuvolaris-operator -o wide || true
+
+  # --- Spark standard flow (come gli altri operatori) ---
+  spark-standard:
+    desc: build (kaniko) e deploy operatore con Spark + istanza whisk-spark
+    env:
+      GITHUB_USER:
+        sh: if [ -n "$GITHUB_USER" ]; then echo "$GITHUB_USER"; else whoami; fi
+    cmds:
+      - |
+        if [ -n "$GHCR_USER" ] && [ -n "$GHCR_TOKEN" ]; then
+          echo "Rilevate credenziali GHCR: uso pipeline ghcr (build+push)";
+          export GHCR_USER GHCR_TOKEN
+          task spark-all-ghcr || { echo "Pipeline GHCR fallita"; exit 1; }
+          echo "Deployment GHCR completato, procedo con istanza Spark";
+          WHISK=whisk-spark task t:instance;
+          exit 0; # Evita esecuzione ramo interno registry
+        else
+          echo "Credenziali GHCR non presenti: uso percorso registry interno/kind";
+        fi
+      - |
+        if [ "$(./detect.sh)" = "kind" ]; then
+          echo "Cluster kind rilevato";
+          if command -v kind >/dev/null 2>&1; then
+            echo "kind CLI presente: uso build-and-load";
+            if ! task build-and-load MY_OPERATOR_IMAGE=docker-registry.kube-system.svc.cluster.local:5000/$GITHUB_USER/openserverless-operator; then
+              echo "kind load fallita: fallback a Kaniko";
+              task install-registry || exit 1;
+              task tag-commit-push || true;
+              task kaniko-build-patched || exit 1;
+            fi
+          else
+            echo "kind CLI assente: provo installazione veloce";
+            curl -fsSL -o kind https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64 && chmod +x kind && sudo mv kind /usr/local/bin/kind 2>/dev/null || mv kind "$HOME/.local/bin/kind" 2>/dev/null || true;
+            if command -v kind >/dev/null 2>&1; then
+              echo "Installazione kind riuscita: eseguo load";
+              if ! task build-and-load MY_OPERATOR_IMAGE=docker-registry.kube-system.svc.cluster.local:5000/$GITHUB_USER/openserverless-operator; then
+                echo "kind load fallita dopo install: fallback a Kaniko";
+                task install-registry || exit 1;
+                task tag-commit-push || true;
+                task kaniko-build-patched || exit 1;
+              fi
+            else
+              echo "Installazione kind fallita: fallback a Kaniko";
+              task install-registry || exit 1;
+              task tag-commit-push || true;
+              task kaniko-build-patched || exit 1;
+            fi
+          fi
+        else
+          echo "Cluster $(./detect.sh): uso Kaniko";
+          task install-registry || exit 1;
+          task tag-commit-push || true;
+          task kaniko-build-patched || exit 1;
+        fi
+      - kubectl -n nuvolaris apply -f deploy/nuvolaris-permissions || true
+      - |
+        TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo latest)
+        REGISTRY_HOST="docker-registry.kube-system.svc.cluster.local:5000"
+        if [ "$(./detect.sh)" != "kind" ]; then
+          if kubectl -n kube-system get svc docker-registry-nodeport >/dev/null 2>&1; then
+            NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+            if [ -n "$NODE_IP" ]; then
+              REGISTRY_HOST="${NODE_IP}:30500"
+              echo "Uso NodePort registry $REGISTRY_HOST per image pull"
+            fi
+          fi
+        fi
+        export TAG
+        export MY_OPERATOR_IMAGE=${REGISTRY_HOST}/$GITHUB_USER/openserverless-operator
+        # Imposta immagine Spark: immagine interna se no GHCR
+        if [ -n "$GHCR_USER" ] && [ -n "$GHCR_TOKEN" ]; then
+          export MY_OPERATOR_IMAGE_SPARK="ghcr.io/$GHCR_USER/openserverless-operator:spark-dev"
+        else
+          export MY_OPERATOR_IMAGE_SPARK="${REGISTRY_HOST}/$GITHUB_USER/openserverless-operator:$TAG"
+        fi
+        envsubst < deploy/nuvolaris-operator/operator-pod-spark.yaml > _operator-pod-spark.yaml
+      - kubectl -n nuvolaris delete pod nuvolaris-operator-spark --ignore-not-found
+      - kubectl -n nuvolaris apply -f _operator-pod-spark.yaml
+      - kubectl -n nuvolaris wait --for=condition=Ready pod/nuvolaris-operator-spark --timeout=180s || true
+      - kubectl -n nuvolaris get pod nuvolaris-operator-spark -o wide || true
+      - |
+        WHISK=whisk-spark task t:instance
+  # --- Spark Operator (GHCR) ---
+  spark-login-ghcr:
+    desc: login a GHCR (richiede GHCR_USER e GHCR_TOKEN in .env)
+    cmds:
+      - test -n "$GHCR_USER" || (echo "GHCR_USER mancante" && exit 1)
+      - test -n "$GHCR_TOKEN" || (echo "GHCR_TOKEN mancante" && exit 1)
+      - echo "$GHCR_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin
+  spark-build-ghcr:
+    desc: build immagine operatore con Spark (tag ghcr.io/$GHCR_USER/openserverless-operator:spark-dev)
+    cmds:
+      - test -n "$GHCR_USER" || (echo "GHCR_USER mancante" && exit 1)
+      - podman build -t ghcr.io/$GHCR_USER/openserverless-operator:spark-dev -f Dockerfile .
+  spark-push-ghcr:
+    desc: push immagine operatore Spark su GHCR
+    deps: [spark-login-ghcr]
+    cmds:
+      - test -n "$GHCR_USER" || (echo "GHCR_USER mancante" && exit 1)
+      - podman push ghcr.io/$GHCR_USER/openserverless-operator:spark-dev
+  spark-deploy-ghcr:
+    desc: deploy pod operatore Spark usando manifest parametrizzato
+    env:
+      GHCR_USER: ${GHCR_USER}
+    cmds:
+      - test -n "$GHCR_USER" || (echo "GHCR_USER mancante" && exit 1)
+      - envsubst < deploy/nuvolaris-operator/operator-pod-spark.yaml > _operator-pod-spark.yaml
+      - kubectl -n nuvolaris apply -f deploy/nuvolaris-permissions || true
+      - kubectl -n nuvolaris apply -f _operator-pod-spark.yaml
+      - kubectl -n nuvolaris wait --for=condition=Ready pod/nuvolaris-operator-spark --timeout=180s || true
+      - kubectl -n nuvolaris get pod nuvolaris-operator-spark -o wide || true
+  spark-all-ghcr:
+    desc: build+push+deploy operatore Spark (GHCR)
+    cmds:
+      - task: spark-build-ghcr
+      - task: spark-push-ghcr
+      - task: spark-deploy-ghcr
+
+  # --- SparkJob CRD Testing ---
+  sparkjob-deploy-crd:
+    desc: deploy SparkJob CRD
+    cmds:
+      - kubectl apply -f deploy/nuvolaris-permissions/sparkjob-crd.yaml
+      - kubectl get crd sparkjobs.nuvolaris.org || true
+      
+  sparkjob-test-examples:
+    desc: test SparkJob examples (PySpark pi calculation)
+    deps: [sparkjob-deploy-crd]
+    cmds:
+      - echo "=== Testing PySpark Example ==="
+      - kubectl apply -f tests/sparkjob-examples.yaml
+      - echo "Waiting for SparkJob to complete..."
+      - |
+        for i in {1..30}; do
+          STATUS=$(kubectl get sparkjob pyspark-example -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+          echo "Status: $STATUS (attempt $i/30)"
+          if [ "$STATUS" = "Succeeded" ] || [ "$STATUS" = "Failed" ]; then
+            break
+          fi
+          sleep 10
+        done
+      - echo "=== SparkJob Status ==="
+      - kubectl get sparkjob pyspark-example -o yaml | grep -A 20 "status:" || true
+      - echo "=== Driver Job Status ==="
+      - kubectl get job pyspark-example-driver -o wide || true
+      - echo "=== Driver Pod Logs ==="
+      - kubectl logs job/pyspark-example-driver --tail=50 || true
+      
+  sparkjob-test-wordcount:
+    desc: test SparkJob WordCount example (inline PySpark code)
+    deps: [sparkjob-deploy-crd]
+    cmds:
+      - echo "=== Testing PySpark WordCount ==="
+      - |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: nuvolaris.org/v1
+        kind: SparkJob
+        metadata:
+          name: pyspark-wordcount-test
+          namespace: nuvolaris
+        spec:
+          name: "PySpark WordCount Test"
+          application:
+            mainApplicationFile: "/tmp/wordcount.py"
+            source:
+              type: "inline"
+              content: |
+                from pyspark.sql import SparkSession
+                spark = SparkSession.builder.appName("WordCountTest").getOrCreate()
+                data = ["hello world", "spark is amazing", "pyspark rocks"]
+                lines = spark.sparkContext.parallelize(data)
+                counts = lines.flatMap(lambda x: x.split(' ')).map(lambda x: (x, 1)).reduceByKey(lambda a, b: a + b)
+                results = counts.collect()
+                for word, count in results:
+                    print(f"{word}: {count}")
+                spark.stop()
+          spark:
+            master: "spark://spark-master:7077"
+            driver:
+              cores: 1
+              memory: "512m"
+            executor:
+              instances: 2
+              cores: 1
+              memory: "1g"
+          execution:
+            timeout: 300
+            backoffLimit: 2
+          monitoring:
+            enabled: true
+            eventLog: true
+        EOF
+      - echo "Waiting for WordCount job to complete..."
+      - |
+        for i in {1..20}; do
+          STATUS=$(kubectl get sparkjob pyspark-wordcount-test -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+          echo "Status: $STATUS (attempt $i/20)"
+          if [ "$STATUS" = "Succeeded" ] || [ "$STATUS" = "Failed" ]; then
+            break
+          fi
+          sleep 10
+        done
+      - echo "=== WordCount Results ==="
+      - kubectl logs job/pyspark-wordcount-test-driver --tail=30 || true
+      
+  sparkjob-clean:
+    desc: cleanup SparkJob test resources
+    cmds:
+      - kubectl delete sparkjob pyspark-example --ignore-not-found
+      - kubectl delete sparkjob pyspark-wordcount --ignore-not-found  
+      - kubectl delete sparkjob pyspark-wordcount-test --ignore-not-found
+      - kubectl delete sparkjob scala-sparkpi --ignore-not-found
+      - kubectl delete job pyspark-example-driver --ignore-not-found
+      - kubectl delete job pyspark-wordcount-driver --ignore-not-found
+      - kubectl delete job pyspark-wordcount-test-driver --ignore-not-found
+      - kubectl delete job scala-sparkpi-driver --ignore-not-found
+      - echo "SparkJob test resources cleaned up"
+
+  sparkjob-status:
+    desc: show status of all SparkJobs and related resources
+    cmds:
+      - echo "=== SparkJobs ==="
+      - kubectl get sparkjobs -o wide || echo "No SparkJobs found"
+      - echo "=== Driver Jobs ==="
+      - kubectl get jobs -l app=spark,component=driver || echo "No driver jobs found"
+      - echo "=== Driver Pods ==="
+      - kubectl get pods -l app=spark,component=driver || echo "No driver pods found"
+      - echo "=== Spark Cluster Status ==="
+      - kubectl get pods -l app=spark | grep -E "(master|worker|history)" || echo "Spark cluster not running"
         
 
   shell:

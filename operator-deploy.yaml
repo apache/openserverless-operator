@@ -18,9 +18,29 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: dummy-operator
-  namespace: default
+  name: nuvolaris-operator
+  namespace: nuvolaris
+  labels:
+    app: nuvolaris-operator
+    spark-integrated: "true"
+  annotations:
+    whisks.nuvolaris.org/annotate-version: "true"
 spec:
+  serviceAccount: nuvolaris-operator
   containers:
-  - name: dummy-operator
-    image: ghcr.io/$GITHUB_USER/openserverless-operator:$TAG
+  - name: nuvolaris-operator
+    # usa l'immagine costruita da Kaniko nel registro locale del cluster (kube-system)
+    image: docker-registry.kube-system.svc.cluster.local:5000/$GITHUB_USER/openserverless-operator:$TAG
+    imagePullPolicy: Always
+    command: ["./run.sh"]
+    args: ["--verbose"]
+    env:
+      - name: ENABLE_SPARK
+        value: "true"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi

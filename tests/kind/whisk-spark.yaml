@@ -1,0 +1,66 @@
+apiVersion: nuvolaris.org/v1
+kind: Whisk
+metadata:
+  name: controller
+  namespace: nuvolaris
+spec:
+  # Core components
+  components:
+    openwhisk: true
+    couchdb: true
+    redis: true
+    minio: true
+    
+    # Enable Spark cluster
+    spark: true
+  
+  # Nuvolaris configuration
+  nuvolaris:
+    namespace: nuvolaris
+  
+  # Spark cluster configuration
+  spark:
+    # Image configuration
+    image: apache/spark:3.5.0
+    version: "3.5.0"
+    
+    # Master configuration
+    master:
+      replicas: 1
+      memory: 1g
+      cpu: "1000m"
+      port: 7077
+      webui-port: 8080
+    
+    # Worker configuration
+    worker:
+      replicas: 2
+      memory: 2g
+      cpu: "2000m"
+      cores: 2
+      webui-port: 8081
+    
+    # History Server configuration
+    history-server:
+      enabled: true
+      port: 18080
+      volume-size: 10
+    
+    # Event logging
+    event-log:
+      enabled: true
+      dir: /tmp/spark-events
+    
+    # High Availability (optional - requires Zookeeper)
+    ha:
+      enabled: false
+      zookeeper-url: ""
+    
+    # Security
+    user: spark
+    uid: 185
+  
+  # Affinity and tolerations (optional)
+  affinity: false
+  affinity-core-node-label: nuvolaris
+  tolerations: false

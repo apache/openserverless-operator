@@ -56,6 +56,67 @@ task deploy
 Once you have finished with development you can create a public image with `task publish` that will publish the tag and
 trigger a creation of the image.
 
+## Spark Operator Integration
+
+OpenServerless includes a Spark operator that provides automated Spark cluster deployment and SparkJob CRD support for job execution. The Spark operator follows standard OpenServerless patterns for resource management.
+
+### Quick Start
+
+1. **Deploy Spark Operator and Cluster**:
+   ```bash
+   task spark-standard
+   ```
+
+2. **Test SparkJob CRD**:
+   ```bash
+   task sparkjob-deploy-crd
+   task sparkjob-test-examples
+   ```
+
+3. **Access Spark UI** (with port-forwarding):
+   ```bash
+   kubectl port-forward -n nuvolaris service/spark-master 8080:8080        # Master UI
+   kubectl port-forward -n nuvolaris service/spark-history 18080:18080    # History Server
+   ```
+
+### SparkJob CRD
+
+The SparkJob Custom Resource Definition enables automated execution of Spark applications. See [SparkJob Documentation](docs/SPARKJOB.md) for complete usage guide including:
+
+- PySpark, Scala, and Java application examples
+- Inline code execution
+- Resource configuration
+- Monitoring and logging
+- Troubleshooting guide
+
+### Standard OpenServerless Integration
+
+The Spark operator follows standard OpenServerless patterns:
+- **Templates**: Uses Jinja2 templates in `/nuvolaris/templates/`
+- **Build Pipeline**: Standard GHCR workflow with `spark-build-ghcr`, `spark-push-ghcr`, `spark-all-ghcr` tasks
+- **Configuration**: Uses `.env` pattern for GHCR credentials
+- **Kopf Handlers**: Standard `@kopf.on.create`, `@kopf.on.delete` patterns for CRD lifecycle
+
+### GHCR Integration (Optional)
+
+For production deployments, configure GitHub Container Registry in `.env`:
+```bash
+GITHUB_USER=<your-github-username>
+GHCR_USER=<your-github-username>
+GHCR_TOKEN=<personal-access-token-with-packages-read-write>
+```
+
+Generate token: GitHub → Settings → Developer settings → Personal access tokens → scopes: `read:packages`, `write:packages`
+
+### Monitoring
+
+Check operator logs:
+```bash
+kubectl -n nuvolaris logs pod/nuvolaris-operator-spark | grep -i spark
+```
+
+If pods show `ImagePullBackOff`, verify registry configuration or use GHCR workflow.
+
 ## Prerequisites
 
 1. Please set up and use a development VM [as described here](https://github.com/apache/openserverless)

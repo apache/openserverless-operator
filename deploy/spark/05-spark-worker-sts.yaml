@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: spark-worker
+  namespace: nuvolaris
+  labels:
+    app: spark
+    component: spark-worker
+spec:
+  serviceName: spark-worker
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spark
+      component: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: spark-worker
+    spec:
+      serviceAccountName: spark
+      securityContext:
+        fsGroup: 185
+      containers:
+      - name: spark-worker
+        image: apache/spark:3.5.0
+        imagePullPolicy: IfNotPresent
+        command:
+          - /bin/bash
+          - -c
+          - |
+            # Prepare directories
+            mkdir -p /opt/spark/conf /opt/spark/logs /opt/spark/work
+            
+            # Copy config files if present
+            if ls /etc/spark-config/* >/dev/null 2>&1; then
+              cp -r /etc/spark-config/* /opt/spark/conf/ || true
+            fi
+            
+            # Start Spark Worker (daemon mode disabled)
+            export SPARK_NO_DAEMONIZE=true
+            /opt/spark/sbin/start-worker.sh spark://spark-master:7077
+            
+            # Fallback sleep if no logs yet
+            if ! ls /opt/spark/logs/* >/dev/null 2>&1; then
+              echo "No logs yet, sleeping..."; sleep 5;
+            fi
+            
+            # Keep container running
+            tail -F /opt/spark/logs/* || sleep infinity
+        ports:
+        - name: worker
+          containerPort: 7078
+          protocol: TCP
+        - name: webui
+          containerPort: 8081
+          protocol: TCP
+        env:
+        - name: SPARK_MODE
+          value: "worker"
+        - name: SPARK_MASTER_URL
+          value: "spark://spark-master:7077"
+        - name: SPARK_WORKER_CORES
+          value: "2"
+        - name: SPARK_WORKER_MEMORY
+          value: "1g"
+        - name: SPARK_WORKER_PORT
+          value: "7078"
+        - name: SPARK_WORKER_WEBUI_PORT
+          value: "8081"
+        - name: SPARK_DAEMON_MEMORY
+          value: "1g"
+        - name: SPARK_NO_DAEMONIZE
+          value: "true"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        volumeMounts:
+        - name: spark-config
+          mountPath: /etc/spark-config
+        - name: spark-work
+          mountPath: /opt/spark/work
+        - name: spark-logs
+          mountPath: /opt/spark/logs
+        livenessProbe:
+          httpGet:
+            path: /
+            port: webui
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: webui
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+      volumes:
+      - name: spark-config
+        configMap:
+          name: spark-config
+      - name: spark-work
+        emptyDir: {}
+      - name: spark-logs
+        emptyDir: {}

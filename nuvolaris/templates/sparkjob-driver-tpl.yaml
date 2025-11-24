@@ -1,0 +1,117 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{job_name}}-driver
+  namespace: {{namespace}}
+  labels:
+    app: spark
+    component: driver
+    sparkjob: {{job_name}}
+spec:
+  backoffLimit: {{backoff_limit}}
+  activeDeadlineSeconds: {{timeout}}
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: driver
+        sparkjob: {{job_name}}
+    spec:
+      restartPolicy: {{restart_policy}}
+      serviceAccountName: {{service_account}}
+      containers:
+      - name: spark-driver
+        image: {{spark_image}}
+        command: 
+        - spark-submit
+        - --master
+        - {{spark_master}}
+        - --name
+        - {{job_name}}
+        - --driver-cores
+        - "{{driver_cores}}"
+        - --driver-memory
+        - {{driver_memory}}
+        - --num-executors
+        - "{{executor_instances}}"
+        - --executor-cores
+        - "{{executor_cores}}"
+        - --executor-memory
+        - {{executor_memory}}
+        - --deploy-mode
+        - client
+        {% if event_log_enabled %}
+        - --conf
+        - spark.eventLog.enabled=true
+        - --conf
+        - spark.eventLog.dir=/tmp/spark-events
+        {% endif %}
+        {% if spark_conf %}
+        {% for key, value in spark_conf.items() %}
+        - --conf
+        - {{key}}={{value}}
+        {% endfor %}
+        {% endif %}
+        {% if jars %}
+        - --jars
+        - {{jars|join(',')}}
+        {% endif %}
+        {% if files %}
+        - --files
+        - {{files|join(',')}}
+        {% endif %}
+        {% if py_files %}
+        - --py-files
+        - {{py_files|join(',')}}
+        {% endif %}
+        {% if main_class %}
+        - --class
+        - {{main_class}}
+        {% endif %}
+        - {{main_application_file}}
+        {% if arguments %}
+        {% for arg in arguments %}
+        - {{arg}}
+        {% endfor %}
+        {% endif %}
+        env:
+        - name: SPARK_USER
+          value: spark
+        - name: SPARK_APPLICATION_ID
+          value: {{job_name}}
+        resources:
+          requests:
+            cpu: "{{driver_cores}}"
+            memory: {{driver_memory}}
+          limits:
+            cpu: "{{driver_cores}}"
+            memory: {{driver_memory}}
+        {% if event_log_enabled and history_server_enabled %}
+        volumeMounts:
+        - name: spark-events
+          mountPath: /tmp/spark-events
+        {% endif %}
+      {% if event_log_enabled and history_server_enabled %}
+      volumes:
+      - name: spark-events
+        persistentVolumeClaim:
+          claimName: spark-history-pvc
+      {% endif %}

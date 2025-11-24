@@ -1,0 +1,278 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sparkjobs.nuvolaris.org
+  namespace: nuvolaris
+spec:
+  scope: Namespaced
+  group: nuvolaris.org
+  names:
+    kind: SparkJob
+    plural: sparkjobs
+    singular: sparkjob
+    shortNames:
+      - spj
+      - spark-job
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      subresources: 
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                # Job identification
+                name:
+                  description: "Spark job name"
+                  type: string
+                
+                # Application specification
+                application:
+                  type: object
+                  properties:
+                    # Main application
+                    mainApplicationFile:
+                      description: "Path to main application file (Python, Scala, Java)"
+                      type: string
+                    
+                    mainClass:
+                      description: "Main class for Java/Scala applications"
+                      type: string
+                    
+                    arguments:
+                      description: "Application arguments"
+                      type: array
+                      items:
+                        type: string
+                    
+                    # Application source
+                    source:
+                      type: object
+                      properties:
+                        type:
+                          description: "Source type: configMap, secret, url, inline"
+                          type: string
+                          enum: ["configMap", "secret", "url", "inline"]
+                        
+                        configMapRef:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            key:
+                              type: string
+                        
+                        secretRef:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            key:
+                              type: string
+                        
+                        url:
+                          description: "URL to download application from"
+                          type: string
+                        
+                        content:
+                          description: "Inline application content"
+                          type: string
+                
+                # Spark configuration
+                spark:
+                  type: object
+                  properties:
+                    master:
+                      description: "Spark master URL (default: spark://spark-master:7077)"
+                      type: string
+                      default: "spark://spark-master:7077"
+                    
+                    conf:
+                      description: "Spark configuration properties"
+                      type: object
+                      additionalProperties:
+                        type: string
+                    
+                    # Driver configuration
+                    driver:
+                      type: object
+                      properties:
+                        cores:
+                          description: "Driver CPU cores"
+                          type: integer
+                          default: 1
+                        
+                        memory:
+                          description: "Driver memory (e.g., 1g, 512m)"
+                          type: string
+                          default: "512m"
+                        
+                        serviceAccount:
+                          description: "Kubernetes service account for driver"
+                          type: string
+                          default: "spark"
+                    
+                    # Executor configuration
+                    executor:
+                      type: object
+                      properties:
+                        instances:
+                          description: "Number of executors"
+                          type: integer
+                          default: 2
+                        
+                        cores:
+                          description: "Executor CPU cores"
+                          type: integer
+                          default: 1
+                        
+                        memory:
+                          description: "Executor memory (e.g., 1g, 512m)"
+                          type: string
+                          default: "1g"
+                
+                # Execution settings
+                execution:
+                  type: object
+                  properties:
+                    schedule:
+                      description: "Cron schedule for recurring jobs (optional)"
+                      type: string
+                    
+                    restartPolicy:
+                      description: "Restart policy: Never, OnFailure, Always"
+                      type: string
+                      enum: ["Never", "OnFailure", "Always"]
+                      default: "OnFailure"
+                    
+                    timeout:
+                      description: "Job timeout in seconds"
+                      type: integer
+                      default: 3600
+                    
+                    backoffLimit:
+                      description: "Number of retry attempts"
+                      type: integer
+                      default: 3
+                
+                # Dependencies
+                dependencies:
+                  type: object
+                  properties:
+                    jars:
+                      description: "Additional JAR files"
+                      type: array
+                      items:
+                        type: string
+                    
+                    files:
+                      description: "Additional files to distribute"
+                      type: array
+                      items:
+                        type: string
+                    
+                    pyFiles:
+                      description: "Python files (for PySpark)"
+                      type: array
+                      items:
+                        type: string
+                
+                # Monitoring
+                monitoring:
+                  type: object
+                  properties:
+                    enabled:
+                      description: "Enable monitoring/logging"
+                      type: boolean
+                      default: true
+                    
+                    eventLog:
+                      description: "Enable event logging"
+                      type: boolean
+                      default: true
+                    
+                    historyServer:
+                      description: "Enable history server integration"
+                      type: boolean
+                      default: true
+            
+            status:
+              type: object
+              properties:
+                phase:
+                  description: "Job phase: Pending, Running, Succeeded, Failed"
+                  type: string
+                  enum: ["Pending", "Running", "Succeeded", "Failed", "Unknown"]
+                
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                
+                startTime:
+                  description: "Job start timestamp"
+                  type: string
+                  format: date-time
+                
+                completionTime:
+                  description: "Job completion timestamp"
+                  type: string
+                  format: date-time
+                
+                applicationId:
+                  description: "Spark application ID"
+                  type: string
+                
+                driverPod:
+                  description: "Driver pod name"
+                  type: string
+                
+                executorPods:
+                  description: "List of executor pod names"
+                  type: array
+                  items:
+                    type: string
+                
+                sparkUI:
+                  description: "Spark UI URLs"
+                  type: object
+                  properties:
+                    driverUI:
+                      type: string
+                    historyUI:
+                      type: string
