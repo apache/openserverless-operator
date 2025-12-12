@@ -52,7 +52,7 @@ spec:
       containers:
       - name: openshift-acme
         image: quay.io/tnozicka/openshift-acme:controller
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         args:
         - --exposer-image=quay.io/tnozicka/openshift-acme:exposer
         - --loglevel=4
