@@ -47,9 +47,9 @@ spec:
     # postgres enabled or not
     postgres: true
     # etcd enabled or not
-    etcd: true
+    etcd: false
     # milvus enabled or not
-    milvus: true
+    milvus: false
     # registry enabled or not
     registry: false
     # seaweedfs enabled or not

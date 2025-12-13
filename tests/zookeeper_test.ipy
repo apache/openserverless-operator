@@ -32,7 +32,7 @@ pod_name = zookeeper.get_zookeeper_pod_name()
 assert(pod_name)
 
 zookeeper_version = kube.kubectl("get", f"pods/{pod_name}", jsonpath="{.spec.containers[0].image}")
-assert(zookeeper_version[0] == "ghcr.io/nuvolaris/zookeeper:3.4.14")
+assert(zookeeper_version[0] == "zookeeper:3.5.9")
 
 # check the url is stored into the configuration
 assert(cfg.get("nuvolaris.zookeeper.url") == "zookeeper-0.zookeeper:2181")

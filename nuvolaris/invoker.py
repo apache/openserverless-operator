@@ -39,9 +39,8 @@ def create(owner=None):
     if(data['affinity'] or data['tolerations']):
        tplp.append("affinity-tolerance-sts-invoker-attach.yaml")
     
-    logging.info(f"using invoker image {whisk_image}:{whisk_tag}")
-    config = kus.image(whisk_image, newTag=whisk_tag)
-    config += kus.patchTemplates("openwhisk-invoker", tplp, data)
+    logging.info(f"using invoker image {whisk_image}:{whisk_tag}")    
+    config = kus.patchTemplates("openwhisk-invoker", tplp, data)
     spec = kus.kustom_list("openwhisk-invoker", config, templates=[], data=data)
 
     if owner:

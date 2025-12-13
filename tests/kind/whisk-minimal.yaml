@@ -30,6 +30,8 @@ spec:
     couchdb: true
     # start kafka
     kafka: true
+    # zookeeper enabled or not
+    zookeeper: true    
     # start mongodb
     mongodb: false
     # start redis
