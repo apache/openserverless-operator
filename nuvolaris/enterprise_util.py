@@ -44,8 +44,8 @@ def get_invoker_image_data(data):
         data['invoker_image'] = img_data["image"]
         data['invoker_tag'] = img_data["tag"]
     else:        
-        data['invoker_image'] = cfg.get("invoker.image") or "ghcr.io/nuvolaris/openwhisk-invoker"
-        data['invoker_tag'] = cfg.get("invoker.tag") or "3.1.0-mastrogpt.2402101445"    
+        data['invoker_image'] = cfg.get("invoker.image","INVOKER_IMAGE","apache/openserverless-wsk-invoker")
+        data['invoker_tag'] = cfg.get("invoker.tag","INVOKER_TAG","2.0.0-incubating.2506080813")
 
 def getEnterpriseControllerConfigData():
     data = {

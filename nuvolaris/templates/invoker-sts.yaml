@@ -306,7 +306,22 @@ spec:
           {% if usePrivateRegistry %}
           - name: "CONFIG_whisk_kubernetes_podTemplate"
             value: "file:/templates/ow_pod_templates.yaml"
-          {% endif %}              
+          {% endif %}
+
+          # OpenWhisk 2 without Scheduler
+          - name: "CONFIG_spi_LoadBalancerProvider"
+            value: "org.apache.openwhisk.core.loadBalancer.ShardingContainerPoolBalancer"
+          - name: "CONFIG_spi_EntitlementSpiProvider"
+            value: "org.apache.openwhisk.core.entitlement.LocalEntitlementProvider"      
+          - name: "CONFIG_spi_LoadBalancerProvider"
+            value: "org.apache.openwhisk.core.loadBalancer.ShardingContainerPoolBalancer"
+          - name: "CONFIG_spi_InvokerProvider"
+            value: "org.apache.openwhisk.core.invoker.InvokerReactive"
+          - name: "CONFIG_spi_InvokerServerProvider"
+            value: "org.apache.openwhisk.core.invoker.DefaultInvokerServer"
+          - name: "CONFIG_spi_DurationCheckerProvider"
+            value: "org.apache.openwhisk.core.scheduler.queue.NoopDurationCheckerProvider"
+
 
         ports:
         - name: invoker

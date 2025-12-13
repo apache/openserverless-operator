@@ -229,9 +229,19 @@ spec:
         - name: "CONFIG_kamon_metric_tickInterval"
           value: "30"        
 
-        #- name: "CONFIG_spi_ContainerFactoryProvider"
-        #  value: "org.apache.openwhisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider"
-        #- name: "CONFIG_spi_LogStoreProvider"
-        #  value:  "org.apache.openwhisk.core.containerpool.logging.DockerToActivationLogStoreProvider"           
-        #- name: "CONFIG_spi_ArtifactStoreProvider"
-        #  value: "org.apache.openwhisk.core.database.CouchDbStoreProvider"       
+        # OpenWhisk 2 without Scheduler
+        - name: "CONFIG_spi_LoadBalancerProvider"
+          value: "org.apache.openwhisk.core.loadBalancer.ShardingContainerPoolBalancer"
+        - name: "CONFIG_spi_EntitlementSpiProvider"
+          value: "org.apache.openwhisk.core.entitlement.LocalEntitlementProvider"      
+        - name: "CONFIG_spi_LoadBalancerProvider"
+          value: "org.apache.openwhisk.core.loadBalancer.ShardingContainerPoolBalancer"
+        - name: "CONFIG_spi_InvokerProvider"
+          value: "org.apache.openwhisk.core.invoker.InvokerReactive"
+        - name: "CONFIG_spi_InvokerServerProvider"
+          value: "org.apache.openwhisk.core.invoker.DefaultInvokerServer"
+        - name: "CONFIG_spi_DurationCheckerProvider"
+          value: "org.apache.openwhisk.core.scheduler.queue.NoopDurationCheckerProvider"
+
+
+

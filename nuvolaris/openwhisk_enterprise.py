@@ -36,6 +36,7 @@ def create(owner=None):
     if(data['affinity'] or data['tolerations']):
        tplp.append("affinity-tolerance-sts-core-attach.yaml")    
 
+    logging.info(f"using controller image {whisk_image}:{whisk_tag}")
     config = kus.image(whisk_image, newTag=whisk_tag)
     config += kus.patchTemplates("openwhisk-enterprise", tplp, data)
     spec = kus.kustom_list("openwhisk-enterprise", config, templates=[], data=data)

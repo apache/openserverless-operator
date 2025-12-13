@@ -41,7 +41,7 @@ spec:
     # tls enabled or not
     tls: false
     # minio enabled or not
-    minio: true 
+    minio: false 
     # minio static enabled or not
     static: true
     # postgres enabled or not
@@ -53,7 +53,7 @@ spec:
     # registry enabled or not
     registry: false
     # seaweedfs enabled or not
-    seaweedfs: false               
+    seaweedfs: true               
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP

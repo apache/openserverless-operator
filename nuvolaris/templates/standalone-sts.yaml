@@ -216,7 +216,19 @@ spec:
           value: "org.apache.openwhisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider"             
 
         - name: "CONFIG_whisk_spi_LogStoreProvider"
-          value: "org.apache.openwhisk.core.containerpool.logging.DockerToActivationLogStoreProvider"           
+          value: "org.apache.openwhisk.core.containerpool.logging.DockerToActivationLogStoreProvider"
+
+        # OpenWhisk 2 without Scheduler
+        - name: "CONFIG_spi_EntitlementSpiProvider"
+          value: "org.apache.openwhisk.core.entitlement.LocalEntitlementProvider"      
+        - name: "CONFIG_spi_LoadBalancerProvider"
+          value: "org.apache.openwhisk.core.loadBalancer.ShardingContainerPoolBalancer"
+        - name: "CONFIG_spi_InvokerProvider"
+          value: "org.apache.openwhisk.core.invoker.InvokerReactive"
+        - name: "CONFIG_spi_InvokerServerProvider"
+          value: "org.apache.openwhisk.core.invoker.DefaultInvokerServer"
+        - name: "CONFIG_spi_DurationCheckerProvider"
+          value: "org.apache.openwhisk.core.scheduler.queue.NoopDurationCheckerProvider"
 
         - name: "CONFIG_whisk_controller_protocol"
           value: "http"  

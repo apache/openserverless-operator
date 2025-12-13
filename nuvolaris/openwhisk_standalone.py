@@ -31,6 +31,8 @@ def create(owner=None):
 
     whisk_image = data["controller_image"]
     whisk_tag = data["controller_tag"]
+
+    logging.info(f"using controller image {whisk_image}:{whisk_tag}")
     config = kus.image(whisk_image, newTag=whisk_tag)
     
     tplp = ["standalone-sts.yaml"]
