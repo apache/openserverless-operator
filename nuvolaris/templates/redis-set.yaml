@@ -32,17 +32,17 @@ spec:
         name: redis
         app: redis
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"         
+        whisks.nuvolaris.org/annotate-version: "true"
     spec:
       restartPolicy: Always
       {% if applypodsecurity %}
       securityContext:
-        fsGroup: 1001 
-        runAsUser: 1001 #default BITNAMI user     
+        fsGroup: 1001
+        runAsUser: 1001 #default BITNAMI user
       {% endif %}
       containers:
       - name: redis
-        image: bitnamisecure/valkey:latest
+        image: docker.io/bitnamilegacy/redis:8.2.1
         command: ["/bin/sh","-c","redis-server /redis-master/redis.conf"]
         env:
         - name: MASTER

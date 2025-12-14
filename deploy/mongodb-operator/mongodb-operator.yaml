@@ -73,7 +73,7 @@ spec:
         - name: MONGODB_REPO_URL
           value: docker.io
         image: quay.io/mongodb/mongodb-kubernetes-operator:0.7.8
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: mongodb-kubernetes-operator
         resources:
           limits:

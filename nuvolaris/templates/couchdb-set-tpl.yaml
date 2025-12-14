@@ -22,7 +22,7 @@ metadata:
   namespace: nuvolaris
   name: {{name}}
   labels:
-    name: {{name}} 
+    name: {{name}}
     app: {{appName}}
     index: "{{index}}"
     replicationRole: "{{replicationRole}}"
@@ -39,10 +39,10 @@ spec:
       labels:
         name: {{name}}
         app: {{appName}}
-        index: "{{index}}" 
+        index: "{{index}}"
         replicationRole: primary
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"  
+        whisks.nuvolaris.org/annotate-version: "true"
     spec:
       restartPolicy: Always
       containers:
@@ -53,7 +53,7 @@ spec:
           capabilities:
             drop:
             - ALL
-        imagePullPolicy: "Always"
+        imagePullPolicy: "IfNotPresent"
         {% else %}
         imagePullPolicy: "IfNotPresent"
         {% endif %}
