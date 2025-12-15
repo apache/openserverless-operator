@@ -303,7 +303,7 @@ def get_controller_image_data(data):
         data['controller_tag'] = img_data["tag"]
     else:
         data['controller_image'] = cfg.get("controller.image","CONTROLLER_IMAGE","apache/openserverless-wsk-controller")
-        data['controller_tag'] = cfg.get("controller.tag","CONTROLLER_TAG","2.0.0-incubating.2506080813")
+        data['controller_tag'] = cfg.get("controller.tag","CONTROLLER_TAG","2.0.0-incubating.2512132233")
 
 # return configuration parameters for the standalone controller
 def get_standalone_config_data():
