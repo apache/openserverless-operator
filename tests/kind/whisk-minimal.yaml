@@ -25,11 +25,13 @@ spec:
     # start openwhisk controller
     openwhisk: true
     # start openwhisk invoker
-    invoker: false    
+    invoker: true    
     # start couchdb
     couchdb: true
     # start kafka
-    kafka: false
+    kafka: true
+    # zookeeper enabled or not
+    zookeeper: true    
     # start mongodb
     mongodb: false
     # start redis

@@ -25,7 +25,6 @@ metadata:
     app: zookeeper
 spec:
   serviceName: zookeeper
-  podManagementPolicy: "Parallel"
   replicas: 1
   selector:
     matchLabels:
@@ -48,20 +47,49 @@ spec:
         - name: "zookeeper-pvc-datalog"
           persistentVolumeClaim:
             claimName: "zookeeper-pvc-datalog"
-      
+
+      initContainers:
+      - name: init-myid
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            mkdir -p /data /datalog
+            echo 1 > /data/myid
+            chown -R 1001:1001 /data /datalog
+        volumeMounts:
+          - name: zookeeper-pvc-data
+            mountPath: /data
+          - name: zookeeper-pvc-datalog
+            mountPath: /datalog
+          - name: zk-config
+            mountPath: /conf
+
       containers:
       - name: zookeeper
-        image: "ghcr.io/nuvolaris/zookeeper:3.4.14"
-        imagePullPolicy: "IfNotPresent"
-        command: ["/bin/bash", "-c", "hostname -s | awk -F '-' '{print $NF}'> /data/myid; cat /data/myid; cat /conf/zoo.cfg; zkServer.sh start-foreground"]
+        image: zookeeper:3.5.9
+        imagePullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - |
+            export ZOOCFGDIR=/conf
+            zkServer.sh start-foreground
         ports:
-        - name: zookeeper
-          containerPort: 2181
-        - name: server
-          containerPort: 2888
-        - name: leader-election
-          containerPort: 3888
-
+          - name: zookeeper
+            containerPort: 2181
+          - name: quorum
+            containerPort: 2888
+          - name: leader-election
+            containerPort: 3888
+        volumeMounts:
+          - name: zk-config
+            mountPath: /conf
+          - name: zookeeper-pvc-data
+            mountPath: /data
+          - name: zookeeper-pvc-datalog
+            mountPath: /datalog
         livenessProbe:
           tcpSocket:
             port: 2181
@@ -71,17 +99,9 @@ spec:
         readinessProbe:
           exec:
             command:
-            - /bin/bash
-            - -c
-            - "echo ruok | nc -w 1 localhost 2181 | grep imok"
+              - sh
+              - -c
+              - "zkServer.sh status"
           initialDelaySeconds: 5
           periodSeconds: 10
-          timeoutSeconds: 1
-        volumeMounts:
-        - mountPath: /conf
-          name: zk-config         
-        - mountPath: /data
-          name: "zookeeper-pvc-data"
-        - mountPath: /datalog
-          name: "zookeeper-pvc-datalog"
----
+          timeoutSeconds: 3
