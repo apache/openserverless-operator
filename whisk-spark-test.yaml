@@ -1,0 +1,112 @@
+apiVersion: nuvolaris.org/v1
+kind: Whisk
+metadata:
+  name: controller
+  namespace: nuvolaris
+spec:
+  nuvolaris:
+      password: nuvpassw0rd 
+      apihost: auto
+  components:
+    # start openwhisk controller
+    openwhisk: true
+    # start openwhisk invoker
+    invoker: false    
+    # start couchdb
+    couchdb: true
+    # start kafka
+    kafka: false
+    # start mongodb
+    mongodb: true
+    # start redis
+    redis: true
+    # start cron based action parser
+    cron: true 
+    # enable TLS
+    tls: false
+    # minio enabled or not
+    minio: true
+    # minio static enabled or not
+    static: true
+    # postgres enabled or not
+    postgres: true
+    # registry disabled for this test
+    registry: false
+    # enable spark
+    spark: true
+  openwhisk:
+    namespaces:
+      whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abcfO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
+      nuvolaris: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xKCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
+  couchdb:
+    host: couchdb
+    port: 5984
+    volume-size: 10
+    admin:
+      user: whisk_admin
+      password: some_passw0rd
+    controller:
+      user: invoker_admin
+      password: s0meP@ass1
+    invoker:
+      user: controller_admin
+      password: s0meP@ass2
+  kafka:
+    host: kafka
+    volume-size: 10
+  scheduler:
+    schedule: "* * * * *"
+  configs:
+    limits:
+      actions:
+        sequence-maxLength: 50
+        invokes-perMinute: 999
+        invokes-concurrent: 250
+      triggers: 
+        fires-perMinute: 999
+    controller:
+      javaOpts: "-Xmx1024M"
+  redis:
+    persistence-enabled: true
+    volume-size: 10
+    default:
+      password: s0meP@ass3
+    nuvolaris:
+      prefix: nuv      
+      password: s0meP@ass3
+  mongodb:
+    host: mongodb
+    volume-size: 10
+    admin: 
+      user: whisk_admin
+      password: 0therPa55
+    nuvolaris:
+      user: nuvolaris
+      password: s0meP@ass3
+    exposedExternally: False
+    useOperator: False
+  minio:
+    volume-size: 2
+    admin:
+      user: minioadmin
+      password: minioadmin    
+    nuvolaris:
+      user: nuvolaris
+      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+  postgres:    
+    volume-size: 5
+    replicas: 2
+    admin:      
+      password: 0therPa55
+      replica-password: 0therPa55RR
+    nuvolaris:
+      password: s0meP@ass3
+  spark:
+    master-cores: 1
+    master-memory: 512m
+    worker-cores: 1
+    worker-memory: 512m
+    driver-memory: 512m
+    executor-cores: 1
+    executor-memory: 512m
+    history-enabled: true

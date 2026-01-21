@@ -37,6 +37,7 @@ import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
 import nuvolaris.registry_deploy as registry
 import nuvolaris.seaweedfs_deploy as seaweedfs
+import nuvolaris.spark as spark
 
 def patch_preloader(owner: None):
     try:
@@ -159,6 +160,10 @@ def patch(diff, status, owner=None, name=None):
 
     if "milvus" in what_to_do:
         milvus.patch(status,what_to_do['milvus'], owner)
+        components_updated = True 
+
+    if "spark" in what_to_do:
+        spark.patch(status,what_to_do['spark'], owner)
         components_updated = True 
 
     if "registry" in what_to_do:

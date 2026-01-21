@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-config
+  namespace: {{namespace}}
+  labels:
+    app: spark
+    component: spark-config
+data:
+  spark-defaults.conf: |
+    spark.master                      spark://spark-master:{{master_port}}
+    spark.eventLog.enabled            {{event_log_enabled|lower}}
+    spark.eventLog.dir                {{event_log_dir}}
+    spark.history.fs.logDirectory     {{event_log_dir}}
+    spark.sql.warehouse.dir           /opt/spark/work-dir/spark-warehouse
+    spark.driver.host                 spark-master-0.spark-master.{{namespace}}.svc.cluster.local
+    spark.driver.bindAddress          0.0.0.0
+    {% if ha_enabled %}
+    spark.deploy.recoveryMode         ZOOKEEPER
+    spark.deploy.zookeeper.url        {{ha_zookeeper_url}}
+    {% endif %}
+  log4j.properties: |
+    # Root logger option
+    log4j.rootLogger=INFO, console
+    
+    # Console appender configuration
+    log4j.appender.console=org.apache.log4j.ConsoleAppender
+    log4j.appender.console.layout=org.apache.log4j.PatternLayout
+    log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n
+    
+    # Set specific log levels
+    log4j.logger.org.apache.spark.repl.Main=WARN
+    log4j.logger.org.spark_project.jetty=WARN
+    log4j.logger.org.spark_project.jetty.util.component.AbstractLifeCycle=ERROR
+    log4j.logger.org.apache.spark.repl.SparkIMain$exprTyper=WARN
+    log4j.logger.org.apache.spark.repl.SparkILoop$SparkILoopInterpreter=WARN
+    log4j.logger.org.apache.parquet=ERROR
+    log4j.logger.parquet=ERROR
+    log4j.logger.org.apache.hadoop.hive.metastore.RetryingHMSHandler=FATAL
+    log4j.logger.org.apache.hadoop.hive.ql.exec.FunctionRegistry=ERROR

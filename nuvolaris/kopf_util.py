@@ -107,6 +107,7 @@ def evaluate_differences(response: dict, differences: list):
         check_component(response, d,"spec.components.quota","quota")
         check_component(response, d,"spec.components.etcd","etcd")
         check_component(response, d,"spec.components.milvus","milvus")
+        check_component(response, d,"spec.components.spark","spark")
         check_component(response, d,"spec.components.registry","registry")
         check_component(response, d,"spec.components.seaweedfs","seaweedfs")
         openwhisk(response, d)           
