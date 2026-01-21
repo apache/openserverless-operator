@@ -15,26 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-%load_ext autoreload
-%autoreload 2
-import logging
-logging.basicConfig(level=logging.DEBUG)
+version: 3
 
-import sys, os, os.path, yaml, json
-import nuvolaris.kube as kube
-import nuvolaris.kustomize as kus
-import nuvolaris.config as cfg
-import nuvolaris.couchdb as cdb
-import nuvolaris.templates as tpl
-import requests as req
-import nuvolaris.testutil as tu
+tasks:
 
-k='kubectl -n nuvolaris'
-ka='kubectl -n nuvolaris apply'
-kd='kubectl -n nuvolaris delete'
-kde='kubectl -n nuvolaris describe'
-kg='kubectl -n nuvolaris get'
-kns='kubectl config  set-context --current --namespace'
-
-def yd(r):
-    print(yaml.dump(r))
+  kind:
+    desc: kind

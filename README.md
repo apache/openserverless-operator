@@ -20,18 +20,90 @@
 
 # Apache OpenServerless Operator
 
-In this readme there are information for developers.
+In this README we explain how to do development with the Operator
 
-We describe how to build and test the operator in our development environment
+The operator is a collection of modules managed with ops. 
 
-Please refer to the [website](https://openserverless.apache.org) for user information.
+The operator itself is an ops plugin to invoke some of functions from the command line.
 
-## How to build and use an operator image
+To work with it, install ops and clone the source code from the top level, so you get the operator code under `openserverless/operator-op`
 
-Ensure you have satisfied the prerequisites below. Most notably, you need to use our development virtual machine and you
-need write access to a GitHub repository.
+```
+curl -sL bit.ly/get-ops | bash
+git clone https://github.com/apache/openserverless --recurse-submodules
+cd openserverless
+```
 
-Once you have satisfied the prerequisites, you can build an image you can use in the development machine.
+To be able to work with the operator you need a Kubernetes cluster and a Working configuration. 
+
+You can easily create one with kind:
+
+```
+# destroy the old one
+ops op clu kind destroy
+# create a new cluster
+ops op clu kind create
+```
+
+If you want to use kubectl directory use `ops util kubeconfig` 
+to export the kind configurat to `~/.kube/config`. WARNING it overwrites yout existing one.
+
+## Configuration
+
+You need a full configuration to be able to work with the operator. 
+
+You can create an actual configuration on the cluster skipping the launch of the operator:
+
+For example this is a config of slim mode:
+
+```
+# configure slim mode for example 
+ops config slim
+# configure
+ops setup kubernetes configure
+```
+
+## Execute the operator as a cli plugin
+
+Many modules are now executable as `ops op nuvolaris`  commands.
+
+For example: `ops op nuv etcd`
+
+It shows the subcommand with `create [<replicas>]` and `delete` 
+
+## Working on the cli
+
+You can also test and work on the cli. Try this:
+
+```
+ops op cli
+```
+
+Initialize the configuration:
+
+```
+import nuvolaris.operator_util as operator_util
+owner = kube.get("wsk/controller")
+operator_util.config_from_spec(owner['spec'])
+```
+
+Create the components:
+
+```
+import nuvolaris.etcd as etcd
+msg = etcd.create(owner)
+```
+
+## How to publish the operator image
+
+When you are satisfied with your development you can publish the image.
+
+First, install [task](http://taskfile.dev/docs/installation).
+
+You need to setup some environment variables. Copy .env.dist in .env and put your GitHub username in it
+
+Since the build requires you push your sources in your repo, you need the credentials to access it. The fastest way is
+to [create a personal token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
 
 Build an image with:
 
@@ -56,38 +128,8 @@ task deploy
 Once you have finished with development you can create a public image with `task publish` that will publish the tag and
 trigger a creation of the image.
 
-## Prerequisites
-
-1. Please set up and use a development VM [as described here](https://github.com/apache/openserverless)
-
-2. With VSCode, access the development VM, open the workspace `openserverless/openserverless.code-workspace` and then
-   open a terminal with `operator` subproject: this will enable the `nix` environment with direnv (provided by the VM).
-
-3. Create a fork of `github.com/apache/openserverless-operator`
-
-4. Copy .env.dist in .env and put your GitHub username in it
-
-5. Since the build requires you push your sources in your repo, you need the credentials to access it. The fastest way
-   is
-   to [create a personal token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
-
-6. Now set up a remote to access your repo and set it as your default upstream branch.
+Once the image is publicly available you have to put in in `opsroot.json` to use it:
 
 ```
-git remote add fork https://<GITHUB_USERNAME>:<GITHUB_TOKEN>@github.com/<GITHUB_USERNAME>/openserverless-operator
-git branch -u https://github.com/<GITHUB_USERNAME>/openserverless-operator
+https://github.com/apache/openserverless-task/blob/9d2227b87196be9b487673d4d1f8202c2ec354f2/opsroot.json#L8
 ```
-
-That's it. Now you can use `task build` to build the image.
-
-7. Deploy the operator
-
-To deploy a testing configuration of the Apache OpenServerless operator execute the command
-
-```shell
-task all
-```
-
-The operator instance will be configured applying the `test/k3s/whisk.yaml` template.
-All the components are activated except TLS and MONITORING.
-

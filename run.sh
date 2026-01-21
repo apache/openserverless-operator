@@ -27,7 +27,7 @@ then mkdir -p deploy
 fi
 # start the operator if possible
 if kubectl -n nuvolaris get cm/config
-then poetry run kopf run -n nuvolaris -m nuvolaris nuvolaris/main.py nuvolaris/user_handlers.py nuvolaris/workflows.py "$@"
+then uv run kopf run -n nuvolaris -m nuvolaris nuvolaris/main.py nuvolaris/user_handlers.py nuvolaris/workflows.py "$@"
 else echo "You need to 'kubectl apply -f deploy/permissions' before starting the operator."
 fi
 

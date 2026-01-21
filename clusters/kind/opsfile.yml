@@ -1,0 +1,59 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+version: '3'
+
+vars:
+  NAME: "nuvolaris"
+  KUBEFILE: "{{.OPS_TMP}}/kind.kubeconfig"
+  DRY: ""
+
+env:
+  KUBECONFIG:
+    sh: if test -e "$OPS_TMP/kubeconfig"; then echo "$OPS_TMP/kubeconfig"; else echo ~/.kube/config ; fi
+  kc: "{{.DRY}} kubectl -n nuvolaris"
+
+tasks:
+
+  create: 
+    desc: create
+    cmds:
+    - kind create cluster --name "{{.NAME}}" --config kind.yaml
+    - kind get kubeconfig --name="{{.NAME}}"  >{{.KUBEFILE}}
+    - cp "{{.KUBEFILE}}" "$OPS_TMP/kubeconfig"
+    - kubectl --namespace=ingress-nginx  --kubeconfig "{{.KUBEFILE}}" apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml 
+  
+  ingress:
+    desc: temporary fix to create ingress
+    cmds:
+    - kubectl --namespace=ingress-nginx  --kubeconfig "{{.KUBEFILE}}" apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml 
+  
+  destroy: 
+    desc: destroy
+    cmds:
+    - kind delete cluster --name "{{.NAME}}"
+    - rm -f "$OPS_TMP/kubeconfig" "{{.KUBEFILE}}"
+
+  list:
+    desc: list
+    cmds:
+    - kind get clusters
+
+  status:
+    desc: status
+    cmds:
+    - $kc get nodes
