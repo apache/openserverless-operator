@@ -78,7 +78,7 @@ ADD --chown=nuvolaris:nuvolaris quota.sh /home/nuvolaris/
 FROM python:3.12-slim-bullseye AS deps
 
 # --- Install Poetry ---
-ARG POETRY_VERSION=1.8.5
+ARG POETRY_VERSION=2.3.2
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_NO_INTERACTION=1
 ENV POETRY_VIRTUALENVS_IN_PROJECT=1
