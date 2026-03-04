@@ -1,0 +1,92 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+name: Trigger Testing
+run-name: Dispatch operator PR test for ${{ github.event.issue.number || github.event.inputs.pr_number }}
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to test"
+        required: true
+        type: string
+      platform:
+        description: "Platform to test on (e.g. k3s-amd, eks-amd)"
+        required: true
+        type: string
+
+jobs:
+  dispatch:
+    name: Dispatch operator-pr-test
+    runs-on: ubuntu-22.04
+    # Run on /testing comments from authorized users, or on manual dispatch
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.issue.pull_request &&
+        startsWith(github.event.comment.body, '/testing ') &&
+        contains(fromJSON('["MEMBER","OWNER","COLLABORATOR"]'), github.event.comment.author_association)
+      )
+    steps:
+      - name: Parse comment
+        id: parse
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "platform=${{ github.event.inputs.platform }}" >> "$GITHUB_OUTPUT"
+            echo "pr_number=${{ github.event.inputs.pr_number }}" >> "$GITHUB_OUTPUT"
+          else
+            COMMENT="${{ github.event.comment.body }}"
+            PLATFORM="${COMMENT#/testing }"
+            echo "platform=${PLATFORM}" >> "$GITHUB_OUTPUT"
+            echo "pr_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get PR details
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ steps.parse.outputs.pr_number }})
+          echo "ref=$(echo "$PR_JSON" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
+          echo "repo=$(echo "$PR_JSON" | jq -r '.head.repo.full_name')" >> "$GITHUB_OUTPUT"
+          echo "sha=$(echo "$PR_JSON" | jq -r '.head.sha')" >> "$GITHUB_OUTPUT"
+
+      - name: Add reaction to comment
+        if: github.event_name != 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            -f content=rocket
+
+      - name: Dispatch to testing repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.OPENSERVERLESS_TESTING_PAT }}
+          repository: ${{ github.repository_owner }}/openserverless-testing
+          event-type: operator-pr-test
+          client-payload: >-
+            {
+              "pr_number": "${{ steps.parse.outputs.pr_number }}",
+              "pr_ref": "${{ steps.pr.outputs.ref }}",
+              "pr_sha": "${{ steps.pr.outputs.sha }}",
+              "operator_repo": "${{ steps.pr.outputs.repo }}",
+              "platform": "${{ steps.parse.outputs.platform }}"
+            }
