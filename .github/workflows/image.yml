@@ -22,8 +22,6 @@ on:
   push:
     tags:
     - '[0-9]*'
-    branches-ignore:
-    - '*'
 jobs:
   image:
     name: Build OpenServerless Operator Image
