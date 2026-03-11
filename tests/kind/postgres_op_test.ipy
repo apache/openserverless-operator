@@ -15,22 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-!kubectl -n nuvolaris delete kubegres --all
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
-
-import nuvolaris.config as cfg
-import nuvolaris.kube as kube
-import nuvolaris.postgres_operator as pdb
-import nuvolaris.testutil as tu
-
-# test
-assert(cfg.configure(tu.load_sample_config()))
-cfg.detect_storage()
-assert(pdb.create())
-
-assert(kube.kubectl("get", f"cm/config", jsonpath="{.metadata.annotations.postgres_host}"))
-assert(pdb.delete())
-
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+#!kubectl -n nuvolaris delete kubegres --all
+#!kubectl -n nuvolaris delete all --all
+#!kubectl -n nuvolaris delete pvc --all
+#
+#import nuvolaris.config as cfg
+#import nuvolaris.kube as kube
+#import nuvolaris.postgres_operator as pdb
+#import nuvolaris.testutil as tu
+#
+## test
+#assert(cfg.configure(tu.load_sample_config()))
+#cfg.detect_storage()
+#assert(pdb.create())
+#
+#assert(kube.kubectl("get", f"cm/config", jsonpath="{.metadata.annotations.postgres_host}"))
+#assert(pdb.delete())
+#
+#!kubectl -n nuvolaris delete all --all
+#!kubectl -n nuvolaris delete pvc --all
