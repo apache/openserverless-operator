@@ -37,11 +37,15 @@ jobs:
       - name: Assign TAG from pull request
         if:  ${{ github.event_name == 'pull_request' }}
         run: |
-          echo "IMG_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          TAG=$(git rev-parse --short HEAD)
+          echo "IMG_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "OPERATOR_TAG=$TAG" >> "$GITHUB_ENV"
       - name: Assign TAG from push
         if:  ${{ github.event_name != 'pull_request' }}
         run: |
-          echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"        
+          TAG=$(git describe --tags --abbrev=0)
+          echo "IMG_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "OPERATOR_TAG=$TAG" >> "$GITHUB_ENV"
       - name: Assign Custom Image Name
         if:  ${{ github.repository_owner != 'apache'}}
         run: |
@@ -61,7 +65,7 @@ jobs:
       - name: Install
         run: task setup
       - name: BuildAndLoad
-        run: task build-and-load TAG="$IMG_TAG"
+        run: task build-and-load
       - name: AddIngress
         run: task kind:ingress
       - name: Ngrok
