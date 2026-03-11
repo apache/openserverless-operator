@@ -34,16 +34,9 @@ jobs:
           submodules: recursive
       - name: License   
         uses: apache/skywalking-eyes@main
-      - name: Assign TAG from pull request
-        if:  ${{ github.event_name == 'pull_request' }}
+      - name: Assign TAG
         run: |
           TAG=$(git rev-parse --short HEAD)
-          echo "IMG_TAG=$TAG" >> "$GITHUB_ENV"
-          echo "OPERATOR_TAG=$TAG" >> "$GITHUB_ENV"
-      - name: Assign TAG from push
-        if:  ${{ github.event_name != 'pull_request' }}
-        run: |
-          TAG=$(git describe --tags --abbrev=0)
           echo "IMG_TAG=$TAG" >> "$GITHUB_ENV"
           echo "OPERATOR_TAG=$TAG" >> "$GITHUB_ENV"
       - name: Assign Custom Image Name

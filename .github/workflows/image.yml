@@ -22,8 +22,6 @@ on:
   push:
     tags:
     - '[0-9]*'
-    branches-ignore:
-    - '*'
 jobs:
   image:
     name: Build OpenServerless Operator Image
@@ -87,9 +85,9 @@ jobs:
       - name: Registry login
         uses: docker/login-action@v3
         with:
-          registry: registry.hub.docker.com
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}           
+          registry: ${{ vars.IMAGE_REGISTRY || 'registry.hub.docker.com' }}
+          username: ${{ secrets.DOCKERHUB_USER || github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
