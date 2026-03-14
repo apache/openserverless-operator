@@ -77,16 +77,14 @@ jobs:
             -f content=rocket
 
       - name: Dispatch to testing repo
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.OPENSERVERLESS_TESTING_PAT }}
-          repository: ${{ github.repository_owner }}/openserverless-testing
-          event-type: operator-pr-test
-          client-payload: >-
-            {
-              "pr_number": "${{ steps.parse.outputs.pr_number }}",
-              "pr_ref": "${{ steps.pr.outputs.ref }}",
-              "pr_sha": "${{ steps.pr.outputs.sha }}",
-              "operator_repo": "${{ steps.pr.outputs.repo }}",
-              "platform": "${{ steps.parse.outputs.platform }}"
-            }
+        env:
+          GH_TOKEN: ${{ secrets.OPENSERVERLESS_TESTING_PAT }}
+        run: |
+          gh api repos/${{ github.repository_owner }}/openserverless-testing/dispatches \
+            -X POST \
+            -f event_type=operator-pr-test \
+            -f 'client_payload[pr_number]=${{ steps.parse.outputs.pr_number }}' \
+            -f 'client_payload[pr_ref]=${{ steps.pr.outputs.ref }}' \
+            -f 'client_payload[pr_sha]=${{ steps.pr.outputs.sha }}' \
+            -f 'client_payload[operator_repo]=${{ steps.pr.outputs.repo }}' \
+            -f 'client_payload[platform]=${{ steps.parse.outputs.platform }}'
