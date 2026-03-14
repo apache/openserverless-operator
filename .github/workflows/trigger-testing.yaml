@@ -61,7 +61,7 @@ jobs:
       - name: Get PR details
         id: pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.OPENSERVERLESS_TESTING_PAT }}
         run: |
           PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ steps.parse.outputs.pr_number }})
           echo "ref=$(echo "$PR_JSON" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
