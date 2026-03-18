@@ -221,7 +221,7 @@ def delete_registry_ingress(owner=None, namespace="nuvolaris"):
         res += kube.kubectl("delete", "ingress",endpoint.api_ingress_name(namespace,"registry"))    
 
         if(ingress_class == 'traefik'):            
-            res = kube.kubectl("delete", "middleware.traefik.containo.us",endpoint.api_middleware_ingress_name(namespace,"registry"))         
+            res = kube.kubectl("delete", "middleware.traefik.io",endpoint.api_middleware_ingress_name(namespace,"registry"))
 
         return res
     except Exception as e:
