@@ -16,50 +16,53 @@
 # under the License.
 #
 name: Trigger Testing
-run-name: Dispatch operator PR test for ${{ github.event.issue.number || github.event.inputs.pr_number }}
+run-name: Dispatch operator PR test for PR #${{ github.event.pull_request.number }}
 
 on:
-  issue_comment:
-    types: [created]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "PR number to test"
-        required: true
-        type: string
-      platform:
-        description: "Platform to test on (e.g. k3s-amd, eks-amd)"
-        required: true
-        type: string
+  pull_request_target:
+    types: [labeled, synchronize, reopened]
 
 jobs:
   dispatch:
     name: Dispatch operator-pr-test
     runs-on: ubuntu-22.04
-    # Run on /testing comments from authorized users, or on manual dispatch
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.issue.pull_request &&
-        startsWith(github.event.comment.body, '/testing ') &&
-        contains(fromJSON('["MEMBER","OWNER","COLLABORATOR"]'), github.event.comment.author_association)
-      )
     steps:
-      - name: Parse comment
+      - name: Parse trigger
         id: parse
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "platform=${{ github.event.inputs.platform }}" >> "$GITHUB_OUTPUT"
-            echo "pr_number=${{ github.event.inputs.pr_number }}" >> "$GITHUB_OUTPUT"
+          SELECTOR="$(jq -r '
+            .pull_request.labels
+            | map(.name)
+            | map(select(test("^(kind|k3s|k8s|mk8s|eks|aks|gke|osh)-(amd|arm)$")))
+            | first // empty
+          ' "$GITHUB_EVENT_PATH")"
+          echo "pr_number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          echo "selector=${SELECTOR}" >> "$GITHUB_OUTPUT"
+          if [[ -n "$SELECTOR" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
-            COMMENT="${{ github.event.comment.body }}"
-            PLATFORM="${COMMENT#/testing }"
-            echo "platform=${PLATFORM}" >> "$GITHUB_OUTPUT"
-            echo "pr_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Skip when no testing selector is present
+        if: steps.parse.outputs.enabled != 'true'
+        run: echo "No <platform>-<architecture> selector found on PR labels."
+
+      - name: Validate selector
+        if: steps.parse.outputs.enabled == 'true'
+        run: |
+          case "${{ steps.parse.outputs.selector }}" in
+            kind-amd|kind-arm|k3s-amd|k3s-arm|k8s-amd|k8s-arm|mk8s-amd|mk8s-arm|eks-amd|eks-arm|aks-amd|aks-arm|gke-amd|gke-arm|osh-amd|osh-arm)
+              ;;
+            *)
+              echo "Unsupported selector: ${{ steps.parse.outputs.selector }}"
+              exit 1
+              ;;
+          esac
 
       - name: Get PR details
         id: pr
+        if: steps.parse.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -68,15 +71,8 @@ jobs:
           echo "repo=$(echo "$PR_JSON" | jq -r '.head.repo.full_name')" >> "$GITHUB_OUTPUT"
           echo "sha=$(echo "$PR_JSON" | jq -r '.head.sha')" >> "$GITHUB_OUTPUT"
 
-      - name: Add reaction to comment
-        if: github.event_name != 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
-            -f content=rocket
-
       - name: Dispatch to testing repo
+        if: steps.parse.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ secrets.OPENSERVERLESS_TESTING_PAT }}
         run: |
@@ -87,4 +83,5 @@ jobs:
             -f 'client_payload[pr_ref]=${{ steps.pr.outputs.ref }}' \
             -f 'client_payload[pr_sha]=${{ steps.pr.outputs.sha }}' \
             -f 'client_payload[operator_repo]=${{ steps.pr.outputs.repo }}' \
-            -f 'client_payload[platform]=${{ steps.parse.outputs.platform }}'
+            -f 'client_payload[platform]=${{ steps.parse.outputs.selector }}' \
+            -f 'client_payload[selector]=${{ steps.parse.outputs.selector }}'
