@@ -151,7 +151,7 @@ def delete_seaweedfs_ingress(runtime, namespace, ingress_class, type, owner=None
         res += kube.kubectl("delete", "ingress",endpoint.api_ingress_name(namespace,type))    
 
         if(ingress_class == 'traefik'):            
-            res = kube.kubectl("delete", "middleware.traefik.containo.us",endpoint.api_middleware_ingress_name(namespace,type))         
+            res = kube.kubectl("delete", "middleware.traefik.io",endpoint.api_middleware_ingress_name(namespace,type))
 
         return res
     except Exception as e:
