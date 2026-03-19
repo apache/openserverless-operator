@@ -48,7 +48,7 @@ jobs:
       - name: Assign Custom Image Name
         if:  ${{ github.repository_owner != 'apache'}}
         run: |
-          echo "MY_OPERATOR_IMAGE=${{ github.repository_owner }}/${{ github.event.repository.name }}" >> "$GITHUB_ENV"
+          echo "MY_OPERATOR_IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}" >> "$GITHUB_ENV"
           echo "IMAGE_REGISTRY=ghcr.io" >> "$GITHUB_ENV"
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
@@ -87,7 +87,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.IMAGE_REGISTRY || 'registry.hub.docker.com' }}
-          username: ${{ env.IMAGE_REGISTRY == 'ghcr.io' && github.actor || secrets.DOCKERHUB_USER }}
+          username: ${{ env.IMAGE_REGISTRY == 'ghcr.io' && github.repository_owner || secrets.DOCKERHUB_USER }}
           password: ${{ env.IMAGE_REGISTRY == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.DOCKERHUB_TOKEN }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
