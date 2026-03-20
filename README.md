@@ -26,6 +26,8 @@ We describe how to build and test the operator in our development environment
 
 Please refer to the [website](https://openserverless.apache.org) for user information.
 
+For PR-driven infrastructure tests on GitHub, use a PR label in the form `<test>-<commit-hash>`, for example `k3s-abcdef1`.
+
 ## How to build and use an operator image
 
 Ensure you have satisfied the prerequisites below. Most notably, you need to use our development virtual machine and you
@@ -90,4 +92,3 @@ task all
 
 The operator instance will be configured applying the `test/k3s/whisk.yaml` template.
 All the components are activated except TLS and MONITORING.
-
