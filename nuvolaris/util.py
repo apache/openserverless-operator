@@ -158,16 +158,34 @@ def get_ingress_class(runtime):
         logging.warn(f"skipping ingress class auto detection and returning {ingress_class}")
         return ingress_class
 
-    # ingress class default to nginx
+    # Default according to the historical runtime assumptions.
     ingress_class = "nginx"
-
-    # On microk8s ingress class must be public
     if runtime == "microk8s":
         ingress_class = "public"
-
-    # On k3s ingress class must be traefik
-    if runtime == "k3s":
+    elif runtime == "k3s":
         ingress_class = "traefik"
+
+    # Prefer the ingress class that actually exists in the current cluster.
+    try:
+        detected = kube.kubectl(
+            "get",
+            "ingressclass",
+            namespace=None,
+            jsonpath=r"{.items[*].metadata.name}",
+            debugresult=False,
+        )
+        detected = [item for item in detected if item]
+        if detected:
+            logging.info(f"auto-detected ingress classes: {detected}")
+            if "nginx" in detected:
+                return "nginx"
+            if runtime == "microk8s" and "public" in detected:
+                return "public"
+            if runtime == "k3s" and "traefik" in detected:
+                return "traefik"
+            return detected[0]
+    except Exception as e:
+        logging.warning(f"failed to auto-detect ingress classes, using default {ingress_class}: {e}")
 
     return ingress_class
 
@@ -889,5 +907,4 @@ def get_seaweedds_filer_host():
      seaweedfs_filer_host   = cfg.get("seaweedfs.host", "SEAWEEDFS_API_HOST", "seaweedfs")
      seaweedfs_filer_port   = cfg.get("seaweedfs.port", "SEAWEEDFS_API_PORT", "9090")
      return f"http://{seaweedfs_filer_host}:{seaweedfs_filer_port}"
-
 
