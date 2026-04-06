@@ -50,13 +50,26 @@ def configure(settings: kopf.OperatorSettings, **_):
 
 # tested by an integration test
 @kopf.on.login()
-def login(**kwargs):
+def login(logger, **kwargs):
     token = '/var/run/secrets/kubernetes.io/serviceaccount/token'
     if os.path.isfile(token):
-        logging.debug("found serviceaccount token: login via pykube in kubernetes")
-        return kopf.login_via_pykube(**kwargs)
-    logging.debug("login via client")
-    return kopf.login_via_client(**kwargs)
+        for method, handler in [
+            ("service-account", kopf.login_with_service_account),
+            ("client", kopf.login_via_client),
+            ("pykube", kopf.login_via_pykube),
+        ]:
+            try:
+                credentials = handler(logger=logger, **kwargs)
+            except Exception:
+                logger.exception("login via %s failed", method)
+                continue
+            if credentials is not None:
+                logger.info("authenticated in-cluster via %s", method)
+                return credentials
+            logger.warning("login via %s returned no credentials", method)
+        raise kopf.LoginError("No in-cluster credentials were retrieved from service account, client, or pykube.")
+    logger.debug("login via client")
+    return kopf.login_via_client(logger=logger, **kwargs)
 
 # tested by an integration test
 @kopf.on.create('nuvolaris.org', 'v1', 'whisks')

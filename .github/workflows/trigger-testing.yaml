@@ -16,67 +16,69 @@
 # under the License.
 #
 name: Trigger Testing
-run-name: Dispatch operator PR test for ${{ github.event.issue.number || github.event.inputs.pr_number }}
+run-name: Dispatch operator PR test for PR #${{ github.event.pull_request.number }}
 
 on:
-  issue_comment:
-    types: [created]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "PR number to test"
-        required: true
-        type: string
-      platform:
-        description: "Platform to test on (e.g. k3s-amd, eks-amd)"
-        required: true
-        type: string
+  pull_request_target:
+    types: [labeled, synchronize, reopened]
 
 jobs:
   dispatch:
     name: Dispatch operator-pr-test
     runs-on: ubuntu-22.04
-    # Run on /testing comments from authorized users, or on manual dispatch
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.issue.pull_request &&
-        startsWith(github.event.comment.body, '/testing ') &&
-        contains(fromJSON('["MEMBER","OWNER","COLLABORATOR"]'), github.event.comment.author_association)
-      )
     steps:
-      - name: Parse comment
+      - name: Parse testing tag
         id: parse
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_REF: ${{ github.event.pull_request.head.ref }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "platform=${{ github.event.inputs.platform }}" >> "$GITHUB_OUTPUT"
-            echo "pr_number=${{ github.event.inputs.pr_number }}" >> "$GITHUB_OUTPUT"
-          else
-            COMMENT="${{ github.event.comment.body }}"
-            PLATFORM="${COMMENT#/testing }"
-            echo "platform=${PLATFORM}" >> "$GITHUB_OUTPUT"
-            echo "pr_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          VALID_TEST_RE='^(kind|k3s|k3sarm|k8s|k8sarm|mk8s|mk8sarm|eks|eksarm|aks|aksarm|gke|gkearm|osh|osharm)-([0-9a-f]{7,40})$'
+          MATCHING_TAGS=()
+
+          while IFS= read -r label; do
+            [[ -n "$label" ]] || continue
+            if [[ "$label" =~ $VALID_TEST_RE ]]; then
+              label_hash="${BASH_REMATCH[2]}"
+              if [[ "$PR_SHA" == "$label_hash"* ]]; then
+                MATCHING_TAGS+=("$label")
+              fi
+            fi
+          done < <(jq -r '.pull_request.labels[]?.name // empty' "$GITHUB_EVENT_PATH")
+
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "pr_ref=$PR_REF" >> "$GITHUB_OUTPUT"
+          echo "pr_sha=$PR_SHA" >> "$GITHUB_OUTPUT"
+          echo "repo=$PR_REPO" >> "$GITHUB_OUTPUT"
+
+          if [[ "${#MATCHING_TAGS[@]}" -gt 1 ]]; then
+            echo "Found multiple matching <test>-<hash> tags for PR SHA $PR_SHA:" >&2
+            printf ' - %s\n' "${MATCHING_TAGS[@]}" >&2
+            exit 1
           fi
 
-      - name: Get PR details
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ steps.parse.outputs.pr_number }})
-          echo "ref=$(echo "$PR_JSON" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
-          echo "repo=$(echo "$PR_JSON" | jq -r '.head.repo.full_name')" >> "$GITHUB_OUTPUT"
-          echo "sha=$(echo "$PR_JSON" | jq -r '.head.sha')" >> "$GITHUB_OUTPUT"
+          if [[ "${#MATCHING_TAGS[@]}" -eq 1 ]]; then
+            TEST_TAG="${MATCHING_TAGS[0]}"
+            TEST_NAME="${TEST_TAG%-*}"
+            TEST_HASH="${TEST_TAG##*-}"
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "test_tag=$TEST_TAG" >> "$GITHUB_OUTPUT"
+            echo "test_name=$TEST_NAME" >> "$GITHUB_OUTPUT"
+            echo "test_hash=$TEST_HASH" >> "$GITHUB_OUTPUT"
+            echo "reason=Matched testing tag $TEST_TAG for PR SHA $PR_SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "reason=No <test>-<hash> tag found on PR labels for current SHA $PR_SHA" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Add reaction to comment
-        if: github.event_name != 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
-            -f content=rocket
+      - name: Skip when no matching testing tag is present
+        if: steps.parse.outputs.enabled != 'true'
+        run: echo "${{ steps.parse.outputs.reason }}"
 
       - name: Dispatch to testing repo
+        if: steps.parse.outputs.enabled == 'true'
         env:
           GH_TOKEN: ${{ secrets.OPENSERVERLESS_TESTING_PAT }}
         run: |
@@ -84,7 +86,9 @@ jobs:
             -X POST \
             -f event_type=operator-pr-test \
             -f 'client_payload[pr_number]=${{ steps.parse.outputs.pr_number }}' \
-            -f 'client_payload[pr_ref]=${{ steps.pr.outputs.ref }}' \
-            -f 'client_payload[pr_sha]=${{ steps.pr.outputs.sha }}' \
-            -f 'client_payload[operator_repo]=${{ steps.pr.outputs.repo }}' \
-            -f 'client_payload[platform]=${{ steps.parse.outputs.platform }}'
+            -f 'client_payload[pr_ref]=${{ steps.parse.outputs.pr_ref }}' \
+            -f 'client_payload[pr_sha]=${{ steps.parse.outputs.pr_sha }}' \
+            -f 'client_payload[operator_repo]=${{ steps.parse.outputs.repo }}' \
+            -f 'client_payload[test_tag]=${{ steps.parse.outputs.test_tag }}' \
+            -f 'client_payload[test_name]=${{ steps.parse.outputs.test_name }}' \
+            -f 'client_payload[test_hash]=${{ steps.parse.outputs.test_hash }}'

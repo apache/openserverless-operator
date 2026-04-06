@@ -36,6 +36,9 @@ spec:
         app: nuvolaris-mongodb
         name: nuvolaris-mongodb
     spec:
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
       containers:
       - image: ghcr.io/nuvolaris/ferretdb:1.6.0
         name: ferretdb
