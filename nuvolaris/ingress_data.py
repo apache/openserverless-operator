@@ -41,6 +41,7 @@ class IngressData:
             "hostname":hostname,
             "tls":tls,
             "ingress_class":ingress_class,            
+            "traefik_middleware_api_version": util.get_traefik_middleware_api_version(),
             "path_type":path_type,
             "route_timeout_seconds":tutil.duration_in_second(util.get_controller_http_timeout()),
             'needs_rewrite': False,
@@ -121,4 +122,4 @@ class IngressData:
         logging.info(f"*** Rendering traefik middleware template using host {self._data['hostname']} endpoint for {self._data['ingress_name']} via template {tpl}")
         out = f"/tmp/__{namespace}_{tpl}"
         file = ntp.spool_template(tpl, out, self._data)
-        return os.path.abspath(file)                     
+        return os.path.abspath(file)

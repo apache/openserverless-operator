@@ -203,7 +203,7 @@ def delete_minio_ingress(runtime, namespace, ingress_class, type, owner=None):
         res += kube.kubectl("delete", "ingress",endpoint.api_ingress_name(namespace,type))    
 
         if(ingress_class == 'traefik'):            
-            res = kube.kubectl("delete", "middleware.traefik.io",endpoint.api_middleware_ingress_name(namespace,type))
+            res = kube.kubectl("delete", util.get_traefik_middleware_resource(),endpoint.api_middleware_ingress_name(namespace,type))
 
         return res
     except Exception as e:
@@ -223,4 +223,4 @@ def delete_minio_ingresses(data, owner=None):
     if data['minio_console_ingress_enabled']:
         res += delete_minio_ingress(runtime, namespace, ingress_class, "minio-console", owner)
 
-    return res       
+    return res
