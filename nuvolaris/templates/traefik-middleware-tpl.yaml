@@ -16,7 +16,7 @@
 # under the License.
 #
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: {{traefik_middleware_api_version}}
 kind: Middleware
 metadata:
   namespace: {{namespace}}
@@ -30,4 +30,4 @@ spec:
   replacePathRegex:
     regex: {{context_path}}{{context_regexp}}
     replacement: {{rewrite_target}}
-  {% endif %}        
+  {% endif %}

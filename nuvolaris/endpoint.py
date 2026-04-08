@@ -240,11 +240,12 @@ def delete(owner=None):
             return res
 
         if(ingress_class == 'traefik'):            
-            res = kube.kubectl("delete", "middleware.traefik.io",api_middleware_ingress_name(namespace,"apihost"))
-            res += kube.kubectl("delete", "middleware.traefik.io",api_middleware_ingress_name(namespace,"apihost-my"))
-            res += kube.kubectl("delete", "middleware.traefik.io",api_middleware_ingress_name(namespace,"apihost-info"))
+            middleware_resource = util.get_traefik_middleware_resource()
+            res = kube.kubectl("delete", middleware_resource,api_middleware_ingress_name(namespace,"apihost"))
+            res += kube.kubectl("delete", middleware_resource,api_middleware_ingress_name(namespace,"apihost-my"))
+            res += kube.kubectl("delete", middleware_resource,api_middleware_ingress_name(namespace,"apihost-info"))
             if should_delete_www:
-                res += kube.kubectl("delete", "middleware.traefik.io",api_middleware_ingress_name(namespace,"apihost-www-my"))
+                res += kube.kubectl("delete", middleware_resource,api_middleware_ingress_name(namespace,"apihost-www-my"))
 
         res += kube.kubectl("delete", "ingress",api_ingress_name(namespace,"apihost"))
         res += kube.kubectl("delete", "ingress",api_ingress_name(namespace,"apihost-my"))
@@ -321,8 +322,9 @@ def delete_ow_api_endpoint(ucfg):
             return res
 
         if(ingress_class == 'traefik'):                        
-            res += kube.kubectl("delete", "middleware.traefik.io",api_middleware_ingress_name(namespace,"apihost"))
-            res += kube.kubectl("delete", "middleware.traefik.io",api_middleware_ingress_name(namespace,"apihost-my"))
+            middleware_resource = util.get_traefik_middleware_resource()
+            res += kube.kubectl("delete", middleware_resource,api_middleware_ingress_name(namespace,"apihost"))
+            res += kube.kubectl("delete", middleware_resource,api_middleware_ingress_name(namespace,"apihost-my"))
 
         res += kube.kubectl("delete", "ingress",api_ingress_name(namespace,"apihost"))
         res += kube.kubectl("delete", "ingress",api_ingress_name(namespace,"apihost-my"))
