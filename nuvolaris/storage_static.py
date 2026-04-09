@@ -177,7 +177,7 @@ def delete_ow_static_endpoint(ucfg):
 
         if(ingress_class == 'traefik'):            
             middleware_name = static_middleware_ingress_name(namespace)
-            res += kube.kubectl("delete", "middleware.traefik.io",middleware_name)
+            res += kube.kubectl("delete", util.get_traefik_middleware_resource(),middleware_name)
 
         ingress_name = static_ingress_name(namespace)
         res += kube.kubectl("delete", "ingress",ingress_name)
@@ -221,11 +221,11 @@ def delete_nuv_ingresses():
 
         if(ingress_class == 'traefik'):            
             middleware_name = static_middleware_ingress_name("nuvolaris")
-            res += kube.kubectl("delete", "middleware.traefik.io",middleware_name)
+            res += kube.kubectl("delete", util.get_traefik_middleware_resource(),middleware_name)
             
             if should_delete_www:
                 middleware_name = static_middleware_ingress_name("www-nuvolaris")
-                res += kube.kubectl("delete", "middleware.traefik.io",middleware_name)
+                res += kube.kubectl("delete", util.get_traefik_middleware_resource(),middleware_name)
 
         ingress_name = static_ingress_name("nuvolaris")
         res += kube.kubectl("delete", "ingress",ingress_name)
@@ -264,4 +264,4 @@ def patch(status, action, owner=None):
         logging.info(f"*** hanlded request to {action} static") 
     except Exception as e:
         logging.error('*** failed to update static: %s' % e)
-        operator_util.patch_operator_status(status,'static','error')           
+        operator_util.patch_operator_status(status,'static','error')

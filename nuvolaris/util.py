@@ -189,6 +189,31 @@ def get_ingress_class(runtime):
 
     return ingress_class
 
+def get_traefik_middleware_api_version():
+    """
+    Detect the Traefik Middleware apiVersion supported by the current cluster.
+    Prefer the new group `traefik.io`, while keeping compatibility with the
+    historical `traefik.containo.us` CRDs.
+    """
+    candidates = [
+        ("middlewares.traefik.io", "traefik.io/v1alpha1"),
+        ("middlewares.traefik.containo.us", "traefik.containo.us/v1alpha1"),
+    ]
+    for crd_name, api_version in candidates:
+        try:
+            kube.kubectl("get", "crd", crd_name, namespace=None, debugresult=False)
+            logging.info(f"detected Traefik middleware apiVersion {api_version} via CRD {crd_name}")
+            return api_version
+        except Exception:
+            continue
+
+    logging.warning("could not auto-detect Traefik middleware CRD; defaulting to traefik.io/v1alpha1")
+    return "traefik.io/v1alpha1"
+
+def get_traefik_middleware_resource():
+    api_group = get_traefik_middleware_api_version().split("/")[0]
+    return f"middleware.{api_group}"
+
 # determine the ingress-nginx flavour
 def get_ingress_yaml(runtime):
     if runtime == "eks":
@@ -907,4 +932,3 @@ def get_seaweedds_filer_host():
      seaweedfs_filer_host   = cfg.get("seaweedfs.host", "SEAWEEDFS_API_HOST", "seaweedfs")
      seaweedfs_filer_port   = cfg.get("seaweedfs.port", "SEAWEEDFS_API_PORT", "9090")
      return f"http://{seaweedfs_filer_host}:{seaweedfs_filer_port}"
-
