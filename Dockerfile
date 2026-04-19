@@ -104,10 +104,10 @@ FROM python:3.12-slim-bullseye
 
 ARG OPERATOR_IMAGE_DEFAULT=registry.hub.docker.com/apache/openserverless-operator
 ARG OPERATOR_TAG_DEFAULT=0.1.0-testing.2309191654
-ENV CONTROLLER_IMAGE=ghcr.io/nuvolaris/openwhisk-controller
-ENV CONTROLLER_TAG=3.1.0-mastrogpt.2402101445
-ENV INVOKER_IMAGE=ghcr.io/nuvolaris/openwhisk-invoker
-ENV INVOKER_TAG=3.1.0-mastrogpt.2402101445
+ENV CONTROLLER_IMAGE=registry.hub.docker.com/apache/openserverless-wsk-controller
+ENV CONTROLLER_TAG=2.0.0-incubating.2512132233
+ENV INVOKER_IMAGE=registry.hub.docker.com/apache/openserverless-wsk-invoker
+ENV INVOKER_TAG=2.0.0-incubating.2512132233
 ENV OPERATOR_IMAGE=${OPERATOR_IMAGE_DEFAULT}
 ENV OPERATOR_TAG=${OPERATOR_TAG_DEFAULT}
 ENV TZ=Europe/London

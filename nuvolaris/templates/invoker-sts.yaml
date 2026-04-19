@@ -47,7 +47,7 @@ spec:
         command: ['sh', '-c', "until nslookup kafka.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for kafka; sleep 2; done"]     
       containers:
       - name: invoker
-        image: "ghcr.io/nuvolaris/openwhisk-invoker:0.3.0-morpheus.22122609"
+        image: "{{invoker_image}}:{{invoker_tag}}"
         imagePullPolicy: "IfNotPresent"
         command: [ "/bin/bash", "-c", "/init.sh --uniqueName $INVOKER_NAME" ]
         #command: ["sleep", "inf"]
@@ -103,8 +103,8 @@ spec:
             value: "{{invoker_java_opts}} "
 
           # Invoker options          
-          - name: "INVOKER_OPTS"
-            value: "-Dkubernetes.master=https://$KUBERNETES_SERVICE_HOST -Dwhisk.spi.ContainerFactoryProvider=org.apache.openwhisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider"           
+          #- name: "INVOKER_OPTS"
+          #  value: "-Dkubernetes.master=https://$KUBERNETES_SERVICE_HOST"           
 
           # action runtimes
           - name: "RUNTIMES_MANIFEST"
@@ -306,7 +306,26 @@ spec:
           {% if usePrivateRegistry %}
           - name: "CONFIG_whisk_kubernetes_podTemplate"
             value: "file:/templates/ow_pod_templates.yaml"
-          {% endif %}              
+          {% endif %}
+
+          # OpenWhisk 2 without Scheduler
+          - name: "CONFIG_whisk_spi_LoadBalancerProvider"
+            value: "org.apache.openwhisk.core.loadBalancer.ShardingContainerPoolBalancer"
+          - name: "CONFIG_whisk_spi_EntitlementSpiProvider"
+            value: "org.apache.openwhisk.core.entitlement.LocalEntitlementProvider"      
+          - name: "CONFIG_whisk_spi_LoadBalancerProvider"
+            value: "org.apache.openwhisk.core.loadBalancer.ShardingContainerPoolBalancer"
+          - name: "CONFIG_whisk_spi_InvokerProvider"
+            value: "org.apache.openwhisk.core.invoker.InvokerReactive"
+          - name: "CONFIG_whisk_spi_InvokerServerProvider"
+            value: "org.apache.openwhisk.core.invoker.DefaultInvokerServer"
+          - name: "CONFIG_whisk_spi_DurationCheckerProvider"
+            value: "org.apache.openwhisk.core.scheduler.queue.NoopDurationCheckerProvider"
+
+          # kubernetes
+          - name: "CONFIG_whisk_spi_ContainerFactoryProvider"
+            value: "org.apache.openwhisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider"            
+
 
         ports:
         - name: invoker

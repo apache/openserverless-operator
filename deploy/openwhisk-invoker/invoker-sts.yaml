@@ -91,10 +91,10 @@ spec:
           - name: "JAVA_OPTS"
             value: "-Xmx512M "
 
-          # Invoker options
-          - name: "INVOKER_OPTS"
-            value: " -Dkubernetes.master=https://$KUBERNETES_SERVICE_HOST -Dwhisk.spi.ContainerFactoryProvider=org.apache.openwhisk.core.containerpool.kubernetes.KubernetesContainerFactoryProvider"
-
+          # Invoker options          
+          #- name: "INVOKER_OPTS"
+          #  value: "-Dkubernetes.master=https://$KUBERNETES_SERVICE_HOST" 
+          
           # action runtimes
           - name: "RUNTIMES_MANIFEST"
             valueFrom:   

@@ -39,7 +39,7 @@ def get_zookeeper_connect_data():
     return None    
 
 def create(owner=None):
-    logging.info(f"*** configuring zookeeper")
+    logging.info("*** configuring zookeeper")
 
     data = cfg_util.get_zookeeper_config_data()
     
