@@ -102,7 +102,7 @@ RUN echo "Installing poetry" && \
 # Final stage
 FROM python:3.12-slim-bullseye
 
-ARG OPERATOR_IMAGE_DEFAULT=registry.hub.docker.com/apache/openserverless-operator
+ARG OPERATOR_IMAGE_DEFAULT=docker.io/apache/openserverless-operator
 ARG OPERATOR_TAG_DEFAULT=0.1.0-testing.2309191654
 ENV CONTROLLER_IMAGE=ghcr.io/nuvolaris/openwhisk-controller
 ENV CONTROLLER_TAG=3.1.0-mastrogpt.2402101445
