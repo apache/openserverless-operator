@@ -27,12 +27,15 @@ data:
   zoo.cfg: |
     tickTime=2000
     clientPort=2181
-    initLimit=5
-    syncLimit=2
+    initLimit=10
+    syncLimit=5
     dataDir=/data
     dataLogDir=/datalog
-    logLevel=INFO
-    server.0=zookeeper-0.zookeeper:2888:3888  
+    maxClientCnxns=60
+    autopurge.snapRetainCount=3
+    autopurge.purgeInterval=24
+    server.1=zookeeper-0.zookeeper:2888:3888
+    4lw.commands.whitelist=ruok
 
   log4j.properties: |+
     #
