@@ -162,7 +162,7 @@ def patch(diff, status, owner=None, name=None):
         components_updated = True 
 
     if "registry" in what_to_do:
-        registry.patch(status,what_to_do['milvus'], owner)
+        registry.patch(status,what_to_do['registry'], owner)
         components_updated = True                                      
 
     # handle update action on openwhisk
