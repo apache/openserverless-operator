@@ -32,6 +32,9 @@ def find_default_container(containers: list, container_name, runtime_list, only_
             img = runtime['image']
             is_apache = img['prefix'] == 'apache'
             if not only_apache or is_apache:
+                if not img.get('tag'):
+                    logging.warning(f"skipping runtime preloader for {container_name}: missing image tag")
+                    continue
                 container = {
                     "name": container_name,
                     "image": f"{img['prefix']}/{img['name']}:{img['tag']}"

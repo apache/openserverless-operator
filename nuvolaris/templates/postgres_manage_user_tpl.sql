@@ -18,14 +18,32 @@
  */
 
 {% if mode == 'create' %}
-CREATE DATABASE {{database}};
-CREATE USER {{username}} WITH PASSWORD '{{password}}';
+SELECT 'CREATE DATABASE {{database}}'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{database}}')\gexec
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '{{username}}') THEN
+        ALTER USER {{username}} WITH PASSWORD '{{password}}';
+    ELSE
+        CREATE USER {{username}} WITH PASSWORD '{{password}}';
+    END IF;
+END
+$$;
+
 GRANT ALL PRIVILEGES ON DATABASE {{database}} to {{username}};
 REVOKE CONNECT ON DATABASE {{database}} from public;
 {% endif %}
 
 {% if mode == 'delete' %}
-DROP DATABASE {{database}};
-DROP OWNED BY {{username}};
-DROP USER {{username}};
+DROP DATABASE IF EXISTS {{database}};
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '{{username}}') THEN
+        DROP OWNED BY {{username}};
+        DROP USER {{username}};
+    END IF;
+END
+$$;
 {% endif %}

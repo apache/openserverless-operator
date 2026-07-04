@@ -22,6 +22,13 @@ import nuvolaris.kube as kube
 import nuvolaris.kustomize as nku
 import nuvolaris.template as ntp
 
+def _build(dir):
+    res = subprocess.run(["kustomize", "build", dir], capture_output=True)
+    if res.returncode != 0:
+        error = res.stderr.decode("utf-8")
+        raise Exception(error)
+    return res.stdout.decode("utf-8")
+
 # execute the kustomization of a folder under "deploy"
 # specified with `where`
 # it generate a kustomization.yaml, adding the header 
@@ -66,8 +73,7 @@ def kustomize(where, *what, templates=[], data={}):
             out = f"deploy/{where}/__{template}"
             file = ntp.spool_template(template, out, data)
             f.write(f"- __{template}\n")
-    res = subprocess.run(["kustomize", "build", dir], capture_output=True)
-    return res.stdout.decode("utf-8")
+    return _build(dir)
 
 # execute the kustomization of a folder under "deploy"
 # specified with `where` returning the expanded kustomization
@@ -76,8 +82,7 @@ def kustomize(where, *what, templates=[], data={}):
 # the nuvolaris operator needs to delete a component
 def build(where):
     dir = f"deploy/{where}"
-    res = subprocess.run(["kustomize", "build", dir], capture_output=True)
-    return res.stdout.decode("utf-8")   
+    return _build(dir)
 
 # execute the kustomization of a folder under "deploy"
 # specified with `where`
@@ -125,8 +130,7 @@ def restricted_kustomize(where, *what, templates=[], templates_filter=[],data={}
             out = f"deploy/{where}/__{template}"
             file = ntp.spool_template(template, out, data)
             f.write(f"- __{template}\n")
-    res = subprocess.run(["kustomize", "build", dir], capture_output=True)
-    return res.stdout.decode("utf-8")    
+    return _build(dir)
 
 # generate image kustomization
 def image(name, newName=None, newTag=None):

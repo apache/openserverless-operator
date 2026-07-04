@@ -25,10 +25,17 @@ import json
 
 def create(owner=None):
     logging.info(f"*** configuring runtime preloader")
-    only_apache = cfg.get("nuvolaris.preloader.only_apache", defval=True)
+    config = cfg.getall()
+    only_apache = config.get(
+        "nuvolaris.preload.only-apache",
+        config.get("nuvolaris.preloader.only_apache", True)
+    )
 
     runtimes_as_json = util.get_runtimes_json_from_config_map()
     data=rutil.parse_runtimes(json.loads(runtimes_as_json), only_apache)
+    if not data['containers']:
+        logging.info("*** skipped runtime preloader: no valid runtime images found")
+        return "skipped runtime preloader"
     
     kust = kus.patchTemplates("runtimes", ["runtimes-job-container-attach.yaml"], data)
     spec = kus.kustom_list("runtimes", kust, templates=[], data=data)
