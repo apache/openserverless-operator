@@ -1,3 +1,0 @@
-[submodule "olaris"]
-	path = olaris
-	url = https://github.com/nuvolaris/openserverless-task.git
