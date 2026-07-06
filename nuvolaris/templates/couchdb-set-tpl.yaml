@@ -48,6 +48,11 @@ spec:
       containers:
       - name: couchdb
         image: "{{container_image}}"
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          ulimit -n 1048576
+          exec tini -- /docker-entrypoint.sh /opt/couchdb/bin/couchdb
         {% if runtime == 'openshift' %}
         securityContext:
           capabilities:
@@ -69,6 +74,12 @@ spec:
         ports:
         - name: couchdb
           containerPort: 5984
+        readinessProbe:
+          tcpSocket:
+            port: 5984
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 60
         env:
         - name: "COUCHDB_USER"
           valueFrom:
