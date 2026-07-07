@@ -146,16 +146,16 @@ def image(name, newName=None, newTag=None):
     >>> print(ku.image("busybox", newTag="nightly"), end='')
     images:
     - name: busybox
-      newTag: nightly
+      newTag: "nightly"
     >>> print(ku.image("busybox", "nginx", "nightly"), end='')
     images:
     - name: busybox
       newName: nginx
-      newTag: nightly
+      newTag: "nightly"
     """
     r = f"images:\n- name: {name}\n"
     if newName: r += f"  newName: {newName}\n"
-    if newTag:  r += f"  newTag: {newTag}\n"
+    if newTag:  r += f'  newTag: "{newTag}"\n'
     return r
 
 # generate a configmap kustomization expanding a template
