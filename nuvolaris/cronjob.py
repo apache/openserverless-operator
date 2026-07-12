@@ -24,8 +24,8 @@ import nuvolaris.operator_util as operator_util
 def create(owner=None):
     logging.info("creating cron")
     
-    img = cfg.get('operator.image') or "missing-operator-image"
-    tag = cfg.get('operator.tag') or "missing-operator-tag"
+    img = cfg.get("operator.image","OPERATOR_IMAGE", "ghcr.io/nuvolaris/openwhisk-controller")
+    tag = cfg.get("operator.tag","OPERATOR_TAG", "3.1.0-mastrogpt.2402101445")
     image = f"{img}:{tag}"
     logging.info(f"cron using image {image}")
 

@@ -16,23 +16,25 @@
 # under the License.
 #
 
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
-
 import nuvolaris.couchdb as cdb
 import nuvolaris.couchdb_util as cdbu
 import nuvolaris.testutil as tu
 import nuvolaris.config as cfg
 import nuvolaris.kube as kube
+import nuvolaris.testutil as tu
 import time
 from kopf.testing import KopfRunner
+
+tu.run_proc("kubectl -n nuvolaris delete all --all")
+tu.run_proc("kubectl -n nuvolaris delete pvc --all")
+
 
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_labels()["nuvolaris.kube"] == "kind")
 assert(cfg.detect_storage()["nuvolaris.storageclass"] == "standard")
 assert(cfg.put("couchdb.host", "localhost"))
 
-!kubectl apply -f tests/kind/whisk.yaml
+tu.run_proc("kubectl apply -f tests/kind/whisk.yaml")
 wsk = kube.get("wsk/controller")
 cdb.create(wsk)
 
@@ -51,17 +53,17 @@ assert(cdb.add_initial_subjects(db))
 
 with KopfRunner(['run', '-A', '--verbose', 'nuvolaris/user_handlers.py']) as runner:
     # do something while the operator is running.
-    !kubectl apply -f tests/whisk-user.yaml
+    tu.run_proc("kubectl apply -f tests/whisk-user.yaml")
     time.sleep(1)  # give it some time to react and to sleep and to retry
     wsku = kube.get("wsku/franztt")    
     assert(wsku['spec'])
 
-    !kubectl delete -f tests/whisk-user.yaml
+    tu.run_proc("kubectl delete -f tests/whisk-user.yaml")
     time.sleep(1)  # give it some time to react
 
 assert runner.exit_code == 0
 assert runner.exception is None
 
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+tu.run_proc("kubectl -n nuvolaris delete all --all")
+tu.run_proc("kubectl -n nuvolaris delete pvc --all")
 
