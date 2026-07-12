@@ -24,8 +24,8 @@ import nuvolaris.operator_util as operator_util
 def create(owner=None):
     logging.info("creating quota cheker scheduled job")
    
-    img = cfg.get('operator.image') or "missing-operator-image"
-    tag = cfg.get('operator.tag') or "missing-operator-tag"
+    img = cfg.get('operator.image','OPERATOR_IMAGE') or "missing-operator-image"
+    tag = cfg.get('operator.tag','OPERATOR_TAG') or "missing-operator-tag"
 
     image = f"{img}:{tag}"
     logging.info("quota job using image %s", image)

@@ -68,6 +68,8 @@ tasks:
       COUCHDB_SERVICE_HOST: "localhost"
       MINIO_API_HOST: "localhost"
       OW_CONTROLLER_HOST : "localhost"
+      VIRTUAL_ENV:
+        sh: poetry env info --path 2>/dev/null || echo ""
       OW_CONTROLLER_PORT : 3233 
       INVOKER_IMAGE: "{{.INVOKER_IMAGE}}"
       INVOKER_TAG: "{{.INVOKER_TAG}}"
