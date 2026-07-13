@@ -43,6 +43,8 @@ spec:
           ports:
             - containerPort: 5000
           env:
+            - name: OTEL_TRACES_EXPORTER
+              value: "none"
             - name: REGISTRY_AUTH
               value: "htpasswd"
             - name: REGISTRY_AUTH_HTPASSWD_REALM
@@ -63,4 +65,4 @@ spec:
             claimName: registry-pvc
         - name: auth-volume
           secret:
-            secretName: registry-auth-secret      
+            secretName: registry-auth-secret

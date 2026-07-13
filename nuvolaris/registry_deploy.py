@@ -35,6 +35,7 @@ from nuvolaris.route_data import RouteData
 
 def create_external_registry(data, owner=None):
     logging.info("setting up an external registry")
+    assign_registry_endpoints(data)
 
     #set the registry secret
     registrySecret = SecretHtpasswordData(data['registryUsername'],data['registryPassword'])
@@ -44,10 +45,16 @@ def create_external_registry(data, owner=None):
     os.remove(path_to_template_yaml)
 
     #set the registry pull secret
-    registryPullSecret = ImagePullSecretData(data['registryUsername'],data['registryPassword'],data['repoHostname'])
+    registryPullSecret = ImagePullSecretData(data['registryUsername'],data['registryPassword'],data['repoPullHostname'])
     registryPullSecret.with_secret_name("registry-pull-secret")
     path_to_template_yaml = registryPullSecret.render_template("nuvolaris")
     
+    res += kube.kubectl("apply", "-f",path_to_template_yaml)
+    os.remove(path_to_template_yaml)
+
+    registryPushSecret = ImagePullSecretData(data['registryUsername'],data['registryPassword'],data['repoPushHostname'])
+    registryPushSecret.with_secret_name("registry-pull-secret-int")
+    path_to_template_yaml = registryPushSecret.render_template("nuvolaris")
     res += kube.kubectl("apply", "-f",path_to_template_yaml)
     os.remove(path_to_template_yaml)
     _annotate_registry_metadata(data)
@@ -56,6 +63,7 @@ def create_external_registry(data, owner=None):
 
 def create_internal_registry(data, owner=None):
     logging.info("setting up an internal registry")
+    assign_registry_endpoints(data)
     tplp = ["pvc-attach.yaml"]
 
     if(data['affinity'] or data['tolerations']):
@@ -69,13 +77,7 @@ def create_internal_registry(data, owner=None):
     kust += registrySecret.generateHtPasswordPatch()
 
     #path the registry pull secret
-    repoInternalHost = data['repoHostname']
-    if kube.detect_kind():
-        # when repo is kind, the registry pull secret will point
-        # to the node port exposed on the node
-        repoInternalHost = "127.0.0.1:32000"
-    
-    registryPullSecret = ImagePullSecretData(data['registryUsername'],data['registryPassword'],repoInternalHost)
+    registryPullSecret = ImagePullSecretData(data['registryUsername'],data['registryPassword'],data['repoPullHostname'])
     registryPullSecret.with_secret_name("registry-pull-secret")    
     kust += registryPullSecret.generatePullSecretPatch()
 
@@ -86,6 +88,17 @@ def create_internal_registry(data, owner=None):
     else:
         cfg.put("state.registry.spec", spec)
     res = kube.apply(spec)
+
+    # BuildKit pushes from inside the cluster, while action containers are
+    # pulled by the node runtime. Keep separate credentials because the Docker
+    # config auth key must match the endpoint used by each client.
+    registryPushSecret = ImagePullSecretData(
+        data['registryUsername'], data['registryPassword'], data['repoPushHostname']
+    )
+    registryPushSecret.with_secret_name("registry-pull-secret-int")
+    path_to_template_yaml = registryPushSecret.render_template("nuvolaris")
+    res += kube.kubectl("apply", "-f", path_to_template_yaml)
+    os.remove(path_to_template_yaml)
 
     wait_for_registry_ready()
     _annotate_registry_metadata(data)
@@ -110,8 +123,10 @@ def _annotate_registry_metadata(data):
     annotate nuvolaris configmap with entries for registry connectivity REGISTRY_ENDPOINT, REGISTRY_USERNAME, RESIGTRY_PASSWORD    
     """ 
     try:
-        openwhisk.annotate(f"registry_host={data['repoHostname']}")
-        openwhisk.annotate(f"registry_internal_host={data['repoSvcHostname']}")
+        openwhisk.annotate(f"registry_host={data['repoPullHostname']}")
+        openwhisk.annotate(f"registry_internal_host={data['repoPushHostname']}")
+        openwhisk.annotate(f"registry_pull_host={data['repoPullHostname']}")
+        openwhisk.annotate(f"registry_push_host={data['repoPushHostname']}")
         openwhisk.annotate(f"registry_username={data['registryUsername']}")
         openwhisk.annotate(f"registry_password={data['registryPassword']}")
 
@@ -140,6 +155,53 @@ def assign_registry_hostname(data):
     data['repoUrl'] = repoUrl
 
     logging.info(f"assigned registry hostname {data['repoHostname']}")
+
+
+def _without_scheme(hostname):
+    return str(hostname or "").replace("https://", "").replace("http://", "").rstrip("/")
+
+
+def _k3s_node_registry_host():
+    try:
+        addresses = kube.kubectl(
+            "get", "nodes", namespace=None,
+            jsonpath="{.items[0].status.addresses[?(@.type == 'InternalIP')].address}",
+        )
+        if isinstance(addresses, list) and addresses:
+            return f"{addresses[0]}:32000"
+        if isinstance(addresses, str) and addresses:
+            return f"{addresses}:32000"
+    except Exception as exc:
+        logging.warning(f"cannot determine K3s registry node address: {exc}")
+    return ""
+
+
+def assign_registry_endpoints(data):
+    """Resolve pod-side push and node-side pull registry endpoints."""
+    assign_registry_hostname(data)
+    mode = data.get("mode", "internal")
+    runtime = cfg.get('nuvolaris.kube')
+    if mode == "external":
+        endpoint = _without_scheme(data['repoHostname'])
+        data['repoPushHostname'] = endpoint
+        data['repoPullHostname'] = endpoint
+        return
+
+    data['repoPushHostname'] = _without_scheme(data['repoSvcHostname'])
+    configured_pull = data.get('repoPullHostname')
+    if configured_pull and configured_pull != "auto":
+        data['repoPullHostname'] = _without_scheme(configured_pull)
+    elif data.get('ingressEnabled'):
+        data['repoPullHostname'] = _without_scheme(data['repoHostname'])
+    elif runtime == "kind" or kube.detect_kind():
+        data['repoPullHostname'] = "127.0.0.1:32000"
+    elif runtime == "k3s":
+        data['repoPullHostname'] = _k3s_node_registry_host()
+    else:
+        data['repoPullHostname'] = _without_scheme(data['repoHostname'])
+
+    if not data['repoPullHostname']:
+        raise ValueError("registry pull hostname is not configured")
 
 
 def wait_for_registry_ready():
