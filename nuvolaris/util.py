@@ -891,6 +891,7 @@ def get_registry_config_data():
         "size": cfg.get("registry.volume-size", "REGISTRY_VOLUME_SIZE", 20),
         "storageClass": cfg.get("nuvolaris.storageclass"),
         "repoHostname": cfg.get('registry.hostname') or "auto",
+        "repoPullHostname": cfg.get('registry.pull-hostname') or "auto",
         "ingressEnabled": cfg.get('registry.ingress.enabled') or False,
         "registryUsername": cfg.get('registry.auth.username') or "openserverless",
         "registryPassword": cfg.get('registry.auth.password') or "4pwdregistry",
