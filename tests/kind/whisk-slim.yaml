@@ -49,7 +49,7 @@ spec:
     # etcd enabled or not
     etcd: false
     # milvus enabled or not
-    milvus: false
+    milvus: true
     # registry enabled or not
     registry: false
     # seaweedfs enabled or not

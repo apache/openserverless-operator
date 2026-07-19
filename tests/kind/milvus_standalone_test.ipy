@@ -23,6 +23,7 @@ import nuvolaris.config as cfg
 import nuvolaris.etcd as etcd
 import nuvolaris.milvus_standalone as milvus
 import nuvolaris.minio_deploy as minio
+import nuvolaris.seaweedfs_deploy as seaweedfs
 import nuvolaris.testutil as tu
 from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
 from nuvolaris.user_config import UserConfig
@@ -39,13 +40,27 @@ tu.run_proc("kubectl -n nuvolaris delete pvc --all")
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["nuvolaris.storageclass"])
 assert(cfg.get("nuvolaris.slim") == None or cfg.get("nuvolaris.slim") == False)
+assert(cfg.get("components.milvus") == True)
+
+is_minio = cfg.get('components.minio') or False
+is_seaweedfs = cfg.get('components.seaweedfs') or False
+assert(is_minio or is_seaweedfs)
+
 
 # for this test minioClient and Milvus should see this env variable
-os.environ['MINIO_API_HOST']='localhost'
+# for this test minioClient and Milvus should see this env variable
+if is_minio:
+    os.environ['MINIO_API_HOST']='localhost'
+if is_seaweedfs:
+    os.environ['SEAWEEDFS_API_HOST']='localhost'
+    os.environ['SEAWEEDFS_API_PORT']='9090'
 os.environ['MILVUS_API_HOST']='localhost'
 
 assert(etcd.create())
-assert(minio.create())
+if is_minio:
+   assert(minio.create())
+if is_seaweedfs:
+    assert(seaweedfs.create())
 assert(milvus.create())
 
 # generate some user config
@@ -85,7 +100,9 @@ assert port
 # test client
 client = MilvusClient(uri=f'http://localhost:{port}',token=token, db_name=database)
 client.create_collection("testcollection", dimension=128)
-assert("testcollection" in client.list_collections())
+collections = client.list_collections() or []
+assert("testcollection" in collections)
+
 client.drop_collection("testcollection")
 
 # test user deletion
@@ -93,7 +110,10 @@ assert(milvus.delete_ow_milvus(ucfg))
 
 assert(milvus.delete())
 assert(etcd.delete())
-assert(minio.delete())
+if is_minio:
+   assert(minio.delete())    
+if is_seaweedfs:
+    assert(seaweedfs.delete())
 
 tu.run_proc("kubectl -n nuvolaris delete all --all")
 tu.run_proc("kubectl -n nuvolaris delete pvc --all")
