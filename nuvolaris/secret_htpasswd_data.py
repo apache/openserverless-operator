@@ -20,6 +20,7 @@ import logging
 import os
 import nuvolaris.kustomize as kus
 import nuvolaris.template as ntp
+import nuvolaris.util as util
 import bcrypt
 import base64   
 
@@ -59,6 +60,8 @@ class SecretHtpasswordData:
         """
         uses the given template to render a final htpassword secret template and returns the path to the template
         """
+        if not util.validate_namespace(namespace):
+            raise ValueError(f"Invalid namespace {namespace}")
         logging.info(f"*** Rendering htpassword secret template with name {self._data['secret_name']} via template {tpl}")
         out = f"/tmp/__{namespace}_{tpl}"
         file = ntp.spool_template(tpl, out, self._data)
