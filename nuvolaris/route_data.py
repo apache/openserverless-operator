@@ -81,7 +81,9 @@ class RouteData:
         logging.info(f"*** Rendering route template using host {self._data['hostname']} endpoint for {self._data['route_name']} via template {tpl}")
         """
         uses the given template to render a final route template and returns the path to the template
-        """  
+        """
+        if not util.validate_namespace(namespace):
+            raise ValueError(f"Invalid namespace {namespace}")
         out = f"/tmp/__{namespace}_{tpl}"
         file = ntp.spool_template(tpl, out, self._data)
         return os.path.abspath(file)                  

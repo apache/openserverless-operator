@@ -173,12 +173,16 @@ def _add_pdb_user_metadata(ucfg:UserConfig, user_metadata: UserMetadata):
 def render_postgres_script(namespace,template,data):
     """
     uses the given template to render a sh script to execute via psql.
-    """  
+    """
+    if not util.validate_namespace(namespace):
+        raise ValueError(f"Invalid namespace {namespace}")
     out = f"/tmp/__{namespace}_{template}"
     file = ntp.spool_template(template, out, data)
     return os.path.abspath(file)
 
 def exec_psql_command(pod_name,path_to_psql_script,path_to_pgpass,additional_psql_args=''):
+    if not os.path.exists(path_to_psql_script):
+        raise ValueError(f"invalid path script in exec_mongosh_command")
     logging.info(f"passing script {path_to_psql_script} to pod {pod_name}")
     res = kube.kubectl("cp",path_to_psql_script,f"{pod_name}:{path_to_psql_script}")
     res = kube.kubectl("cp",path_to_pgpass,f"{pod_name}:/tmp/.pgpass")

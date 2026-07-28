@@ -15,10 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
-
 import json
 
 import nuvolaris.config as cfg
@@ -30,13 +26,18 @@ import nuvolaris.user_config as user_config
 import nuvolaris.user_metadata as user_metadata
 import nuvolaris.userdb_util as userdb
 import nuvolaris.bcrypt_util as bu
+import nuvolaris.testutil as tu
+
+tu.run_proc("kubectl -n nuvolaris delete all --all")
+tu.run_proc("kubectl -n nuvolaris delete pvc --all")
+
 
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_labels()["nuvolaris.kube"] == "kind")
 assert(cfg.detect_storage()["nuvolaris.storageclass"] == "standard")
 assert(cfg.put("couchdb.host", "localhost"))
 
-!kubectl apply -f tests/kind/whisk.yaml
+tu.run_proc("kubectl apply -f tests/kind/whisk.yaml")
 wsk = kube.get("wsk/controller")
 cdb.create(wsk)
 
@@ -49,7 +50,8 @@ assert(db.configure_no_reduce_limit())
 assert(cdb.init_users_metadata(db))
 
 # test user metadata creation
-!kubectl apply -f tests/kind/whisk-user.yaml
+tu.run_proc("kubectl apply -f tests/kind/whisk-user.yaml")
+
 wsku = kube.get("wsku/franztt")
 ucfg = user_config.UserConfig(wsku['spec'])
 metadata = user_metadata.UserMetadata(ucfg)
@@ -64,7 +66,7 @@ assert(len(docs) > 0)
 
 # test password verification
 doc = docs[0]
-assert(bu.verify_password(ucfg.get('password'),doc['password']))
+assert(bu.verify_password(ucfg.get('password') or '',doc['password']))
 
 # test password change
 new_password = 'test123'
@@ -83,6 +85,6 @@ docs = list(response['docs'])
 assert(len(docs) == 0)
 
 # cleanup
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+tu.run_proc("kubectl -n nuvolaris delete all --all")
+tu.run_proc("kubectl -n nuvolaris delete pvc --all")
 
