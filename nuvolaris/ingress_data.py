@@ -110,6 +110,8 @@ class IngressData:
         """
         uses the given template to render a final ingress template and returns the path to the template
         """
+        if not util.validate_namespace(namespace):
+            raise ValueError(f"Invalid namespace {namespace}")
         logging.info(f"*** Rendering ingress template using host {self._data['hostname']} endpoint for {self._data['ingress_name']} via template {tpl}")  
         out = f"/tmp/__{namespace}_{tpl}"
         file = ntp.spool_template(tpl, out, self._data)
@@ -118,7 +120,9 @@ class IngressData:
     def render_traefik_middleware_template(self, namespace,tpl="traefik-middleware-tpl.yaml"):
         """
         uses the given template policy to render a final ingress template. By default renders an addPrefix middleware.
-        """  
+        """ 
+        if not util.validate_namespace(namespace):
+            raise ValueError(f"Invalid namespace {namespace}")
         logging.info(f"*** Rendering traefik middleware template using host {self._data['hostname']} endpoint for {self._data['ingress_name']} via template {tpl}")
         out = f"/tmp/__{namespace}_{tpl}"
         file = ntp.spool_template(tpl, out, self._data)

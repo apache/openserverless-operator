@@ -40,7 +40,7 @@ class CouchDB:
       session = req.Session()
       while delta < max_seconds:
         try:
-          r = session.get(f"{self.db_url}/_utils", timeout=5)
+          r = session.get(f"{self.db_url}/_utils/", timeout=5)
           logging.info(f"CouchDB.wait_db_ready() got response code = {r.status_code}")          
           if r.status_code == 200:
             return True

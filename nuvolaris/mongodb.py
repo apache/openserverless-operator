@@ -114,12 +114,16 @@ def init():
 def render_mongodb_script(namespace,template,data):
     """
     uses the given template to render a js script to execute as a json.
-    """  
+    """
+    if not util.validate_namespace(namespace):
+        raise ValueError(f"Invalid namespace {namespace}")
     out = f"/tmp/__{namespace}_{template}"
     file = ntp.spool_template(template, out, data)
     return os.path.abspath(file)
 
 def exec_mongosh_command(pod_name,path_to_mdb_script):
+    if not os.path.exists(path_to_mdb_script):
+        raise ValueError(f"invalid path script in exec_mongosh_command")
     logging.info(f"passing script {path_to_mdb_script} to pod {pod_name}")
     res = kube.kubectl("cp",path_to_mdb_script,f"{pod_name}:{path_to_mdb_script}")
     res = kube.kubectl("exec","-it",pod_name,"--","/bin/bash","-c",f"mongosh --file {path_to_mdb_script}")
