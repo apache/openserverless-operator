@@ -43,9 +43,10 @@ def get_invoker_image_data(data):
         img_data = util.parse_image(invoker_image)
         data['invoker_image'] = img_data["image"]
         data['invoker_tag'] = img_data["tag"]
-    else:        
-        data['invoker_image'] = cfg.get("invoker.image") or "ghcr.io/nuvolaris/openwhisk-invoker"
-        data['invoker_tag'] = cfg.get("invoker.tag") or "3.1.0-mastrogpt.2402101445"    
+    else:
+        #ghcr.io/nuvolaris/openwhisk-invoker:3.1.0-mastrogpt.2402101445
+        data['invoker_image'] = cfg.get("invoker.image","INVOKER_IMAGE", "ghcr.io/nuvolaris/openwhisk-invoker")
+        data['invoker_tag'] = cfg.get("invoker.tag", "INVOKER_TAG", "3.1.0-mastrogpt.2402101445")
 
 def getEnterpriseControllerConfigData():
     data = {

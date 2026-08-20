@@ -22,6 +22,7 @@ import random
 import time
 import uuid
 import os
+import re
 from base64 import b64decode, b64encode
 from typing import List, Union
 from urllib.parse import urlparse
@@ -345,8 +346,8 @@ def get_controller_image_data(data):
         data['controller_image'] = img_data["image"]
         data['controller_tag'] = img_data["tag"]
     else:
-        data['controller_image'] = cfg.get("controller.image") or "ghcr.io/nuvolaris/openwhisk-controller"
-        data['controller_tag'] = cfg.get("controller.tag") or "3.1.0-mastrogpt.2402101445"
+        data['controller_image'] = cfg.get("controller.image","CONTROLLER_IMAGE", "ghcr.io/nuvolaris/openwhisk-controller")
+        data['controller_tag'] = cfg.get("controller.tag","CONTROLLER_TAG", "3.1.0-mastrogpt.2402101445")
 
 # return configuration parameters for the standalone controller
 def get_standalone_config_data():
@@ -385,6 +386,17 @@ def get_standalone_config_data():
     get_controller_image_data(data)
     standalone_affinity_tolerations_data(data)
     return data
+
+def validate_namespace(namespace: str) -> bool:
+    """
+        >>> import nuvolaris.util as util
+        >>> util.validate_namespace("demouser")
+        True
+        >>> util.validate_namespace('x;id;#')
+        False
+    """
+    NAMESPACE_RE = re.compile(r"^[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?$")
+    return bool(NAMESPACE_RE.fullmatch(namespace))
 
 def validate_ow_auth(auth):
     """

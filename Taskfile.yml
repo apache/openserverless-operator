@@ -74,10 +74,13 @@ includes:
 
 tasks:
 
-  default: 
+  default:
+    desc: alias for "use" (show/select the current kubernetes cluster)
+    cmds:
     - task: use
 
   setup:
+    desc: setup the local development environment (deps, ssh key, env config, poetry)
     deps:
       - update-files-from-openwhisk
       - ssh-key
@@ -88,55 +91,100 @@ tasks:
     status:
       - test -e $GOBIN/kopf
       
-  env: env
-  
-  watch: watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,ingress
-  watch-osh: watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,route
-  watch-cert: watch kubectl -n {{.NS}} get ingress,ClusterIssuers,Certificates,CertificateRequests,Orders,Challenges 
-  watch-pod: watch kubectl -n {{.NS}} get po,job --no-headers
+  env:
+    desc: print the current environment variables
+    cmds:
+    - env
 
-  logs: >
-    rm -f nuvolaris-operator.log ;
-    kubectl -n nuvolaris logs pod/nuvolaris-operator -f | tee nuvolaris-operator.log
+  watch:
+    desc: watch nodes, pods, services, pvcs and ingresses in the namespace
+    cmds:
+    - watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,ingress
 
-  cli: 
+  watch-osh:
+    desc: watch nodes, pods, services, pvcs and routes (OpenShift) in the namespace
+    cmds:
+    - watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,route
+
+  watch-cert:
+    desc: watch cert-manager resources (ingress, issuers, certificates, orders, challenges)
+    cmds:
+    - watch kubectl -n {{.NS}} get ingress,ClusterIssuers,Certificates,CertificateRequests,Orders,Challenges
+
+  watch-pod:
+    desc: watch pods and jobs in the namespace
+    cmds:
+    - watch kubectl -n {{.NS}} get po,job --no-headers
+
+  logs:
+    desc: tail the operator logs to nuvolaris-operator.log
+    cmds:
+    - >
+      rm -f nuvolaris-operator.log ;
+      kubectl -n nuvolaris logs pod/nuvolaris-operator -f | tee nuvolaris-operator.log
+
+  cli:
+    desc: run the interactive development CLI
+    cmds:
     - task: d:cli
 
   run:
+    desc: prepare system actions, apply permissions and run the operator locally
+    cmds:
     - task: sys:prepare
     - task: t:permission
     - task: d:run
-  
+
   irun:
-  - task: instance
-  - task: d:run
+    desc: deploy an instance and run the operator locally
+    cmds:
+    - task: instance
+    - task: d:run
 
   permission:
+    desc: apply the nuvolaris permissions
+    cmds:
     - task: t:permission
 
   operator:
+    desc: deploy the operator
+    cmds:
     - task: t:operator
 
   instance:
+    desc: deploy an openwhisk instance
+    cmds:
     - task: t:instance
 
   instance-wfx:
+    desc: deploy an openwhisk instance with workflow extension
+    cmds:
     - task: d:instance-wfx
 
   instance-and-log:
+    desc: deploy an instance and follow the operator logs
+    cmds:
     - task: d:instance
     - kubectl -n nuvolaris logs pod/nuvolaris-operator -f
 
-  mongo: 
-    - task: t:mongo 
+  mongo:
+    desc: run the mongo integration test
+    cmds:
+    - task: t:mongo
 
-  minio: 
+  minio:
+    desc: run the minio integration test
+    cmds:
     - task: t:minio
 
   postgres:
-    - task: t:postgres      
+    desc: run the postgres integration test
+    cmds:
+    - task: t:postgres
 
   minimal:
+    desc: deploy operator and a minimal instance, then run hello test
+    cmds:
     #- task: permission
     - task: operator
     - task  instance WHISK=minimal
@@ -144,6 +192,8 @@ tasks:
     - task: hello
 
   all:
+    desc: full end-to-end setup and test of all services
+    cmds:
     - task: permission
     - task: operator
     - task: instance
@@ -155,28 +205,41 @@ tasks:
     - task: postgres
 
   config:
+    desc: configure ops wsk properties for the deployed instance
+    cmds:
     - task: t:config
 
-  hello: 
+  hello:
+    desc: run the hello world test action
+    cmds:
     - task: t:hello
 
-  redis: 
+  redis:
+    desc: run the redis integration test
+    cmds:
     - task: t:redis
 
-  workflow: 
+  workflow:
+    desc: apply the workflow test manifest
+    cmds:
     - kubectl -n nuvolaris apply -f tests/workflow-test.yaml
 
   defin:
+    desc: remove finalizers to force-delete the wsk controller resource
+    cmds:
     - task: d:defin
 
   # old., to be removed
   image-tag:
-    - git tag -d $(git tag) 
+    desc: "[deprecated] generate and force a new git tag based on the current time"
+    cmds:
+    - git tag -d $(git tag)
     - git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)
     - env PAGER= git tag
 
   # configure env
   configure-env:
+    desc: check that .env exists (copy from .env.dist if missing)
     cmds:
       - |
         if ! test -e .env
@@ -184,7 +247,8 @@ tasks:
         fi
 
   # update configuration files from openwhisk source
-  update-files-from-openwhisk: 
+  update-files-from-openwhisk:
+    desc: update configuration files copied from the openwhisk source repo
     ignore_error: true
     cmds:
       - | 
@@ -201,11 +265,13 @@ tasks:
 
   # generate ssh keys
   ssh-key:
+    desc: generate an ssh key pair for cluster access if missing
     cmds:
       - test -f clusters/id_rsa || ssh-keygen -b 2048 -t rsa -f clusters/id_rsa -q -N ""
       - ssh-keygen  -y -f clusters/id_rsa >clusters/id_rsa.pub
 
   clean:
+    desc: delete all deployed resources in the nuvolaris namespace
     cmds:
       - cmd: kubectl -n nuvolaris delete wsku --all
         ignore_error: true
@@ -230,6 +296,7 @@ tasks:
 
 
   utest:
+    desc: run python doctests for nuvolaris modules (T=filter)
     cmds:
       - |
         for test in nuvolaris/{{.T}}*.py
@@ -238,9 +305,13 @@ tasks:
         done
     silent: true
 
-  iclean: rm -f deploy/*/kustomization.yaml deploy/*/__* deploy/*/*_generated.yaml
+  iclean:
+    desc: remove generated kustomization and generated deploy files
+    cmds:
+    - rm -f deploy/*/kustomization.yaml deploy/*/__* deploy/*/*_generated.yaml
 
   itest:
+    desc: run ipython integration tests against the current kube (T=filter)
     cmds:
       - task: iclean
       - |
@@ -265,6 +336,7 @@ tasks:
     silent: true
 
   dtest:
+    desc: deploy permissions, operator and instance, then run the actions tests
     cmds:
       - task: permission
       - task: operator
@@ -272,24 +344,31 @@ tasks:
       - task: actions
 
   actions:
+    desc: run config, hello, redis and echo action tests
+    cmds:
     - task: t:config
     - task: t:hello
     - task: t:redis
     - task: t:echo
 
   test:
+    desc: run the full test suite (clean, unit, integration, deploy tests)
+    cmds:
     - task: clean
     - task: utest
     - task: itest
     - task: dtest
 
-  debug: 
+  debug:
+    desc: set up an ipython debug profile and run the ui integration test
+    cmds:
     - poetry run ipython profile create
     - cp test_profile.ipy ~/.ipython/profile_default/startup/
     - task: uitest
 
-  all-kubes: 
-    cmds: 
+  all-kubes:
+    desc: run a task against every configured kube (usage - task all-kubes -- <target>)
+    cmds:
       - |-
         if test -z "{{.CLI_ARGS}}"
         then echo 'use "task all-kubes -- <target> runs the target against all the available kubes'
@@ -301,11 +380,13 @@ tasks:
         fi
     silent: true
 
-  kube-test: 
+  kube-test:
+    desc: run dtest quietly, discarding all output
     cmds:
       - task dtest 2>/dev/null >/dev/null
 
-  use: 
+  use:
+    desc: "list available kubeconfigs, or switch to the one matching N"
     cmds:
     - |-
         if test -z "{{.N}}"
@@ -320,15 +401,23 @@ tasks:
     silent: true
 
   build-and-load:
+    desc: build the operator image and load it into the local kind cluster
+    cmds:
     - task: b:build-and-load
 
   build-and-push:
+    desc: build the operator image and push it to the registry
+    cmds:
     - task: b:build-and-push
 
   buildx-and-push:
+    desc: build the operator image (multi-arch) and push it to the registry
+    cmds:
     - task: b:buildx-and-push
 
   docker-login:
+    desc: log in to the docker registry
+    cmds:
     - task: b:docker-login
 
   # openserverless-operator section
@@ -398,15 +487,35 @@ tasks:
         
 
   shell:
+    desc: open an interactive shell in the given pod (POD=name)
+    cmds:
     - kubectl -n nuvolaris exec --stdin --tty {{.POD}} -- /bin/bash
-      
-  1: task use N=1
-  2: task use N=2
-  3: task use N=3
-  4: task use N=4
-  5: task use N=5
-  6: task use N=6
-  7: task use N=7
-  8: task use N=8
-  9: task use N=9
+
+  1:
+    cmds:
+    - task use N=1
+  2:
+    cmds:
+    - task use N=2
+  3:
+    cmds:
+    - task use N=3
+  4:
+    cmds:
+    - task use N=4
+  5:
+    cmds:
+    - task use N=5
+  6:
+    cmds:
+    - task use N=6
+  7:
+    cmds:
+    - task use N=7
+  8:
+    cmds:
+    - task use N=8
+  9:
+    cmds:
+    - task use N=9
 
