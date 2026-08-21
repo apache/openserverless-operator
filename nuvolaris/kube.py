@@ -21,6 +21,7 @@ import nuvolaris.template as tpl
 import subprocess
 import json
 import logging
+import re
 import yaml
 
 
@@ -172,11 +173,46 @@ def rollout(name, namespace="nuvolaris"):
     except:
         return None
     
-def detect_kind():
+def detect() -> str | None:
+    """
+    >>> import nuvolaris.kube as kube
+    >>> kube.mocker.config("get nodes", [{"nuvolaris.io/kube": "kind"}])
+    >>> kube.detect()
+    'kind'
+    >>> kube.mocker.config("get nodes", [{"eksctl.io/cluster-name": "prod"}])
+    >>> kube.detect()
+    'eks'
+    >>> kube.mocker.config("get nodes", [{"kubernetes.io/os": "linux"}])
+    >>> kube.detect()
+    'generic'
+    >>> kube.mocker.reset()
+    """
     try:
-        is_kind = kubectl("get","node/nuvolaris-control-plane",
-                          namespace=None,
-                          jsonpath='{.metadata.labels.nuvolaris\\.io/kube}')
-        return is_kind and "kind" in is_kind
-    except:
-        return False
+        nodes_labels = kubectl("get", "nodes", namespace=None,
+                                jsonpath='{.items[].metadata.labels}')
+    except Exception:
+        return None
+
+    if not nodes_labels or not isinstance(nodes_labels, (list, dict)):
+        return None
+
+    if isinstance(nodes_labels, dict):
+        nodes_labels = [nodes_labels]
+
+    text = json.dumps(nodes_labels)
+
+    if "eksctl.io" in text:
+        return "eks"
+    elif "microk8s.io" in text:
+        return "microk8s"
+    elif "lke.linode.com" in text:
+        return "lks"
+    elif "openshift.io" in text:
+        return "openshift"
+    elif re.search(r"instance-type.*k3s", text):
+        return "k3s"
+    elif any(isinstance(labels, dict) and "kind" in labels.get("nuvolaris.io/kube", "")
+             for labels in nodes_labels):
+        return "kind"
+    else:
+        return "generic"

@@ -22,7 +22,9 @@ vars:
   N: ""
   T: ""
   P: ""
-  BASETAG: 0.1.0-incubating
+  BASETAG:
+    # fixed to 0.1.0-incubating - overridable with MY_BASETAG env var
+    sh: echo "${MY_BASETAG:-0.1.0-incubating}"
   KUBE:
     sh: ./detect.sh
   NS: "nuvolaris"
