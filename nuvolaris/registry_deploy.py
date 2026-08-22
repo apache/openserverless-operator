@@ -70,8 +70,9 @@ def create_internal_registry(data, owner=None):
 
     #path the registry pull secret
     repoInternalHost = data['repoHostname']
-    if kube.detect_kind():
-        # when repo is kind, the registry pull secret will point
+    kube_kind = kube.detect()
+    if kube_kind == 'kind' or kube_kind == 'k3s':
+        # when kubernetes is installed on kind or k3s, the registry pull secret will point
         # to the node port exposed on the node
         repoInternalHost = "127.0.0.1:32000"
     

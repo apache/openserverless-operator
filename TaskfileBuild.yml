@@ -53,6 +53,11 @@ tasks:
       ${MY_OPERATOR_IMAGE:-{{.OPERATOR_IMAGE}}}:{{.OPERATOR_TAG}} 
       --name=nuvolaris
 
+  k3s:build-and-load:
+    - task: build
+    - >
+      docker save ${MY_OPERATOR_IMAGE:-{{.OPERATOR_IMAGE}}}:{{.OPERATOR_TAG}} | sudo k3s ctr images import -
+
   buildx-and-push:
     - > 
       docker buildx build 
