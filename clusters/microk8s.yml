@@ -32,7 +32,7 @@ vars:
         else echo unknown
         fi
   STACK: "{{.GITHUB_USER}}-nuvolaris-dev"
-  KUBECONFIG: "microk8s-{{.GITHUB_USER}}.kubeconfig"
+  MIK_KUBECONFIG: "microk8s-{{.GITHUB_USER}}.kubeconfig"
   
 tasks:
 
@@ -73,8 +73,8 @@ tasks:
         ssh -i id_rsa -o "StrictHostKeyChecking=no" \
         "ubuntu@$(cat {{.APIHOST}})" sudo cloud-init status --wait
         scp -i id_rsa -o "StrictHostKeyChecking=no" \
-        "ubuntu@$(cat {{.APIHOST}}):/etc/kubeconfig" {{.KUBECONFIG}}
-      - cp -v {{.KUBECONFIG}} ~/.kube/config
+        "ubuntu@$(cat {{.APIHOST}}):/etc/kubeconfig" {{.MIK_KUBECONFIG}}
+      - cp -v {{.MIK_KUBECONFIG}} ~/.kube/config
       - kubectl get nodes
 
   import-key: 
@@ -90,6 +90,6 @@ tasks:
     cmds:
     - echo user  {{.GITHUB_USER}}
     - echo stack {{.STACK}}
-    - echo kubeconfig {{.KUBECONFIG}}
+    - echo kubeconfig {{.MIK_KUBECONFIG}}
     silent: true
     
