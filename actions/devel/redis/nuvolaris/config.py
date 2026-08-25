@@ -20,6 +20,10 @@ import logging
 
 _config = {}
 
+# Prefix of the kube node labels carrying configuration. Kept as a
+# constant so the slice below tracks its length automatically.
+LABEL_PREFIX = "nuvolaris.io/"
+
 # define a configuration 
 # the configuration is a map, followed by a list of labels 
 # the map can be a serialized json and will be flattened to a map of values.
@@ -92,8 +96,8 @@ def detect_labels(labels=None):
     kube = None
     for i in labels:
         for j in list(i.keys()):
-            if j.startswith("nuvolaris.io/"):
-                key = f"nuvolaris.{j[13:]}"
+            if j.startswith(LABEL_PREFIX):
+                key = f"nuvolaris.{j[len(LABEL_PREFIX):]}"
                 res[key] = i[j]
                 _config[key] = i[j]
 
