@@ -47,11 +47,28 @@ tasks:
     - docker push ${MY_OPERATOR_IMAGE:-{{.OPERATOR_IMAGE}}}:{{.OPERATOR_TAG}}
 
   build-and-load:
-    - task: build
-    - > 
-      kind load docker-image 
-      ${MY_OPERATOR_IMAGE:-{{.OPERATOR_IMAGE}}}:{{.OPERATOR_TAG}} 
-      --name=nuvolaris
+    silent: true
+    desc: Build the image and loads it to the local Kind, k3s, microk8s cluster
+    vars:
+      KUB_TYPE:
+        sh: ./detect.sh
+    cmds:
+      - task: build
+      - |
+        IMG="${MY_OPERATOR_IMAGE:-{{.OPERATOR_IMAGE}}}:{{.OPERATOR_TAG}}"
+        if [ "{{.KUB_TYPE}}" = "kind" ]; then
+          echo "Loading image to kind"
+          kind load docker-image $IMG --name=nuvolaris
+        elif [ "{{.KUB_TYPE}}" = "k3s" ]; then
+          echo "Loading image to k3s"
+          docker save $IMG | sudo k3s ctr images import -
+        elif [ "{{.KUB_TYPE}}" = "microk8s" ]; then
+          echo "Loading image to microk8s"
+          docker save $IMG | microk8s ctr images import -
+        else
+          echo "Error: unsupported KUB_TYPE '{{.KUB_TYPE}}' for loading images"
+          exit 1
+        fi
 
   k3s:build-and-load:
     - task: build
