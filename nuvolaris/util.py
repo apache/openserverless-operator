@@ -394,9 +394,63 @@ def validate_namespace(namespace: str) -> bool:
         True
         >>> util.validate_namespace('x;id;#')
         False
+        >>> util.validate_namespace(None)
+        False
     """
+    if not isinstance(namespace, str):
+        return False
+
     NAMESPACE_RE = re.compile(r"^[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?$")
     return bool(NAMESPACE_RE.fullmatch(namespace))
+
+def validate_database_name(database: str) -> bool:
+    """
+        Validates a user provided database name. Database names are interpolated
+        into shell commands executed inside the database pods, so they must be
+        restricted to a safe character set.
+        >>> import nuvolaris.util as util
+        >>> util.validate_database_name("demodb")
+        True
+        >>> util.validate_database_name("demo_db1")
+        True
+        >>> util.validate_database_name('x; id; #')
+        False
+        >>> util.validate_database_name('')
+        False
+        >>> util.validate_database_name(None)
+        False
+    """
+    if not isinstance(database, str):
+        return False
+
+    DATABASE_RE = re.compile(r"^[a-zA-Z0-9](?:[_a-zA-Z0-9-]{0,62})?$")
+    return bool(DATABASE_RE.fullmatch(database))
+
+def validate_bucket_name(bucket: str) -> bool:
+    """
+        Validates a user provided bucket name against the S3 bucket naming rules.
+        Bucket names are interpolated into shell commands executed inside the
+        storage pods, so they must be restricted to a safe character set.
+        >>> import nuvolaris.util as util
+        >>> util.validate_bucket_name("demo-bucket")
+        True
+        >>> util.validate_bucket_name("demo.bucket1")
+        True
+        >>> util.validate_bucket_name("x'; id; #")
+        False
+        >>> util.validate_bucket_name('')
+        False
+        >>> util.validate_bucket_name(None)
+        False
+    """
+    if not isinstance(bucket, str):
+        return False
+
+    if len(bucket) < 3 or len(bucket) > 63:
+        return False
+
+    BUCKET_RE = re.compile(r"^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$")
+    return bool(BUCKET_RE.fullmatch(bucket))
 
 def validate_ow_auth(auth):
     """

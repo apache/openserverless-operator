@@ -125,6 +125,9 @@ spec:
                         bucket:
                           description: MINIO data bucket name
                           type: string
+                          x-kubernetes-validations:
+                            - rule: "self.matches('^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$')"
+                              message: "Invalid bucket name"
                       required:
                       - enabled 
                       - bucket 
@@ -139,6 +142,9 @@ spec:
                         bucket:
                           description: name of the bucket
                           type: string                                                    
+                          x-kubernetes-validations:
+                            - rule: "self.matches('^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$')"
+                              message: "Invalid bucket name"
                       required:
                       - enabled 
                       - bucket
@@ -155,6 +161,9 @@ spec:
                     database:
                       description: user dedicated mongodb dataabase name
                       type: string
+                      x-kubernetes-validations:
+                        - rule: "self.matches('^[a-zA-Z0-9][_a-zA-Z0-9-]{0,62}$')"
+                          message: "Invalid database name"
                     password:
                       description: user mongodb password
                       type: string
@@ -176,6 +185,9 @@ spec:
                     database:
                       description: user dedicated postgres database
                       type: string
+                      x-kubernetes-validations:
+                        - rule: "self.matches('^[a-zA-Z0-9][_a-zA-Z0-9-]{0,62}$')"
+                          message: "Invalid database name"
                     password:
                       description: user mongodb password
                       type: string
@@ -197,6 +209,9 @@ spec:
                     database:
                       description: user dedicated MILVUS database
                       type: string
+                      x-kubernetes-validations:
+                        - rule: "self.matches('^[a-zA-Z0-9][_a-zA-Z0-9-]{0,62}$')"
+                          message: "Invalid database name"
                     password:
                       description: user MILVUS password
                       type: string
