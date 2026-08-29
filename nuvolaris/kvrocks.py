@@ -146,12 +146,16 @@ def delete(owner=None):
 def render_kvrocks_script(namespace,template,data):
     """
     uses the given template to render a redis-cli script to be executed.
-    """  
+    """
+    if not util.validate_namespace(namespace):
+        raise ValueError(f"Invalid namespace {namespace}")
     out = f"/tmp/__{namespace}_{template}"
     file = ntp.spool_template(template, out, data)
     return os.path.abspath(file)
 
 def exec_kvrocks_command(pod_name,path_to_script):
+    if not os.path.exists(path_to_script):
+        raise ValueError(f"invalid path script in exec_kvrocks_command")
     logging.info(f"passing script {path_to_script} to pod {pod_name}")
     res = kube.kubectl("cp",path_to_script,f"{pod_name}:{path_to_script}")
     res = kube.kubectl("exec","-it",pod_name,"--","/bin/sh","-c",f"cat {path_to_script} | /bin/redis-cli")

@@ -134,6 +134,10 @@ def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
     database = ucfg.get('mongodb.database')
     logging.info(f"authorizing new mongodb database {database}")
 
+    if not util.validate_database_name(database):
+        logging.error(f"failed to add Mongodb database: invalid database name {database}")
+        return None
+
     try:
         data = util.get_mongodb_config_data()
         data["database"]=database
@@ -156,6 +160,10 @@ def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
 
 def delete_db_user(namespace, database):
     logging.info(f"removing mongodb database {database}")
+
+    if not util.validate_database_name(database):
+        logging.error(f"failed to remove Mongodb database: invalid database name {database}")
+        return None
 
     try:
         data = util.get_mongodb_config_data()

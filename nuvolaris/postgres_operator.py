@@ -182,7 +182,7 @@ def render_postgres_script(namespace,template,data):
 
 def exec_psql_command(pod_name,path_to_psql_script,path_to_pgpass,additional_psql_args=''):
     if not os.path.exists(path_to_psql_script):
-        raise ValueError(f"invalid path script in exec_mongosh_command")
+        raise ValueError(f"invalid path script in exec_psql_command")
     logging.info(f"passing script {path_to_psql_script} to pod {pod_name}")
     res = kube.kubectl("cp",path_to_psql_script,f"{pod_name}:{path_to_psql_script}")
     res = kube.kubectl("cp",path_to_pgpass,f"{pod_name}:/tmp/.pgpass")
@@ -199,6 +199,10 @@ def exec_psql_command(pod_name,path_to_psql_script,path_to_pgpass,additional_psq
 def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
     database = ucfg.get('postgres.database')
     logging.info(f"authorizing new postgres database {database}")
+
+    if not util.validate_database_name(database):
+        logging.error(f"failed to add Postgres database: invalid database name {database}")
+        return None
 
     try:
         data = util.get_postgres_config_data()        
@@ -237,6 +241,10 @@ def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
 
 def delete_db_user(namespace, database):
     logging.info(f"removing postgres database {database}")
+
+    if not util.validate_database_name(database):
+        logging.error(f"failed to remove Postgres database: invalid database name {database}")
+        return None
 
     try:
         data = util.get_postgres_config_data()
@@ -318,6 +326,10 @@ def patch(status, action, owner=None):
         operator_util.patch_operator_status(status,'postgres','error')
 
 def exec_psql_command_in_db(db_name,pod_name,path_to_psql_script,path_to_pgpass):
+    if not util.validate_database_name(db_name):
+        raise ValueError(f"Invalid database name {db_name}")
+    if not os.path.exists(path_to_psql_script):
+        raise ValueError(f"invalid path script in exec_psql_command_in_db")
     logging.info(f"passing script {path_to_psql_script} to pod {pod_name}")
     res = kube.kubectl("cp",path_to_psql_script,f"{pod_name}:{path_to_psql_script}")
     res = kube.kubectl("cp",path_to_pgpass,f"{pod_name}:/tmp/.pgpass")

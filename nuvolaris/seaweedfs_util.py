@@ -19,6 +19,7 @@
 # to perform various operations
 
 import logging
+import re
 import nuvolaris.config as cfg
 import nuvolaris.template as ntp
 import nuvolaris.util as util
@@ -85,6 +86,10 @@ class SeaweedfsClient:
                 raise SeaweedfsUnauthorizedException()
 
     def _exec_weed_command(self,command):
+        # the command is wrapped in a single quoted shell string, so any quote or
+        # shell metacharacter reaching this point would break out of it.
+        if not isinstance(command, str) or re.search(r"[\'\"`$;&|<>\n\r\\]", command):
+            raise ValueError("invalid characters in weed shell command")
         logging.debug(f"executing command: {command} inside pod {self.pod_name}")
         res = kube.kubectl("exec","-it",self.pod_name,"--","/bin/sh","-c",f"echo '{command}' | weed shell")
         return res                               
@@ -93,6 +98,8 @@ class SeaweedfsClient:
         """
         adds a new bucket inside the configured seaweed instance 
         """
+        if not util.validate_bucket_name(bucket_name):
+            raise ValueError(f"Invalid bucket name {bucket_name}")
         res = util.check(self._exec_weed_command(f"s3.bucket.create -name {bucket_name}"),"make_bucket",True)
         if quota_in_mb:
             res = util.check(self._exec_weed_command(f"s3.bucket.quota -name {bucket_name} -op=set -sizeMB={quota_in_mb}"),"make_bucket",res)
@@ -102,6 +109,8 @@ class SeaweedfsClient:
         """
         removes unconditionally a bucket
         """
+        if not util.validate_bucket_name(bucket_name):
+            raise ValueError(f"Invalid bucket name {bucket_name}")
         return util.check(self._exec_weed_command(f"s3.bucket.delete -name {bucket_name}"),"force_bucket_remove",True)
 
     def upload_folder_content(self,local_content,bucket):
