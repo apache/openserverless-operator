@@ -18,7 +18,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-cm
-  namespace: nuvolaris
+  namespace: openserverless
 data:
     redis-conf: |-
                 #requirepass <secure_password>

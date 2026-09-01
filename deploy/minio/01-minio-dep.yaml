@@ -20,7 +20,7 @@ apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and befor
 kind: Deployment
 metadata:
   name: minio-deployment
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   selector:
     matchLabels:
@@ -33,7 +33,7 @@ spec:
         app: minio
         name: minio
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"   
+        whisks.openserverless.org/annotate-version: "true"   
     spec:
       volumes:
       - name: data

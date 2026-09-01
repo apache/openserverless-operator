@@ -15,11 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Workflows
 metadata:
   name: workflow-test
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   image: ghcr.io/msciabarra/busybox:stable
   command: 

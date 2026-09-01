@@ -19,12 +19,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-recovery"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-recovery"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: recovery
 spec:
   ports:
@@ -33,18 +33,18 @@ spec:
   clusterIP: None
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: recovery
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: bookie
 spec:
   ports:
@@ -55,18 +55,18 @@ spec:
   clusterIP: None
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: bookie
   publishNotReadyAddresses: true 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-milvus
-  namespace: nuvolaris
+  name: openserverless-milvus
+  namespace: openserverless
   labels:
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     component: "standalone"
 spec:
   type: NodePort
@@ -83,18 +83,18 @@ spec:
       targetPort: metrics
   selector:
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     component: "standalone"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-zookeeper"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-zookeeper"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: zookeeper
   annotations:
     {}
@@ -113,18 +113,18 @@ spec:
   publishNotReadyAddresses: true
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: zookeeper
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: broker
 spec:
   ports:
@@ -136,5 +136,5 @@ spec:
   clusterIP: None
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: broker        

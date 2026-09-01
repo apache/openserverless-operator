@@ -19,23 +19,23 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 items:
   - metadata:
-      name: nuvolaris-whisk-edit 
+      name: openserverless-whisk-edit 
       labels:
         rbac.authorization.k8s.io/aggregate-to-admin: "true" 
         rbac.authorization.k8s.io/aggregate-to-edit: "true" 
     rules:
-      - apiGroups: ["nuvolaris.org"] 
+      - apiGroups: ["openserverless.org"] 
         resources: ["whisks","whiskusers","workflows"] 
         verbs: ["get", "list", "watch", "create",
                 "update", "patch", "delete", "deletecollection"] 
   - metadata:
-      name: nuvolaris-whisk-view 
+      name: openserverless-whisk-view 
       labels:
         # Add these permissions to the "view" default role.
         rbac.authorization.k8s.io/aggregate-to-view: "true" 
         rbac.authorization.k8s.io/aggregate-to-cluster-reader: "true" 
     rules:
-      - apiGroups: ["nuvolaris.org"] 
+      - apiGroups: ["openserverless.org"] 
         resources: ["whisks","whiskusers","workflows"] 
         verbs: ["get", "list", "watch"]
   

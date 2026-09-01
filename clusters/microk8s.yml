@@ -31,7 +31,7 @@ vars:
         then awk -F= '/GITHUB_USER=/{print $2}' ../.env
         else echo unknown
         fi
-  STACK: "{{.GITHUB_USER}}-nuvolaris-dev"
+  STACK: "{{.GITHUB_USER}}-openserverless-dev"
   KUBECONFIG: "microk8s-{{.GITHUB_USER}}.kubeconfig"
   
 tasks:

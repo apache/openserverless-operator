@@ -19,7 +19,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: zookeeper
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     name: zookeeper
     app: zookeeper

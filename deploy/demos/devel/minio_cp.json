@@ -1,9 +1,9 @@
 {
     "command":"cp",
     "args":[
-        "nuvolaris-web",
+        "openserverless-web",
         "index.html",
-        "nuvolaris-web",
+        "openserverless-web",
         "tidy/content2.html"
     ]
 }

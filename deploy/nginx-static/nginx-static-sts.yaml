@@ -18,27 +18,27 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nuvolaris-static
-  namespace: nuvolaris
+  name: openserverless-static
+  namespace: openserverless
   labels:
-    app: nuvolaris-static
+    app: openserverless-static
 spec:
-  serviceName: nuvolaris-static-svc
+  serviceName: openserverless-static-svc
   replicas: 1
   selector:
     matchLabels:
-      app: nuvolaris-static
+      app: openserverless-static
   template:
     metadata:
       labels:
-        app: nuvolaris-static
+        app: openserverless-static
     spec:
       initContainers:
       - name: check-minio
         image: busybox:1.36.0
-        command: ['sh', '-c', "until nslookup nuvolaris-minio.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for minio; sleep 2; done"]     
+        command: ['sh', '-c', "until nslookup openserverless-minio.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for minio; sleep 2; done"]     
       containers:
-      - name: nuvolaris-static
+      - name: openserverless-static
         image: nginxinc/nginx-unprivileged:1.24
         ports:
         - containerPort: 8080

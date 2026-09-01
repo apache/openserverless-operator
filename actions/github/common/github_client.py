@@ -47,7 +47,7 @@ class GithubClient:
 
     def github_code_exchange(self, client_id,client_secret,code):
         """
-        Exchange the code received from Github when the user activated the nuvolaris github app to
+        Exchange the code received from Github when the user activated the openserverless github app to
         retrieve user access tokens.
         return: access_token=...&expires_in=...&refresh_token=...&refresh_token_expires_in=...&scope=&token_type=bearer
         """
@@ -71,7 +71,7 @@ class GithubClient:
 
     def github_user_detail(self,access_token):
         """
-        Exchange the code received from Github when the user activated the nuvolaris github app to
+        Exchange the code received from Github when the user activated the openserverless github app to
         retrieve user access tokens.
         """
         url = f"{self._github_api_url}/user"

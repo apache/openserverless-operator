@@ -18,18 +18,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nuvolaris-prometheus-server
-  namespace: nuvolaris
+  name: openserverless-prometheus-server
+  namespace: openserverless
   labels:
     app.kubernetes.io/component: server
-    app.kubernetes.io/instance: nuvolaris-prometheus
+    app.kubernetes.io/instance: openserverless-prometheus
     app.kubernetes.io/name: prometheus
 spec:
   replicas: 1  
   selector:
     matchLabels:
       app.kubernetes.io/component: server
-      app.kubernetes.io/instance: nuvolaris-prometheus
+      app.kubernetes.io/instance: openserverless-prometheus
       app.kubernetes.io/name: prometheus
   strategy:
     type: Recreate
@@ -37,14 +37,14 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: server
-        app.kubernetes.io/instance: nuvolaris-prometheus
+        app.kubernetes.io/instance: openserverless-prometheus
         app.kubernetes.io/name: prometheus
         name: prometheus
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"         
+        whisks.openserverless.org/annotate-version: "true"         
     spec:
-      serviceAccount: nuvolaris-prometheus-server
-      serviceAccountName: nuvolaris-prometheus-server
+      serviceAccount: openserverless-prometheus-server
+      serviceAccountName: openserverless-prometheus-server
       terminationGracePeriodSeconds: 300
       containers:
       - name: prometheus-server
@@ -94,8 +94,8 @@ spec:
       volumes:
       - configMap:
           defaultMode: 420
-          name: nuvolaris-prometheus-server
+          name: openserverless-prometheus-server
         name: config-volume
       - name: storage-volume
         persistentVolumeClaim:
-          claimName: nuvolaris-prometheus-server-pvc       
+          claimName: openserverless-prometheus-server-pvc       

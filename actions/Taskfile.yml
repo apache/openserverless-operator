@@ -23,34 +23,34 @@ vars:
   WHISK: '{{default "whisk" .WHISK}}'
   CONFIG: "../tests/{{.KUBE}}/{{.WHISK}}.yaml"
   APIHOST: 
-    sh: kubectl -n nuvolaris get cm/config -o yaml | awk '/apihost:/ {print $2}'
+    sh: kubectl -n openserverless get cm/config -o yaml | awk '/apihost:/ {print $2}'
   SYSTEM:
-    sh: kubectl -n nuvolaris get wsk/controller -o jsonpath='{.spec.openwhisk.namespaces.whisk-system}'
+    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.openwhisk.namespaces.whisk-system}'
   WSKSYS: wsk --apihost {{.APIHOST}} -u {{.SYSTEM}}
   DEPLOY: ../deploy/whisk-system
   
   CDB_USER:
-    sh: kubectl -n nuvolaris get wsk/controller -o jsonpath='{.spec.couchdb.admin.user}'
+    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.couchdb.admin.user}'
 
   CDB_PASSWORD:
-    sh: kubectl -n nuvolaris get wsk/controller -o jsonpath='{.spec.couchdb.admin.password}'
+    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.couchdb.admin.password}'
 
   NUV_MINIO_AUTH:
-    sh: kubectl -n nuvolaris get wsk/controller -o jsonpath='{.spec.minio.nuvolaris.password}'    
+    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.minio.openserverless.password}'    
 
   CDB_HOST: couchdb    
 
-  MINIO_HOST: minio.nuvolaris.svc.cluster.local   
+  MINIO_HOST: minio.openserverless.svc.cluster.local   
   MINIO_PORT: 9000    
 
   #GIHTUB_SA_TOKEN:
-  #  sh: kubectl -n nuvolaris get secrets/nuvolaris-github-secret -o jsonpath='{.data.token}'
+  #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.token}'
 
   #GIHTUB_SA_CRT:
-  #  sh: kubectl -n nuvolaris get secrets/nuvolaris-github-secret -o jsonpath='{.data.ca\.crt}'
+  #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.ca\.crt}'
 
   #GIHTUB_SA_NS:
-  #  sh: kubectl -n nuvolaris get secrets/nuvolaris-github-secret -o jsonpath='{.data.namespace}'         
+  #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.namespace}'         
 
 tasks:
 
@@ -72,8 +72,8 @@ tasks:
 
   login:prepare:
     - |- 
-      mkdir -p login/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py ../nuvolaris/bcrypt_util.py login/nuvolaris
+      mkdir -p login/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py ../openserverless/bcrypt_util.py login/openserverless
     - |-
       cd login
       rm  -f ../{{.DEPLOY}}/login.zip
@@ -114,10 +114,10 @@ tasks:
 
   devel:redis:prepare:
     - |- 
-      mkdir -p devel/redis/nuvolaris
+      mkdir -p devel/redis/openserverless
       mkdir -p devel/redis/common
       cp ./common/*.py devel/redis/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/redis/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/redis/openserverless
     - |-
       cd devel/redis
       rm  -f ../../{{.DEPLOY}}/redis.zip
@@ -138,10 +138,10 @@ tasks:
 
   devel:psql:prepare:
     - |- 
-      mkdir -p devel/psql/nuvolaris
+      mkdir -p devel/psql/openserverless
       mkdir -p devel/psql/common
       cp ./common/*.py  devel/psql/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/psql/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/psql/openserverless
     - |-
       cd devel/psql
       rm  -f ../../{{.DEPLOY}}/psql.zip
@@ -162,10 +162,10 @@ tasks:
 
   devel:minio:prepare:
     - |- 
-      mkdir -p devel/minio/nuvolaris
+      mkdir -p devel/minio/openserverless
       mkdir -p devel/minio/common
       cp ./common/*.py  devel/minio/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/minio/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/minio/openserverless
     - |-
       cd devel/minio
       rm  -f ../../{{.DEPLOY}}/minio.zip
@@ -186,10 +186,10 @@ tasks:
 
   devel:upload:prepare:
     - |- 
-      mkdir -p devel/upload/nuvolaris
+      mkdir -p devel/upload/openserverless
       mkdir -p devel/upload/common
       cp ./common/*.py  devel/upload/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/upload/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/upload/openserverless
     - |-
       cd devel/upload
       rm  -f ../../{{.DEPLOY}}/devel_upload.zip
@@ -210,10 +210,10 @@ tasks:
 
   devel:ferretdb:prepare:
     - |- 
-      mkdir -p devel/ferretdb/nuvolaris
+      mkdir -p devel/ferretdb/openserverless
       mkdir -p devel/ferretdb/common
       cp ./common/*.py devel/ferretdb/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/ferretdb/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/ferretdb/openserverless
     - |-
       cd devel/ferretdb
       rm  -f ../../{{.DEPLOY}}/ferretdb.zip
@@ -234,10 +234,10 @@ tasks:
 
   devel:download:prepare:
     - |- 
-      mkdir -p devel/download/nuvolaris
+      mkdir -p devel/download/openserverless
       mkdir -p devel/download/common
       cp ./common/*.py  devel/download/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/download/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/download/openserverless
     - |-
       cd devel/download
       rm  -f ../../{{.DEPLOY}}/devel_download.zip
@@ -270,23 +270,23 @@ tasks:
 
   content:webtest:
     - >
-      curl -X PUT -T ../nuvolaris/templates/index.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/nuvolaris/index2.html
+      curl -X PUT -T ../openserverless/templates/index.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/index2.html
 
   content:webtest2:
     - >
-      curl -X PUT -T ../nuvolaris/templates/content.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/nuvolaris/tidy/content.html
+      curl -X PUT -T ../openserverless/templates/content.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/tidy/content.html
 
   content:yaml:
     - >
-      curl -X PUT -T ../nuvolaris/templates/couchdb-init.yaml -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/nuvolaris/yaml/couchdb-init.yaml
+      curl -X PUT -T ../openserverless/templates/couchdb-init.yaml -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml
 
   content-delete:yaml:
     - >
-      curl -X DELETE -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/nuvolaris/yaml/couchdb-init.yaml            
+      curl -X DELETE -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml            
 
   content:chess:
     - >
-      curl -X PUT -T ../nuvolaris/templates/content.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/nuvolaris/chess/index.html
+      curl -X PUT -T ../openserverless/templates/content.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/chess/index.html
 
   devel:redis:set:
     - >
@@ -334,11 +334,11 @@ tasks:
 
   devel:upload:webtest:
     - >
-      curl -X PUT -T ../nuvolaris/templates/content.html -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A=" {{.APIHOST}}/api/v1/web/whisk-system/nuv/devel_upload/nuvolaris-web/test/index.html
+      curl -X PUT -T ../openserverless/templates/content.html -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A=" {{.APIHOST}}/api/v1/web/whisk-system/nuv/devel_upload/openserverless-web/test/index.html
 
   devel:upload:data:
     - >
-      curl -X PUT -T ../nuvolaris/templates/content.html -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A=" {{.APIHOST}}/api/v1/web/whisk-system/nuv/devel_upload/nuvolaris-data/test/index.html
+      curl -X PUT -T ../openserverless/templates/content.html -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A=" {{.APIHOST}}/api/v1/web/whisk-system/nuv/devel_upload/openserverless-data/test/index.html
 
   devel:ferretdb:insert:
     - >
@@ -405,10 +405,10 @@ tasks:
 
   github:callback:prepare:
     - |- 
-      mkdir -p github/callback/nuvolaris
+      mkdir -p github/callback/openserverless
       mkdir -p github/callback/common
       cp github/common/*.py github/callback/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py github/callback/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py github/callback/openserverless
     - |-
       cd github/callback
       rm  -f ../../{{.DEPLOY}}/callback.zip
@@ -424,10 +424,10 @@ tasks:
 
   github:webhook:prepare:
     - |- 
-      mkdir -p github/webhook/nuvolaris
+      mkdir -p github/webhook/openserverless
       mkdir -p github/webhook/common
       cp github/common/*.py github/webhook/common
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py github/webhook/nuvolaris
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py github/webhook/openserverless
     - |-
       cd github/webhook
       rm  -f ../../{{.DEPLOY}}/webhook.zip

@@ -20,13 +20,13 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: registry
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     name: registry
     app: registry
 spec:
   replicas: 1
-  serviceName: nuvolaris-registry-svc
+  serviceName: openserverless-registry-svc
   selector:
     matchLabels:
       app: registry

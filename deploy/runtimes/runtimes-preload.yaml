@@ -20,7 +20,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: preload-runtimes
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     app: preload-runtimes
 spec:

@@ -47,7 +47,7 @@ jobs:
         uses: container-tools/kind-action@v2.0.4
         with:
               version: v0.22.0
-              cluster_name: nuvolaris
+              cluster_name: openserverless
               config: .github/kind.yaml
       - name: Set up Python 3.12
         uses: actions/setup-python@v4

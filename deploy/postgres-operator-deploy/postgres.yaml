@@ -19,27 +19,27 @@
 apiVersion: kubegres.reactive-tech.io/v1
 kind: Kubegres
 metadata:
-  name: nuvolaris-postgres
-  namespace: nuvolaris
+  name: openserverless-postgres
+  namespace: openserverless
 spec:
    replicas: 2
    image: pgvector/pgvector:pg16
    database:
       size: 200Mi
-   customConfig: nuvolaris-postgres-conf    
+   customConfig: openserverless-postgres-conf    
    env:
       - name: POSTGRES_PASSWORD
         valueFrom:
            secretKeyRef:
-              name: postgres-nuvolaris-secret
+              name: postgres-openserverless-secret
               key: superUserPassword
       - name: POSTGRES_REPLICATION_PASSWORD
         valueFrom:
            secretKeyRef:
-              name: postgres-nuvolaris-secret
+              name: postgres-openserverless-secret
               key: replicationUserPassword
-      - name: POSTGRES_NUVOLARIS_DB_PASSWORD
+      - name: POSTGRES_OPENSERVERLESS_DB_PASSWORD
         valueFrom:
            secretKeyRef:
-              name: postgres-nuvolaris-secret
-              key: nuvolarisUserPassword             
+              name: postgres-openserverless-secret
+              key: openserverlessUserPassword             

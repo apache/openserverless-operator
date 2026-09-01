@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import nuvolaris.user_config as user_cfg
-import nuvolaris.testutil as tu
+import openserverless.user_config as user_cfg
+import openserverless.testutil as tu
 
 spec = tu.load_sample_user_config()
 cfg = user_cfg.UserConfig(spec)

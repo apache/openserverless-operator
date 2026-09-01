@@ -19,12 +19,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-qdrant-headless
+  name: openserverless-qdrant-headless
   labels:
     helm.sh/chart: qdrant-0.9.2
     app: qdrant
     app.kubernetes.io/name: qdrant
-    app.kubernetes.io/instance: nuvolaris-qdrant
+    app.kubernetes.io/instance: openserverless-qdrant
 spec:
   clusterIP: None
   publishNotReadyAddresses: true
@@ -44,17 +44,17 @@ spec:
   selector:
     app: qdrant
     app.kubernetes.io/name: qdrant
-    app.kubernetes.io/instance: nuvolaris-qdrant
+    app.kubernetes.io/instance: openserverless-qdrant
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-qdrant
+  name: openserverless-qdrant
   labels:
     helm.sh/chart: qdrant-0.9.2
     app: qdrant
     app.kubernetes.io/name: qdrant
-    app.kubernetes.io/instance: nuvolaris-qdrant
+    app.kubernetes.io/instance: openserverless-qdrant
     app.kubernetes.io/version: "v1.9.5"
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -75,4 +75,4 @@ spec:
   selector:
     app: qdrant
     app.kubernetes.io/name: qdrant
-    app.kubernetes.io/instance: nuvolaris-qdrant    
+    app.kubernetes.io/instance: openserverless-qdrant    

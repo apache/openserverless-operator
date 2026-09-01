@@ -18,27 +18,27 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nuvolaris-etcd
-  namespace: nuvolaris
+  name: openserverless-etcd
+  namespace: openserverless
   labels:
-    app.kubernetes.io/name: nuvolaris-etcd    
+    app.kubernetes.io/name: openserverless-etcd    
 spec:
   replicas: 3
-  serviceName: nuvolaris-etcd-headless
+  serviceName: openserverless-etcd-headless
   podManagementPolicy: Parallel
   updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
-      app.kubernetes.io/name: nuvolaris-etcd      
+      app.kubernetes.io/name: openserverless-etcd      
   template:
     metadata:
       labels:
-        name: nuvolaris-etcd
-        app.kubernetes.io/name: nuvolaris-etcd        
+        name: openserverless-etcd
+        app.kubernetes.io/name: openserverless-etcd        
       annotations:
-        serviceName: nuvolaris-etcd
-        whisks.nuvolaris.org/annotate-version: "true"
+        serviceName: openserverless-etcd
+        whisks.openserverless.org/annotate-version: "true"
     spec:
       restartPolicy: Always
       securityContext:
@@ -46,7 +46,7 @@ spec:
         fsGroupChangePolicy: Always
       terminationGracePeriodSeconds: 30
       containers:
-      - name: nuvolaris-etcd
+      - name: openserverless-etcd
         env:
         - name: BITNAMI_DEBUG
           value: "false"
@@ -61,7 +61,7 @@ spec:
               apiVersion: v1
               fieldPath: metadata.name
         - name: MY_STS_NAME
-          value: nuvolaris-etcd
+          value: openserverless-etcd
         - name: ETCDCTL_API
           value: "3"
         - name: ETCD_ON_K8S
@@ -81,16 +81,16 @@ spec:
         - name: ETCD_ROOT_PASSWORD
           valueFrom:
            secretKeyRef:
-             name: nuvolaris-etcd-secret
+             name: openserverless-etcd-secret
              key: rootPassword
         - name: ETCD_AUTH_TOKEN
           value: jwt,priv-key=/opt/bitnami/etcd/certs/token/jwt-token.pem,sign-method=RS256,ttl=10m
         - name: ETCD_ADVERTISE_CLIENT_URLS
-          value: http://$(MY_POD_NAME).nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2379,http://nuvolaris-etcd.nuvolaris.svc.cluster.local:2379
+          value: http://$(MY_POD_NAME).openserverless-etcd-headless.openserverless.svc.cluster.local:2379,http://openserverless-etcd.openserverless.svc.cluster.local:2379
         - name: ETCD_LISTEN_CLIENT_URLS
           value: http://0.0.0.0:2379
         - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
-          value: http://$(MY_POD_NAME).nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2380
+          value: http://$(MY_POD_NAME).openserverless-etcd-headless.openserverless.svc.cluster.local:2380
         - name: ETCD_LISTEN_PEER_URLS
           value: http://0.0.0.0:2380
         - name: ETCD_INITIAL_CLUSTER_TOKEN
@@ -98,9 +98,9 @@ spec:
         - name: ETCD_INITIAL_CLUSTER_STATE
           value: new
         - name: ETCD_INITIAL_CLUSTER
-          value: nuvolaris-etcd-0=http://nuvolaris-etcd-0.nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2380,nuvolaris-etcd-1=http://nuvolaris-etcd-1.nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2380,nuvolaris-etcd-2=http://nuvolaris-etcd-2.nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2380
+          value: openserverless-etcd-0=http://openserverless-etcd-0.openserverless-etcd-headless.openserverless.svc.cluster.local:2380,openserverless-etcd-1=http://openserverless-etcd-1.openserverless-etcd-headless.openserverless.svc.cluster.local:2380,openserverless-etcd-2=http://openserverless-etcd-2.openserverless-etcd-headless.openserverless.svc.cluster.local:2380
         - name: ETCD_CLUSTER_DOMAIN
-          value: nuvolaris-etcd-headless.nuvolaris.svc.cluster.local
+          value: openserverless-etcd-headless.openserverless.svc.cluster.local
         image: docker.io/bitnami/etcd:3.5.17-debian-12-r0
         imagePullPolicy: IfNotPresent
         lifecycle:
@@ -142,7 +142,7 @@ spec:
           name: empty-dir
           subPath: tmp-dir
         - mountPath: /bitnami/etcd
-          name: nuvolaris-etc-data
+          name: openserverless-etc-data
         - mountPath: /opt/bitnami/etcd/certs/token/
           name: etcd-jwt-token
           readOnly: true
@@ -152,10 +152,10 @@ spec:
       - name: etcd-jwt-token
         secret:
           defaultMode: 256
-          secretName: nuvolaris-etcd-jwt-token              
+          secretName: openserverless-etcd-jwt-token              
   volumeClaimTemplates:
     - metadata:
-        name: nuvolaris-etc-data
+        name: openserverless-etc-data
       spec:
         accessModes:
           - "ReadWriteOnce"
