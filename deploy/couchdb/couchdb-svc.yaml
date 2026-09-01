@@ -20,11 +20,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: couchdb-np
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   type: NodePort
   selector:
-    app: nuvolaris-couchdb        
+    app: openserverless-couchdb        
     replicationRole: primary
   ports:   
     - port: 5984
@@ -35,10 +35,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: couchdb
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   selector:
-    app: nuvolaris-couchdb        
+    app: openserverless-couchdb        
     replicationRole: primary
   ports:   
     - port: 5984

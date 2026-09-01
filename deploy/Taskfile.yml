@@ -49,13 +49,13 @@ tasks:
           echo "*** saved in extract/{{.YAML}}"
       fi
 
-  deploy: kubectl -n nuvolaris apply -f deploy/nuvolaris-operator/whisk.yaml
+  deploy: kubectl -n openserverless apply -f deploy/openserverless-operator/whisk.yaml
 
   undeploy-del: >
-    kubectl -n nuvolaris delete wsk/standalone
+    kubectl -n openserverless delete wsk/standalone
 
   undeploy-patch: >
-    kubectl -n nuvolaris patch wsk/standalone --type=merge --patch '{"metadata": {"finalizers":[] } }'
+    kubectl -n openserverless patch wsk/standalone --type=merge --patch '{"metadata": {"finalizers":[] } }'
   
   undeploy: 
     deps:

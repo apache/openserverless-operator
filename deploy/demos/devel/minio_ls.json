@@ -1,6 +1,6 @@
 {
     "command":"ls",
     "args":[
-        "nuvolaris-web"
+        "openserverless-web"
     ]
 }

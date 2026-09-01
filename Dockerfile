@@ -19,59 +19,59 @@
 # Sources
 FROM python:3.12-slim-bullseye AS sources
 
-RUN groupadd --gid 1001 nuvolaris && \
-    useradd -m nuvolaris -s /bin/bash --uid 1001 --gid 1001 --groups root
+RUN groupadd --gid 1001 openserverless && \
+    useradd -m openserverless -s /bin/bash --uid 1001 --gid 1001 --groups root
 
-USER nuvolaris
-WORKDIR /home/nuvolaris
+USER openserverless
+WORKDIR /home/openserverless
 # install the operator
-ADD --chown=nuvolaris:nuvolaris nuvolaris/*.py /home/nuvolaris/nuvolaris/
-ADD --chown=nuvolaris:nuvolaris nuvolaris/files /home/nuvolaris/nuvolaris/files
-ADD --chown=nuvolaris:nuvolaris nuvolaris/templates /home/nuvolaris/nuvolaris/templates
-ADD --chown=nuvolaris:nuvolaris nuvolaris/policies /home/nuvolaris/nuvolaris/policies
-ADD --chown=nuvolaris:nuvolaris deploy/nuvolaris-operator /home/nuvolaris/deploy/nuvolaris-operator
-ADD --chown=nuvolaris:nuvolaris deploy/nuvolaris-permissions /home/nuvolaris/deploy/nuvolaris-permissions
-ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-standalone /home/nuvolaris/deploy/openwhisk-standalone
-ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-endpoint /home/nuvolaris/deploy/openwhisk-endpoint
-ADD --chown=nuvolaris:nuvolaris deploy/couchdb /home/nuvolaris/deploy/couchdb
-ADD --chown=nuvolaris:nuvolaris deploy/redis /home/nuvolaris/deploy/redis
-ADD --chown=nuvolaris:nuvolaris deploy/scheduler /home/nuvolaris/deploy/scheduler
-ADD --chown=nuvolaris:nuvolaris deploy/mongodb-operator /home/nuvolaris/deploy/mongodb-operator
-ADD --chown=nuvolaris:nuvolaris deploy/mongodb-operator-deploy /home/nuvolaris/deploy/mongodb-operator-deploy
-ADD --chown=nuvolaris:nuvolaris deploy/mongodb-standalone /home/nuvolaris/deploy/mongodb-standalone
-ADD --chown=nuvolaris:nuvolaris deploy/cert-manager /home/nuvolaris/deploy/cert-manager
-ADD --chown=nuvolaris:nuvolaris deploy/ingress-nginx /home/nuvolaris/deploy/ingress-nginx
-ADD --chown=nuvolaris:nuvolaris deploy/issuer /home/nuvolaris/deploy/issuer
-ADD --chown=nuvolaris:nuvolaris deploy/minio /home/nuvolaris/deploy/minio
-ADD --chown=nuvolaris:nuvolaris deploy/kafka /home/nuvolaris/deploy/kafka
-ADD --chown=nuvolaris:nuvolaris deploy/zookeeper /home/nuvolaris/deploy/zookeeper
-ADD --chown=nuvolaris:nuvolaris deploy/nginx-static /home/nuvolaris/deploy/nginx-static
-ADD --chown=nuvolaris:nuvolaris deploy/content /home/nuvolaris/deploy/content
-ADD --chown=nuvolaris:nuvolaris deploy/postgres-operator /home/nuvolaris/deploy/postgres-operator
-ADD --chown=nuvolaris:nuvolaris deploy/postgres-operator-deploy /home/nuvolaris/deploy/postgres-operator-deploy
-ADD --chown=nuvolaris:nuvolaris deploy/ferretdb /home/nuvolaris/deploy/ferretdb
-ADD --chown=nuvolaris:nuvolaris deploy/runtimes /home/nuvolaris/deploy/runtimes
-ADD --chown=nuvolaris:nuvolaris deploy/postgres-backup /home/nuvolaris/deploy/postgres-backup
-ADD --chown=nuvolaris:nuvolaris run.sh dbinit.sh cron.sh pyproject.toml poetry.lock whisk-system.sh /home/nuvolaris/
+ADD --chown=openserverless:openserverless openserverless/*.py /home/openserverless/openserverless/
+ADD --chown=openserverless:openserverless openserverless/files /home/openserverless/openserverless/files
+ADD --chown=openserverless:openserverless openserverless/templates /home/openserverless/openserverless/templates
+ADD --chown=openserverless:openserverless openserverless/policies /home/openserverless/openserverless/policies
+ADD --chown=openserverless:openserverless deploy/openserverless-operator /home/openserverless/deploy/openserverless-operator
+ADD --chown=openserverless:openserverless deploy/openserverless-permissions /home/openserverless/deploy/openserverless-permissions
+ADD --chown=openserverless:openserverless deploy/openwhisk-standalone /home/openserverless/deploy/openwhisk-standalone
+ADD --chown=openserverless:openserverless deploy/openwhisk-endpoint /home/openserverless/deploy/openwhisk-endpoint
+ADD --chown=openserverless:openserverless deploy/couchdb /home/openserverless/deploy/couchdb
+ADD --chown=openserverless:openserverless deploy/redis /home/openserverless/deploy/redis
+ADD --chown=openserverless:openserverless deploy/scheduler /home/openserverless/deploy/scheduler
+ADD --chown=openserverless:openserverless deploy/mongodb-operator /home/openserverless/deploy/mongodb-operator
+ADD --chown=openserverless:openserverless deploy/mongodb-operator-deploy /home/openserverless/deploy/mongodb-operator-deploy
+ADD --chown=openserverless:openserverless deploy/mongodb-standalone /home/openserverless/deploy/mongodb-standalone
+ADD --chown=openserverless:openserverless deploy/cert-manager /home/openserverless/deploy/cert-manager
+ADD --chown=openserverless:openserverless deploy/ingress-nginx /home/openserverless/deploy/ingress-nginx
+ADD --chown=openserverless:openserverless deploy/issuer /home/openserverless/deploy/issuer
+ADD --chown=openserverless:openserverless deploy/minio /home/openserverless/deploy/minio
+ADD --chown=openserverless:openserverless deploy/kafka /home/openserverless/deploy/kafka
+ADD --chown=openserverless:openserverless deploy/zookeeper /home/openserverless/deploy/zookeeper
+ADD --chown=openserverless:openserverless deploy/nginx-static /home/openserverless/deploy/nginx-static
+ADD --chown=openserverless:openserverless deploy/content /home/openserverless/deploy/content
+ADD --chown=openserverless:openserverless deploy/postgres-operator /home/openserverless/deploy/postgres-operator
+ADD --chown=openserverless:openserverless deploy/postgres-operator-deploy /home/openserverless/deploy/postgres-operator-deploy
+ADD --chown=openserverless:openserverless deploy/ferretdb /home/openserverless/deploy/ferretdb
+ADD --chown=openserverless:openserverless deploy/runtimes /home/openserverless/deploy/runtimes
+ADD --chown=openserverless:openserverless deploy/postgres-backup /home/openserverless/deploy/postgres-backup
+ADD --chown=openserverless:openserverless run.sh dbinit.sh cron.sh pyproject.toml poetry.lock whisk-system.sh /home/openserverless/
 
 # prepares the required folders to deploy the whisk-system actions
-RUN mkdir /home/nuvolaris/deploy/whisk-system
-ADD --chown=nuvolaris:nuvolaris actions /home/nuvolaris/actions
+RUN mkdir /home/openserverless/deploy/whisk-system
+ADD --chown=openserverless:openserverless actions /home/openserverless/actions
 
 # enterprise specific
-ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-enterprise /home/nuvolaris/deploy/openwhisk-enterprise
-ADD --chown=nuvolaris:nuvolaris deploy/openwhisk-invoker /home/nuvolaris/deploy/openwhisk-invoker
-ADD --chown=nuvolaris:nuvolaris deploy/monitoring /home/nuvolaris/deploy/monitoring
-ADD --chown=nuvolaris:nuvolaris deploy/alert-manager /home/nuvolaris/deploy/alert-manager
-ADD --chown=nuvolaris:nuvolaris deploy/quota /home/nuvolaris/deploy/quota
-ADD --chown=nuvolaris:nuvolaris deploy/kvrocks /home/nuvolaris/deploy/kvrocks
-ADD --chown=nuvolaris:nuvolaris deploy/etcd /home/nuvolaris/deploy/etcd
-ADD --chown=nuvolaris:nuvolaris deploy/milvus-operator /home/nuvolaris/deploy/milvus-operator
-ADD --chown=nuvolaris:nuvolaris deploy/milvus /home/nuvolaris/deploy/milvus
-ADD --chown=nuvolaris:nuvolaris deploy/milvus-slim /home/nuvolaris/deploy/milvus-slim
-ADD --chown=nuvolaris:nuvolaris deploy/registry /home/nuvolaris/deploy/registry
-ADD --chown=nuvolaris:nuvolaris deploy/seaweedfs /home/nuvolaris/deploy/seaweedfs
-ADD --chown=nuvolaris:nuvolaris quota.sh /home/nuvolaris/
+ADD --chown=openserverless:openserverless deploy/openwhisk-enterprise /home/openserverless/deploy/openwhisk-enterprise
+ADD --chown=openserverless:openserverless deploy/openwhisk-invoker /home/openserverless/deploy/openwhisk-invoker
+ADD --chown=openserverless:openserverless deploy/monitoring /home/openserverless/deploy/monitoring
+ADD --chown=openserverless:openserverless deploy/alert-manager /home/openserverless/deploy/alert-manager
+ADD --chown=openserverless:openserverless deploy/quota /home/openserverless/deploy/quota
+ADD --chown=openserverless:openserverless deploy/kvrocks /home/openserverless/deploy/kvrocks
+ADD --chown=openserverless:openserverless deploy/etcd /home/openserverless/deploy/etcd
+ADD --chown=openserverless:openserverless deploy/milvus-operator /home/openserverless/deploy/milvus-operator
+ADD --chown=openserverless:openserverless deploy/milvus /home/openserverless/deploy/milvus
+ADD --chown=openserverless:openserverless deploy/milvus-slim /home/openserverless/deploy/milvus-slim
+ADD --chown=openserverless:openserverless deploy/registry /home/openserverless/deploy/registry
+ADD --chown=openserverless:openserverless deploy/seaweedfs /home/openserverless/deploy/seaweedfs
+ADD --chown=openserverless:openserverless quota.sh /home/openserverless/
 
 #------------------------------------------------------------------------------
 # Python dependencies
@@ -88,15 +88,15 @@ ENV PYTHONUNBUFFERED=1
 ENV POETRY_CACHE_DIR=/opt/.cache
 ENV PATH=${POETRY_HOME}/bin:$PATH
 
-WORKDIR /home/nuvolaris
-COPY --chown=nuvolaris:nuvolaris pyproject.toml poetry.lock /home/nuvolaris/
+WORKDIR /home/openserverless
+COPY --chown=openserverless:openserverless pyproject.toml poetry.lock /home/openserverless/
 RUN echo "Installing poetry" && \
     # Install minimal dependencies
     echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt-get update && apt-get install -y --no-install-recommends \
     curl gnupg zip unzip && \
     curl -sSL https://install.python-poetry.org | python - && \
-    cd /home/nuvolaris && poetry install --no-root --no-interaction --no-ansi && rm -rf $POETRY_CACHE_DIR
+    cd /home/openserverless && poetry install --no-root --no-interaction --no-ansi && rm -rf $POETRY_CACHE_DIR
 
 #------------------------------------------------------------------------------
 # Final stage
@@ -111,17 +111,17 @@ ENV INVOKER_TAG=3.1.0-mastrogpt.2402101445
 ENV OPERATOR_IMAGE=${OPERATOR_IMAGE_DEFAULT}
 ENV OPERATOR_TAG=${OPERATOR_TAG_DEFAULT}
 ENV TZ=Europe/London
-ENV HOME=/home/nuvolaris
-ENV VIRTUAL_ENV=/home/nuvolaris/.venv
+ENV HOME=/home/openserverless
+ENV VIRTUAL_ENV=/home/openserverless/.venv
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_CACHE_DIR=/opt/.cache
 ENV PATH=$POETRY_HOME/bin:$HOME/.venv/bin:$HOME/.local/bin:/usr/local/bin:/usr/bin:/sbin:/bin:/usr/sbin/
 # configure dpkg && timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
-    # add nuvolaris user
-    groupadd --gid 1001 nuvolaris && \
-    useradd -m nuvolaris -s /bin/bash --uid 1001 --gid 1001 --groups root && \
-    echo "nuvolaris ALL=(ALL:ALL) NOPASSWD: ALL" >>/etc/sudoers && \
+    # add openserverless user
+    groupadd --gid 1001 openserverless && \
+    useradd -m openserverless -s /bin/bash --uid 1001 --gid 1001 --groups root && \
+    echo "openserverless ALL=(ALL:ALL) NOPASSWD: ALL" >>/etc/sudoers && \
     # Install minimal dependencies
     echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -144,17 +144,17 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     # install taskfile
     curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/bin
 
-USER nuvolaris
-WORKDIR /home/nuvolaris
+USER openserverless
+WORKDIR /home/openserverless
 # Copy virtualenv
-COPY --from=deps --chown=nuvolaris:nuvolaris ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=deps --chown=openserverless:openserverless ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 # Copy poetry
-COPY --from=deps --chown=nuvolaris:nuvolaris ${POETRY_HOME} ${POETRY_HOME}
+COPY --from=deps --chown=openserverless:openserverless ${POETRY_HOME} ${POETRY_HOME}
 # Copy the home
-COPY --from=sources --chown=nuvolaris:nuvolaris ${HOME} ${HOME}
+COPY --from=sources --chown=openserverless:openserverless ${HOME} ${HOME}
 RUN poetry install --only main --no-interaction --no-ansi && rm -rf ${POETRY_CACHE_DIR}
 # prepares the required folders to deploy the whisk-system actions
-RUN mkdir -p /home/nuvolaris/deploy/whisk-system && \
+RUN mkdir -p /home/openserverless/deploy/whisk-system && \
     ./whisk-system.sh && \
     cd deploy && tar cvf ../deploy.tar *
 CMD ["./run.sh"]

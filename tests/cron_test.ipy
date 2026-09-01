@@ -16,8 +16,8 @@
 # under the License.
 #
 
-import nuvolaris.cronjob as cron
-import nuvolaris.kube as kube
+import openserverless.cronjob as cron
+import openserverless.kube as kube
 
 assert(cron.create())
 assert(kube.get("cronjob.batch/cron-init"))

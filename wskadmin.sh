@@ -21,14 +21,14 @@ configure() {
     if test -e whisk.properties
     then return
     fi
-    if ! kubectl -n nuvolaris get wsk/controller 2>/dev/null >/dev/null
+    if ! kubectl -n openserverless get wsk/controller 2>/dev/null >/dev/null
     then 
-        echo "Nuvolaris not yet configured"
+        echo "OpenServerless not yet configured"
         exit 1
     fi
-    DB_USER="$(kubectl -n nuvolaris get wsk/controller -ojsonpath='{.spec.couchdb.admin.user}')"
-    DB_PASS="$(kubectl -n nuvolaris get wsk/controller -ojsonpath='{.spec.couchdb.admin.password}')"
-    DB_HOST="$(kubectl -n nuvolaris get wsk/controller -ojsonpath='{.spec.couchdb.host}')"
+    DB_USER="$(kubectl -n openserverless get wsk/controller -ojsonpath='{.spec.couchdb.admin.user}')"
+    DB_PASS="$(kubectl -n openserverless get wsk/controller -ojsonpath='{.spec.couchdb.admin.password}')"
+    DB_HOST="$(kubectl -n openserverless get wsk/controller -ojsonpath='{.spec.couchdb.host}')"
     cat <<EOF >whisk.properties
 whisk.logs.dir=/var/tmp/wsklogs
 db.host=$DB_HOST
@@ -37,10 +37,10 @@ db.password=$DB_PASS
 db.provider=CouchDB
 db.protocol=http
 db.port=5984
-db.prefix=nuvolaris_
-db.whisk.auths=nuvolaris_subjects
-db.whisk.actions=nuvolaris_whisks
-db.whisk.activations=nuvolaris_activations
+db.prefix=openserverless_
+db.whisk.auths=openserverless_subjects
+db.whisk.actions=openserverless_whisks
+db.whisk.activations=openserverless_activations
 EOF
 }
 

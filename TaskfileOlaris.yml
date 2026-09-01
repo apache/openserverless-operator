@@ -18,12 +18,12 @@
 version: '3'
 
 env: 
-  DP: deploy/nuvolaris-permissions
+  DP: deploy/openserverless-permissions
   OK: olaris/kubernetes
 
 tasks:
   copy-yaml:
-  - cp -v $DP/nuvolaris-common.yaml $DP/openwhisk-runtimes-cm.yaml $OK/common
+  - cp -v $DP/openserverless-common.yaml $DP/openwhisk-runtimes-cm.yaml $OK/common
   - cp -v $DP/openwhisk-core-roles.yaml $DP/operator-clusterroles.yaml $DP/operator-roles.yaml $OK/roles
   - cp -v $DP/whisk-crd.yaml $DP/whisk-user-crd.yaml  $DP/workflows-crd.yaml $OK/crds
   

@@ -97,7 +97,7 @@ def main(args):
             print("Installation deleted webhook event received")
             kube_client = KubeApiClient(args['kube_host'],args['kube_port'],args['sa_token'],args['sa_crt'])
             _delete_whisk_user(github_data['installation'], kube_client)
-            return build_response("Nuvolaris githup application removal handled")
+            return build_response("OpenServerless githup application removal handled")
 
         #2nd scenario. Handle a push on an authorized repository
         if github_webhook_event_type in ['push'] and github_data['ref']:

@@ -19,17 +19,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie-init"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie-init"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: "bookie-init"
 spec:
   template:
     spec:      
-      serviceAccountName: "nuvolaris-operator"
+      serviceAccountName: "openserverless-operator"
       nodeSelector:
       tolerations:
       initContainers:
@@ -43,11 +43,11 @@ spec:
         command: ["sh", "-c"]
         args:
           - >-
-            until nslookup nuvolaris-milvus-pulsarv3-zookeeper-0.nuvolaris-milvus-pulsarv3-zookeeper.nuvolaris; do
+            until nslookup openserverless-milvus-pulsarv3-zookeeper-0.openserverless-milvus-pulsarv3-zookeeper.openserverless; do
               sleep 3;
             done;
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-bookie-init"
+      - name: "openserverless-milvus-pulsarv3-bookie-init"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         command: ["sh", "-c"]
@@ -62,7 +62,7 @@ spec:
             fi
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"
+            name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:        
       volumes:      
       restartPolicy: OnFailure
@@ -70,12 +70,12 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-pulsar-init"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-pulsar-init"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: pulsar-init
 spec:
 # This feature was previously behind a feature gate for several Kubernetes versions and will default to true in 1.23 and beyond
@@ -93,7 +93,7 @@ spec:
         command: ["sh", "-c"]
         args:
           - >-
-            until nslookup nuvolaris-milvus-pulsarv3-zookeeper-0.nuvolaris-milvus-pulsarv3-zookeeper.nuvolaris; do
+            until nslookup openserverless-milvus-pulsarv3-zookeeper-0.openserverless-milvus-pulsarv3-zookeeper.openserverless; do
               sleep 3;
             done;
       # This initContainer will wait for bookkeeper initnewcluster to complete
@@ -118,10 +118,10 @@ spec:
           done;
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"
+            name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:        
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-pulsar-init"
+      - name: "openserverless-milvus-pulsarv3-pulsar-init"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         command: ["sh", "-c"]
@@ -129,13 +129,13 @@ spec:
           - |            
             export PULSAR_MEM="-Xmx128M";
             bin/pulsar initialize-cluster-metadata \
-              --cluster nuvolaris-milvus-pulsarv3 \
-              --zookeeper nuvolaris-milvus-pulsarv3-zookeeper:2181 \
-              --configuration-store nuvolaris-milvus-pulsarv3-zookeeper:2181 \
-              --web-service-url http://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080/ \
-              --web-service-url-tls https://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8443/ \
-              --broker-service-url pulsar://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:6650/ \
-              --broker-service-url-tls pulsar+ssl://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:6651/ ;
+              --cluster openserverless-milvus-pulsarv3 \
+              --zookeeper openserverless-milvus-pulsarv3-zookeeper:2181 \
+              --configuration-store openserverless-milvus-pulsarv3-zookeeper:2181 \
+              --web-service-url http://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8080/ \
+              --web-service-url-tls https://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8443/ \
+              --broker-service-url pulsar://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:6650/ \
+              --broker-service-url-tls pulsar+ssl://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:6651/ ;
         volumeMounts:        
       volumes:      
       restartPolicy: OnFailure      

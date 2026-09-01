@@ -21,7 +21,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: cron-init
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   schedule: "* * * * *"
   jobTemplate:

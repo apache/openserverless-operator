@@ -23,7 +23,7 @@ The operator is built with [`kopf`](https://kopf.readthedocs.io/en/stable/). It 
 events coming from Kubernetes. The main event to react to is the deployment of a Custom Resource Definition that 
 configures OpenWhisk and all the related components.
 
-All the code is in the package `nuvolaris`. Events are handled in `main.py`.
+All the code is in the package `openserverless`. Events are handled in `main.py`.
 
 Each event handlers uses utility functions you can find the various service specific files like `openwhisk` or `couchdb`.
 
@@ -53,8 +53,8 @@ Then you can do this (obvious details omitted)
 1. You create a customization to create a secret. 
 
 2. there is a customization to create a `patch` for it. There are a few utility functions for that in the 
-`nuvolaris.kustomize` package. Some of them are actually _templatized_ (have Template name) so the actual file is 
-generated expanding a template. All templates are under `nuvolaris/templates`. A _templatized_ configuration uses 
+`openserverless.kustomize` package. Some of them are actually _templatized_ (have Template name) so the actual file is 
+generated expanding a template. All templates are under `openserverless/templates`. A _templatized_ configuration uses 
 `Jinja2`. When you use templates you also have to provide the `data` dictionary for the templates.
 
 3. Once finished you generate a configuration to be applied. Usually it is better to be a series of configuration, 

@@ -21,7 +21,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     name: controller
     app: controller
@@ -192,11 +192,11 @@ spec:
         - name: "CONFIG_whisk_couchdb_provider"
           value: "CouchDB"
         - name: "CONFIG_whisk_couchdb_databases_WhiskActivation"
-          value: "nuvolaris_activations"
+          value: "openserverless_activations"
         - name: "CONFIG_whisk_couchdb_databases_WhiskEntity"
-          value: "nuvolaris_whisks"
+          value: "openserverless_whisks"
         - name: "CONFIG_whisk_couchdb_databases_WhiskAuth"
-          value: "nuvolaris_subjects"
+          value: "openserverless_subjects"
 
         - name: "CONFIG_whisk_couchdb_controller_username"
           value: "controller_admin"

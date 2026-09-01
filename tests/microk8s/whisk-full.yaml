@@ -15,13 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Whisk
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
-  nuvolaris:
+  openserverless:
       password: nuvpassw0rd
       apihost: auto
       #apiport: 80
@@ -56,7 +56,7 @@ spec:
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abcfO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
-      nuvolaris: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xKCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP       
+      openserverless: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xKCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP       
   couchdb:
     host: couchdb
     volume-size: 10
@@ -116,7 +116,7 @@ spec:
     volume-size: 5
     default:
       password: s0meP@ass3
-    nuvolaris:
+    openserverless:
       prefix: nuv      
       password: s0meP@ass3
   mongodb:
@@ -125,8 +125,8 @@ spec:
     admin: 
       user: whisk_admin
       password: 0therPa55
-    nuvolaris:
-      user: nuvolaris
+    openserverless:
+      user: openserverless
       password: s0meP@ass3
     exposedExternally: False
     useOperator: False
@@ -135,8 +135,8 @@ spec:
     admin:
       user: minioadmin
       password: minioadmin    
-    nuvolaris:
-      user: nuvolaris
+    openserverless:
+      user: openserverless
       password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG 
   monitoring:
     prometheus:
@@ -147,7 +147,7 @@ spec:
       slack:        
         enabled: true
         default: true 
-        slack_channel_name: '#monitoring-nuvolaris'
+        slack_channel_name: '#monitoring-openserverless'
         slack_api_url: ${SLACK_API_URL}
       gmail:       
         enabled: true
@@ -162,5 +162,5 @@ spec:
     admin:      
       password: 0therPa55
       replica-password: 0therPa55RR
-    nuvolaris:
+    openserverless:
       password: s0meP@ass3                                    

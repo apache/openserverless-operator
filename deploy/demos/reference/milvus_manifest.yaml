@@ -22,24 +22,24 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: "nuvolaris-milvus-minio"
-  namespace: "nuvolaris"
+  name: "openserverless-milvus-minio"
+  namespace: "openserverless"
   labels:
     app: minio
     chart: minio-8.0.17
-    release: "nuvolaris-milvus"
+    release: "openserverless-milvus"
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-recovery"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-recovery"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: recovery
   annotations:
 ---
@@ -65,14 +65,14 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: bookie
   annotations:
 ---
@@ -98,14 +98,14 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker-acct"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker-acct"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: broker
   annotations:
 ---
@@ -131,14 +131,14 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-proxy"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-proxy"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: proxy
   annotations:
 ---
@@ -164,14 +164,14 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-zookeeper"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-zookeeper"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: zookeeper
   annotations:
 ---
@@ -179,11 +179,11 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: nuvolaris-milvus-minio
+  name: openserverless-milvus-minio
   labels:
     app: minio
     chart: minio-8.0.17
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
 type: Opaque
 data:
@@ -194,11 +194,11 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nuvolaris-milvus-minio
+  name: openserverless-milvus-minio
   labels:
     app: minio
     chart: minio-8.0.17
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
 data:
   initialize: |-
@@ -334,18 +334,18 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-recovery"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-recovery"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: recovery
 data:
   # common config
-  zkServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zkServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
   zkLedgersRootPath: "/ledgers"
   # enable bookkeeper http server
   httpServerEnabled: "true"
@@ -380,18 +380,18 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: bookie
 data:
   # common config
-  zkServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zkServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
   zkLedgersRootPath: "/ledgers"
   # enable bookkeeper http server
   httpServerEnabled: "true"
@@ -447,22 +447,22 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: broker
 data:
   # Metadata settings
-  zookeeperServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
-  configurationStoreServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zookeeperServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
+  configurationStoreServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
 
   # Broker settings
-  clusterName: nuvolaris-milvus-pulsarv3
+  clusterName: openserverless-milvus-pulsarv3
   exposeTopicLevelMetricsInPrometheus: "true"
   numHttpServerThreads: "8"
   zooKeeperSessionTimeoutMillis: "30000"
@@ -516,23 +516,23 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-proxy"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-proxy"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: proxy
 data:
-  clusterName: nuvolaris-milvus-pulsarv3
+  clusterName: openserverless-milvus-pulsarv3
   statusFilePath: "/pulsar/status"
   # prometheus needs to access /metrics endpoint
   webServicePort: "8080"
   servicePort: "6650"
-  brokerServiceURL: pulsar://nuvolaris-milvus-pulsarv3-broker:6650
-  brokerWebServiceURL: http://nuvolaris-milvus-pulsarv3-broker:8080
+  brokerServiceURL: pulsar://openserverless-milvus-pulsarv3-broker:6650
+  brokerWebServiceURL: http://openserverless-milvus-pulsarv3-broker:8080
 
   # Authentication Settings
   PULSAR_GC: |
@@ -565,14 +565,14 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-zookeeper"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-zookeeper"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: zookeeper
 data:
   dataDir: /pulsar/data/zookeeper
@@ -588,8 +588,8 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nuvolaris-milvus
-  namespace: nuvolaris
+  name: openserverless-milvus
+  namespace: openserverless
 data:
   default.yaml: |+
     # Copyright (C) 2019-2021 Zilliz. All rights reserved.
@@ -605,13 +605,13 @@ data:
     
     etcd:
       endpoints:
-      - nuvolaris-milvus-etcd-0.nuvolaris-milvus-etcd-headless.nuvolaris.svc.cluster.local:2379
+      - openserverless-milvus-etcd-0.openserverless-milvus-etcd-headless.openserverless.svc.cluster.local:2379
     
     metastore:
       type: etcd
     
     minio:
-      address: nuvolaris-milvus-minio
+      address: openserverless-milvus-minio
       port: 9000
       accessKeyID: minioadmin
       secretAccessKey: minioadmin
@@ -627,7 +627,7 @@ data:
     messageQueue: pulsar
     
     pulsar:
-      address: nuvolaris-milvus-pulsarv3-proxy
+      address: openserverless-milvus-pulsarv3-proxy
       port: 6650
       maxMessageSize: 104857600
     
@@ -699,13 +699,13 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nuvolaris-milvus-minio
+  name: openserverless-milvus-minio
   annotations:
     helm.sh/resource-policy: keep
   labels:
     app: minio
     chart: minio-8.0.17
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
 spec:
   accessModes:
@@ -718,14 +718,14 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nuvolaris-milvus
-  namespace: nuvolaris
+  name: openserverless-milvus
+  namespace: openserverless
   annotations:
     helm.sh/resource-policy: keep
   labels:
     helm.sh/chart: milvus-4.2.32
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     app.kubernetes.io/version: "2.5.0-beta"
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -739,13 +739,13 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker-role"
+  name: "openserverless-milvus-pulsarv3-broker-role"
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
 rules:
 - apiGroups: [""]
   resources:
@@ -790,32 +790,32 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker-rolebinding"
+  name: "openserverless-milvus-pulsarv3-broker-rolebinding"
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: "nuvolaris-milvus-pulsarv3-broker-role"
+  name: "openserverless-milvus-pulsarv3-broker-role"
 subjects:
 - kind: ServiceAccount
-  name: "nuvolaris-milvus-pulsarv3-broker-acct"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker-acct"
+  namespace: openserverless
 ---
 # Source: milvus/charts/etcd/templates/svc-headless.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-milvus-etcd-headless
-  namespace: nuvolaris
+  name: openserverless-milvus-etcd-headless
+  namespace: openserverless
   labels:
     app.kubernetes.io/name: etcd
     helm.sh/chart: etcd-6.3.3
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     app.kubernetes.io/managed-by: Helm
   annotations:
     service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
@@ -832,18 +832,18 @@ spec:
       targetPort: peer
   selector:
     app.kubernetes.io/name: etcd
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
 ---
 # Source: milvus/charts/etcd/templates/svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-milvus-etcd
-  namespace: nuvolaris
+  name: openserverless-milvus-etcd
+  namespace: openserverless
   labels:
     app.kubernetes.io/name: etcd
     helm.sh/chart: etcd-6.3.3
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     app.kubernetes.io/managed-by: Helm
   annotations:
 spec:
@@ -859,17 +859,17 @@ spec:
       nodePort: null
   selector:
     app.kubernetes.io/name: etcd
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
 ---
 # Source: milvus/charts/minio/templates/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-milvus-minio
+  name: openserverless-milvus-minio
   labels:
     app: minio
     chart: minio-8.0.17
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
 spec:
   type: ClusterIP
@@ -880,7 +880,7 @@ spec:
       targetPort: 9000
   selector:
     app: minio
-    release: nuvolaris-milvus
+    release: openserverless-milvus
 ---
 # Source: milvus/charts/pulsarv3/templates/autorecovery-service.yaml
 #
@@ -904,14 +904,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-recovery"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-recovery"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: recovery
 spec:
   ports:
@@ -920,7 +920,7 @@ spec:
   clusterIP: None
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: recovery
 ---
 # Source: milvus/charts/pulsarv3/templates/bookkeeper-service.yaml
@@ -945,14 +945,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: bookie
 spec:
   ports:
@@ -963,7 +963,7 @@ spec:
   clusterIP: None
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: bookie
   publishNotReadyAddresses: true
 ---
@@ -989,14 +989,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: broker
   annotations:
     {}
@@ -1010,7 +1010,7 @@ spec:
   clusterIP: None
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: broker
 ---
 # Source: milvus/charts/pulsarv3/templates/proxy-service.yaml
@@ -1035,14 +1035,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-proxy"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-proxy"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: proxy
   annotations:
 spec:
@@ -1058,7 +1058,7 @@ spec:
       targetPort: "sts-pulsar"
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: proxy
 ---
 # Source: milvus/charts/pulsarv3/templates/zookeeper-service.yaml
@@ -1085,14 +1085,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-zookeeper"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-zookeeper"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: zookeeper
   annotations:
     {}
@@ -1111,19 +1111,19 @@ spec:
   publishNotReadyAddresses: true
   selector:
     app: pulsarv3
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     component: zookeeper
 ---
 # Source: milvus/templates/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-milvus
-  namespace: nuvolaris
+  name: openserverless-milvus
+  namespace: openserverless
   labels:
     helm.sh/chart: milvus-4.2.32
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     app.kubernetes.io/version: "2.5.0-beta"
     app.kubernetes.io/managed-by: Helm
     component: "standalone"
@@ -1140,18 +1140,18 @@ spec:
       targetPort: metrics
   selector:
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     component: "standalone"
 ---
 # Source: milvus/charts/minio/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nuvolaris-milvus-minio
+  name: openserverless-milvus-minio
   labels:
     app: minio
     chart: minio-8.0.17
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
 spec:
   strategy:
@@ -1162,18 +1162,18 @@ spec:
   selector:
     matchLabels:
       app: minio
-      release: nuvolaris-milvus
+      release: openserverless-milvus
   template:
     metadata:
-      name: nuvolaris-milvus-minio
+      name: openserverless-milvus-minio
       labels:
         app: minio
-        release: nuvolaris-milvus
+        release: openserverless-milvus
       annotations:
         checksum/secrets: ff1e94b7d737d105c2dc9d21647326f2431dcb35e2592f6d63feaddb4f2bea82
         checksum/config: dcce09c6c2c8f2bccb379c721fa4dad7b9d4cae29d4977bbc6caadd1d1cefcf2
     spec:
-      serviceAccountName: "nuvolaris-milvus-minio"
+      serviceAccountName: "openserverless-milvus-minio"
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -1222,12 +1222,12 @@ spec:
             - name: MINIO_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: nuvolaris-milvus-minio
+                  name: openserverless-milvus-minio
                   key: accesskey
             - name: MINIO_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: nuvolaris-milvus-minio
+                  name: openserverless-milvus-minio
                   key: secretkey
           resources:
             requests:
@@ -1235,21 +1235,21 @@ spec:
       volumes:
         - name: export
           persistentVolumeClaim:
-            claimName: nuvolaris-milvus-minio
+            claimName: openserverless-milvus-minio
         - name: minio-user
           secret:
-            secretName: nuvolaris-milvus-minio
+            secretName: openserverless-milvus-minio
 ---
 # Source: milvus/templates/standalone-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nuvolaris-milvus-standalone
-  namespace: nuvolaris
+  name: openserverless-milvus-standalone
+  namespace: openserverless
   labels:
     helm.sh/chart: milvus-4.2.32
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     app.kubernetes.io/version: "2.5.0-beta"
     app.kubernetes.io/managed-by: Helm
     component: "standalone"
@@ -1264,13 +1264,13 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: milvus
-      app.kubernetes.io/instance: nuvolaris-milvus
+      app.kubernetes.io/instance: openserverless-milvus
       component: "standalone"
   template:
     metadata:
       labels:
         app.kubernetes.io/name: milvus
-        app.kubernetes.io/instance: nuvolaris-milvus
+        app.kubernetes.io/instance: openserverless-milvus
         component: "standalone"
         
       annotations:
@@ -1334,10 +1334,10 @@ spec:
         name: tools
       - name: milvus-config
         configMap:
-          name: nuvolaris-milvus
+          name: openserverless-milvus
       - name: milvus-data-disk
         persistentVolumeClaim:
-          claimName: nuvolaris-milvus
+          claimName: openserverless-milvus
       - name: disk
         emptyDir: {}
 ---
@@ -1345,20 +1345,20 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nuvolaris-milvus-etcd
-  namespace: nuvolaris
+  name: openserverless-milvus-etcd
+  namespace: openserverless
   labels:
     app.kubernetes.io/name: etcd
     helm.sh/chart: etcd-6.3.3
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: etcd
-      app.kubernetes.io/instance: nuvolaris-milvus
-  serviceName: nuvolaris-milvus-etcd-headless
+      app.kubernetes.io/instance: openserverless-milvus
+  serviceName: openserverless-milvus-etcd-headless
   podManagementPolicy: Parallel
   updateStrategy:
     type: RollingUpdate
@@ -1367,7 +1367,7 @@ spec:
       labels:
         app.kubernetes.io/name: etcd
         helm.sh/chart: etcd-6.3.3
-        app.kubernetes.io/instance: nuvolaris-milvus
+        app.kubernetes.io/instance: openserverless-milvus
         app.kubernetes.io/managed-by: Helm
       annotations:
     spec:
@@ -1381,9 +1381,9 @@ spec:
                 labelSelector:
                   matchLabels:
                     app.kubernetes.io/name: etcd
-                    app.kubernetes.io/instance: nuvolaris-milvus
+                    app.kubernetes.io/instance: openserverless-milvus
                 namespaces:
-                  - "nuvolaris"
+                  - "openserverless"
                 topologyKey: kubernetes.io/hostname
               weight: 1
         nodeAffinity:
@@ -1426,11 +1426,11 @@ spec:
             - name: ALLOW_NONE_AUTHENTICATION
               value: "yes"
             - name: ETCD_ADVERTISE_CLIENT_URLS
-              value: "http://$(MY_POD_NAME).nuvolaris-milvus-etcd-headless.nuvolaris.svc.cluster.local:2379"
+              value: "http://$(MY_POD_NAME).openserverless-milvus-etcd-headless.openserverless.svc.cluster.local:2379"
             - name: ETCD_LISTEN_CLIENT_URLS
               value: "http://0.0.0.0:2379"
             - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
-              value: "http://$(MY_POD_NAME).nuvolaris-milvus-etcd-headless.nuvolaris.svc.cluster.local:2380"
+              value: "http://$(MY_POD_NAME).openserverless-milvus-etcd-headless.openserverless.svc.cluster.local:2380"
             - name: ETCD_LISTEN_PEER_URLS
               value: "http://0.0.0.0:2380"
             - name: ETCD_AUTO_COMPACTION_MODE
@@ -1508,17 +1508,17 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-recovery"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-recovery"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: recovery
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-recovery"
+  serviceName: "openserverless-milvus-pulsarv3-recovery"
   replicas: 1
   updateStrategy:
     type: RollingUpdate
@@ -1527,14 +1527,14 @@ spec:
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: recovery
   template:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: recovery
       annotations:
         prometheus.io/scrape: "true"
@@ -1542,7 +1542,7 @@ spec:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: "nuvolaris-milvus-pulsarv3-recovery"
+      serviceAccountName: "openserverless-milvus-pulsarv3-recovery"
       initContainers:
       # This initContainer will wait for bookkeeper initnewcluster to complete
       # before deploying the bookies
@@ -1561,11 +1561,11 @@ spec:
           done;
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-recovery"
+            name: "openserverless-milvus-pulsarv3-recovery"
         volumeMounts:
         
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-recovery"
+      - name: "openserverless-milvus-pulsarv3-recovery"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         resources:
@@ -1583,7 +1583,7 @@ spec:
           containerPort: 8000
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-recovery"
+            name: "openserverless-milvus-pulsarv3-recovery"
         volumeMounts:
         
       volumes:
@@ -1610,22 +1610,22 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: bookie
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-bookie"
+  serviceName: "openserverless-milvus-pulsarv3-bookie"
   replicas: 3
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: bookie
   updateStrategy:
     type: RollingUpdate
@@ -1634,8 +1634,8 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: bookie
       annotations:
         prometheus.io/scrape: "true"
@@ -1643,7 +1643,7 @@ spec:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: "nuvolaris-milvus-pulsarv3-bookie"
+      serviceAccountName: "openserverless-milvus-pulsarv3-bookie"
       securityContext:
         fsGroup: 0
         fsGroupChangePolicy: OnRootMismatch
@@ -1668,11 +1668,11 @@ spec:
           done;
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"
+            name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:
         
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-bookie"
+      - name: "openserverless-milvus-pulsarv3-bookie"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -1708,11 +1708,11 @@ spec:
           containerPort: 8000
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"
+            name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:
-        - name: "nuvolaris-milvus-pulsarv3-bookie-journal"
+        - name: "openserverless-milvus-pulsarv3-bookie-journal"
           mountPath: /pulsar/data/bookkeeper/journal
-        - name: "nuvolaris-milvus-pulsarv3-bookie-ledgers"
+        - name: "openserverless-milvus-pulsarv3-bookie-ledgers"
           mountPath: /pulsar/data/bookkeeper/ledgers
         
       volumes:
@@ -1720,14 +1720,14 @@ spec:
       
   volumeClaimTemplates:
   - metadata:
-      name: "nuvolaris-milvus-pulsarv3-bookie-journal"
+      name: "openserverless-milvus-pulsarv3-bookie-journal"
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
           storage: 100Gi
   - metadata:
-      name: "nuvolaris-milvus-pulsarv3-bookie-ledgers"
+      name: "openserverless-milvus-pulsarv3-bookie-ledgers"
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
@@ -1756,22 +1756,22 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: broker
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-broker"
+  serviceName: "openserverless-milvus-pulsarv3-broker"
   replicas: 2
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: broker
   updateStrategy:
     type: RollingUpdate
@@ -1780,14 +1780,14 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: broker
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
-      serviceAccountName: "nuvolaris-milvus-pulsarv3-broker-acct"
+      serviceAccountName: "openserverless-milvus-pulsarv3-broker-acct"
       affinity:
       terminationGracePeriodSeconds: 30
       initContainers:
@@ -1805,8 +1805,8 @@ spec:
           - >-
             
             export BOOKIE_MEM="-Xmx128M";
-            until bin/bookkeeper org.apache.zookeeper.ZooKeeperMain -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /admin/clusters/nuvolaris-milvus-pulsarv3; do
-              echo "pulsar cluster nuvolaris-milvus-pulsarv3 isn't initialized yet ... check in 3 seconds ..." && sleep 3;
+            until bin/bookkeeper org.apache.zookeeper.ZooKeeperMain -server openserverless-milvus-pulsarv3-zookeeper:2181 get /admin/clusters/openserverless-milvus-pulsarv3; do
+              echo "pulsar cluster openserverless-milvus-pulsarv3 isn't initialized yet ... check in 3 seconds ..." && sleep 3;
             done;
         volumeMounts:
         
@@ -1830,20 +1830,20 @@ spec:
               sleep 3;
             done;
             echo "bookkeeper cluster is already initialized";
-            bookieServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-bookie | grep Name | wc -l)";
+            bookieServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-bookie | grep Name | wc -l)";
             until [ ${bookieServiceNumber} -ge 3 ]; do
-              echo "bookkeeper cluster nuvolaris-milvus-pulsarv3 isn't ready yet ... check in 10 seconds ...";
+              echo "bookkeeper cluster openserverless-milvus-pulsarv3 isn't ready yet ... check in 10 seconds ...";
               sleep 10;
-              bookieServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-bookie | grep Name | wc -l)";
+              bookieServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-bookie | grep Name | wc -l)";
             done;
             echo "bookkeeper cluster is ready";
         envFrom:
           - configMapRef:
-              name: "nuvolaris-milvus-pulsarv3-bookie"
+              name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:
           
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-broker"
+      - name: "openserverless-milvus-pulsarv3-broker"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -1873,11 +1873,11 @@ spec:
           bin/gen-yml-from-env.py conf/functions_worker.yml;
           echo "OK" > status;
           
-          bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080;
+          bin/pulsar zookeeper-shell -server openserverless-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8080;
           while [ $? -eq 0 ]; do
-            echo "broker ${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local znode still exists ... check in 10 seconds ...";
+            echo "broker ${HOSTNAME}.openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local znode still exists ... check in 10 seconds ...";
             sleep 10;
-            bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080;
+            bin/pulsar zookeeper-shell -server openserverless-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8080;
           done;
           cat conf/pulsar_env.sh;
           OPTS="${OPTS} -Dlog4j2.formatMsgNoLookups=true" exec bin/pulsar broker;
@@ -1889,7 +1889,7 @@ spec:
           containerPort: 6650
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-broker"
+            name: "openserverless-milvus-pulsarv3-broker"
         volumeMounts:
           
         env:
@@ -1917,22 +1917,22 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-proxy"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-proxy"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: proxy
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-proxy"
+  serviceName: "openserverless-milvus-pulsarv3-proxy"
   replicas: 2
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: proxy
   updateStrategy:
     type: RollingUpdate
@@ -1941,8 +1941,8 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: proxy
       annotations:
         prometheus.io/scrape: "true"
@@ -1950,7 +1950,7 @@ spec:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: "nuvolaris-milvus-pulsarv3-proxy"
+      serviceAccountName: "openserverless-milvus-pulsarv3-proxy"
       initContainers:
       # This init container will wait for zookeeper to be ready before
       # deploying the bookies
@@ -1965,7 +1965,7 @@ spec:
         args:
           - >-
             export PULSAR_MEM="-Xmx128M";
-            until bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper get /admin/clusters/nuvolaris-milvus-pulsarv3; do
+            until bin/pulsar zookeeper-shell -server openserverless-milvus-pulsarv3-zookeeper get /admin/clusters/openserverless-milvus-pulsarv3; do
               sleep 3;
             done;
       # This init container will wait for at least one broker to be ready before
@@ -1981,14 +1981,14 @@ spec:
         args:
           - >-
             set -e;
-            brokerServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-broker | grep Name | wc -l)";
+            brokerServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-broker | grep Name | wc -l)";
             until [ ${brokerServiceNumber} -ge 1 ]; do
-              echo "pulsar cluster nuvolaris-milvus-pulsarv3 isn't initialized yet ... check in 10 seconds ...";
+              echo "pulsar cluster openserverless-milvus-pulsarv3 isn't initialized yet ... check in 10 seconds ...";
               sleep 10;
-              brokerServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-broker | grep Name | wc -l)";
+              brokerServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-broker | grep Name | wc -l)";
             done;
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-proxy"
+      - name: "openserverless-milvus-pulsarv3-proxy"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -2025,7 +2025,7 @@ spec:
           containerPort: 6650
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-proxy"
+            name: "openserverless-milvus-pulsarv3-proxy"
 ---
 # Source: milvus/charts/pulsarv3/templates/zookeeper-statefulset.yaml
 #
@@ -2051,22 +2051,22 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-zookeeper"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-zookeeper"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: zookeeper
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-zookeeper"
+  serviceName: "openserverless-milvus-pulsarv3-zookeeper"
   replicas: 3
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: zookeeper
   updateStrategy:
     type: RollingUpdate
@@ -2075,19 +2075,19 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: zookeeper
       annotations:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: "nuvolaris-milvus-pulsarv3-zookeeper"
+      serviceAccountName: "openserverless-milvus-pulsarv3-zookeeper"
       securityContext:
         fsGroup: 0
         fsGroupChangePolicy: OnRootMismatch
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-zookeeper"
+      - name: "openserverless-milvus-pulsarv3-zookeeper"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         resources:
@@ -2113,12 +2113,12 @@ spec:
           containerPort: 3888
         env:
          - name: ZOOKEEPER_SERVERS
-           value: nuvolaris-milvus-pulsarv3-zookeeper-0,nuvolaris-milvus-pulsarv3-zookeeper-1,nuvolaris-milvus-pulsarv3-zookeeper-2
+           value: openserverless-milvus-pulsarv3-zookeeper-0,openserverless-milvus-pulsarv3-zookeeper-1,openserverless-milvus-pulsarv3-zookeeper-2
          - name: EXTERNAL_PROVIDED_SERVERS
            value: "false"
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-zookeeper"
+            name: "openserverless-milvus-pulsarv3-zookeeper"
         readinessProbe:
           exec:
             command:
@@ -2144,13 +2144,13 @@ spec:
           timeoutSeconds: 30
           failureThreshold: 10
         volumeMounts:
-        - name: "nuvolaris-milvus-pulsarv3-zookeeper-data"
+        - name: "openserverless-milvus-pulsarv3-zookeeper-data"
           mountPath: /pulsar/data
       volumes:
       
   volumeClaimTemplates:
   - metadata:
-      name: "nuvolaris-milvus-pulsarv3-zookeeper-data"
+      name: "openserverless-milvus-pulsarv3-zookeeper-data"
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
@@ -2179,14 +2179,14 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie-init"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie-init"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: "bookie-init"
 spec:
 # This feature was previously behind a feature gate for several Kubernetes versions and will default to true in 1.23 and beyond
@@ -2194,7 +2194,7 @@ spec:
   template:
     spec:
       
-      serviceAccountName: "nuvolaris-milvus-pulsarv3-bookie"
+      serviceAccountName: "openserverless-milvus-pulsarv3-bookie"
       nodeSelector:
       tolerations:
       initContainers:
@@ -2208,11 +2208,11 @@ spec:
         command: ["sh", "-c"]
         args:
           - >-
-            until nslookup nuvolaris-milvus-pulsarv3-zookeeper-2.nuvolaris-milvus-pulsarv3-zookeeper.nuvolaris; do
+            until nslookup openserverless-milvus-pulsarv3-zookeeper-2.openserverless-milvus-pulsarv3-zookeeper.openserverless; do
               sleep 3;
             done;
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-bookie-init"
+      - name: "openserverless-milvus-pulsarv3-bookie-init"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         command: ["sh", "-c"]
@@ -2228,7 +2228,7 @@ spec:
             fi
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"
+            name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:
         
       volumes:
@@ -2257,14 +2257,14 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-pulsar-init"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-pulsar-init"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: pulsar-init
 spec:
 # This feature was previously behind a feature gate for several Kubernetes versions and will default to true in 1.23 and beyond
@@ -2283,7 +2283,7 @@ spec:
         command: ["sh", "-c"]
         args:
           - >-
-            until nslookup nuvolaris-milvus-pulsarv3-zookeeper-2.nuvolaris-milvus-pulsarv3-zookeeper.nuvolaris; do
+            until nslookup openserverless-milvus-pulsarv3-zookeeper-2.openserverless-milvus-pulsarv3-zookeeper.openserverless; do
               sleep 3;
             done;
       # This initContainer will wait for bookkeeper initnewcluster to complete
@@ -2308,11 +2308,11 @@ spec:
           done;
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"
+            name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:
         
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-pulsar-init"
+      - name: "openserverless-milvus-pulsarv3-pulsar-init"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         command: ["sh", "-c"]
@@ -2321,13 +2321,13 @@ spec:
             
             export PULSAR_MEM="-Xmx128M";
             bin/pulsar initialize-cluster-metadata \
-              --cluster nuvolaris-milvus-pulsarv3 \
-              --zookeeper nuvolaris-milvus-pulsarv3-zookeeper:2181 \
-              --configuration-store nuvolaris-milvus-pulsarv3-zookeeper:2181 \
-              --web-service-url http://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080/ \
-              --web-service-url-tls https://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8443/ \
-              --broker-service-url pulsar://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:6650/ \
-              --broker-service-url-tls pulsar+ssl://nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:6651/ ;
+              --cluster openserverless-milvus-pulsarv3 \
+              --zookeeper openserverless-milvus-pulsarv3-zookeeper:2181 \
+              --configuration-store openserverless-milvus-pulsarv3-zookeeper:2181 \
+              --web-service-url http://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8080/ \
+              --web-service-url-tls https://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8443/ \
+              --broker-service-url pulsar://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:6650/ \
+              --broker-service-url-tls pulsar+ssl://openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:6651/ ;
         volumeMounts:
         
       volumes:

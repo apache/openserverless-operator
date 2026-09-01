@@ -19,8 +19,8 @@
 import json
 import logging
 
-import nuvolaris.config as cfg
-import nuvolaris.couchdb_util as cu
+import openserverless.config as cfg
+import openserverless.couchdb_util as cu
 
 USER_META_DBN = "users_metadata"
 
@@ -36,10 +36,10 @@ def fetch_user_data(db, login: str):
             if len(docs) > 0:
                 return docs[0]
 
-        logging.warning(f"Nuvolaris metadata for user {login} not found!")
+        logging.warning(f"OpenServerless metadata for user {login} not found!")
         return None
     except Exception as e:
-        logging.error(f"failed to query Nuvolaris metadata for user {login}. Reason: {e}")
+        logging.error(f"failed to query OpenServerless metadata for user {login}. Reason: {e}")
         return None
 
 
@@ -85,7 +85,7 @@ def handle_additional_env(user_data, env) -> [dict, list, list, list]:
 
 def map_data(user_data):
     """
-    Map the internal nuvolaris user_data records to the auth response
+    Map the internal openserverless user_data records to the auth response
     """
     resp = {}
     resp['login'] = user_data['login']

@@ -24,12 +24,12 @@ def generate_html_response(apihost,whisk_user,github_user):
 <html>
     <body style='background-color:#1da1ce;'>
         <div style='width: 100%;background-color: #1da1ce;justify-content: flex-start;display: flex;'>
-            <a href='https://nuvolaris.io' aria-current="page" aria-label='home'>
+            <a href='https://openserverless.io' aria-current="page" aria-label='home'>
                 <img src='https://raw.githubusercontent.com/apache/openserverless/main/assets/logos/png/os-logo-full-horizontal-transparent.png' loading='lazy' width='195' alt='Apache OpenServerless Logo.'>
             </a>
         </div>
         <div style='width: 100%;height: 50rem;max-width: 100%;background-color: #1da1ce;flex-direction: column;margin-left: 0;margin-right: 0;display: flex;'>
-            <h1 style='color: #fff;text-align: left;font-family: Work Sans, sans-serif;font-size: 1.75rem;font-weight: 600;'>Congratulations, you have successfully configured a free <strong>nuvolaris</strong> account on domain {apihost}</h1>
+            <h1 style='color: #fff;text-align: left;font-family: Work Sans, sans-serif;font-size: 1.75rem;font-weight: 600;'>Congratulations, you have successfully configured a free <strong>openserverless</strong> account on domain {apihost}</h1>
             <p style='color: #fff;text-align: left;font-family: Work Sans, sans-serif;font-size: 1rem;font-weight: 400;'>Please take note of your account details as you won't be able to access this page again!</p>
             <div style='background-color: #fff;flex-direction: column;padding-left: 10px;paddiing-right: 10px;display: flex; color: #000;'>
                 <ul>
@@ -58,12 +58,12 @@ def generate_html_error(apihost,message):
 <html>
     <body style='background-color:#1da1ce;'>
         <div style='width: 100%;background-color: #1da1ce;justify-content: flex-start;display: flex;'>
-            <a href='https://nuvolaris.io' aria-current="page" aria-label='home'>
+            <a href='https://openserverless.io' aria-current="page" aria-label='home'>
                 <img src='https://raw.githubusercontent.com/apache/openserverless/main/assets/logos/png/os-logo-full-horizontal-transparent.png' loading='lazy' width='195' alt='Apache OpenServerless Logo.'>
             </a>
         </div>
         <div style='width: 100%;height: 50rem;max-width: 100%;background-color: #1da1ce;flex-direction: column;margin-left: 0;margin-right: 0;display: flex;'>
-            <h1 style='color: #fff;text-align: left;font-family: Work Sans, sans-serif;font-size: 1.75rem;font-weight: 600;'>Oops, something went wront setting a <strong>nuvolaris</strong> account on domain {apihost}</h1>
+            <h1 style='color: #fff;text-align: left;font-family: Work Sans, sans-serif;font-size: 1.75rem;font-weight: 600;'>Oops, something went wront setting a <strong>openserverless</strong> account on domain {apihost}</h1>
             <p style='color: #fff;text-align: left;font-family: Work Sans, sans-serif;font-size: 1rem;font-weight: 400;'>Please take a look at the provided error description</p>
             <div style='background-color: #fff;flex-direction: column;padding-left: 10px;paddiing-right: 10px;display: flex; color: #000;'>
                 <p>

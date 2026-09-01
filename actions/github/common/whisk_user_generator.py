@@ -44,11 +44,11 @@ def generate_whisk_user_yaml(username,email):
     auth = auth_generator()
 
     return {
-        "apiVersion":"nuvolaris.org/v1",
+        "apiVersion":"openserverless.org/v1",
         "kind":"WhiskUser",
         "metadata":{
             "name": username,
-            "namespace": "nuvolaris"
+            "namespace": "openserverless"
         },
         "spec":{
             "email": email,

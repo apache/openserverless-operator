@@ -19,7 +19,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mongodb-data
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   accessModes:
     - ReadWriteOnce 

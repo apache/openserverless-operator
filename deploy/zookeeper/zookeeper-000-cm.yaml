@@ -20,7 +20,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: zookeeper
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     app: zookeeper
 data:

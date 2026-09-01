@@ -42,7 +42,7 @@ elif echo "$LABELS" | jq . | grep openshift.io >/dev/null
 then echo "openshift"
 elif echo "$LABELS" | jq . | grep 'instance-type.*k3s' >/dev/null
 then echo "k3s"
-elif echo "$LABELS" | jq . | awk '/nuvolaris.io\/kube/ {print $2}' | grep kind >/dev/null
+elif echo "$LABELS" | jq . | awk '/openserverless.io\/kube/ {print $2}' | grep kind >/dev/null
 then echo "kind"
 else echo "generic"
 fi

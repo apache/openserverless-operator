@@ -54,14 +54,14 @@ OpenServerless operator is normally deployed using a `whisk.yaml` configuration 
 Typically, the customization file contains something like:
 
 ```
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Whisk
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
-  nuvolaris:
-      apihost: <ip address or hostname to be assigned to nuvolaris controller ingress>
+  openserverless:
+      apihost: <ip address or hostname to be assigned to openserverless controller ingress>
   components:
     # start openwhisk controller
     openwhisk: true   
@@ -86,7 +86,7 @@ spec:
   openwhisk:
     namespaces:
       whisk-system: xxxx:yyyyyy
-      nuvolaris: ccccc:zzzzz
+      openserverless: ccccc:zzzzz
   couchdb:
     host: couchdb
     port: 5984
@@ -103,9 +103,9 @@ spec:
     admin: 
       user: <mongodb_db_admin_user>
       password: <mongodb_db_admin_pwd>
-    nuvolaris:
-      user: <mongodb_db_nuvolaris_user>
-      password: <mongodb_db_nuvolaris_pwd>    
+    openserverless:
+      user: <mongodb_db_openserverless_user>
+      password: <mongodb_db_openserverless_pwd>    
     useOperator: False
   scheduler:
     schedule: "* * * * *"
@@ -114,7 +114,7 @@ spec:
     acme-server-url: https://acme-staging-v02.api.letsencrypt.org/directory
   minio:
     volume-size: 2
-    nuvolaris:
+    openserverless:
       root-user: <minio_admin_user>
       root-password: <minio_admin_pwd>
   configs:    
@@ -202,7 +202,7 @@ that can be executed modify for example `controller.javaOpts:"-Xmx8192M"` and re
 To apply the new customization execute:
 
 ```shell
-kubectl -n nuvolaris apply -f whisk.yaml
+kubectl -n openserverless apply -f whisk.yaml
 ```
 
 ## Deploying the controller in lean-mode
@@ -210,14 +210,14 @@ kubectl -n nuvolaris apply -f whisk.yaml
 The enterprise operator supports also the deployment of the sole controller in lean mode, by simply applying a `whisk.yaml` containing
 
 ```
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Whisk
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
-  nuvolaris:
-      apihost: <ip address or hostname to be assigned to nuvolaris controller ingress>
+  openserverless:
+      apihost: <ip address or hostname to be assigned to openserverless controller ingress>
   components:
     # start openwhisk controller
     openwhisk: true   

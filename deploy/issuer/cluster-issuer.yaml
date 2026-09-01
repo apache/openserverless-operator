@@ -28,7 +28,7 @@ spec:
    email: nuvolaris@nuvolaris.io
    # Name of a secret used to store the ACME account private key
    privateKeySecretRef:
-     name: nuvolaris-letsencrypt-secret
+     name: openserverless-letsencrypt-secret
    # Enable the HTTP-01 challenge provider
    solvers:
    - http01:

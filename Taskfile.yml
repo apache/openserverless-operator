@@ -25,7 +25,7 @@ vars:
   BASETAG: 0.1.0-incubating
   KUBE:
     sh: ./detect.sh
-  NS: "nuvolaris"
+  NS: "openserverless"
   PREFIX: ""
   TAG:
 
@@ -114,11 +114,11 @@ tasks:
     - watch kubectl -n {{.NS}} get po,job --no-headers
 
   logs:
-    desc: tail the operator logs to nuvolaris-operator.log
+    desc: tail the operator logs to openserverless-operator.log
     cmds:
     - >
-      rm -f nuvolaris-operator.log ;
-      kubectl -n nuvolaris logs pod/nuvolaris-operator -f | tee nuvolaris-operator.log
+      rm -f openserverless-operator.log ;
+      kubectl -n openserverless logs pod/openserverless-operator -f | tee openserverless-operator.log
 
   cli:
     desc: run the interactive development CLI
@@ -139,7 +139,7 @@ tasks:
     - task: d:run
 
   permission:
-    desc: apply the nuvolaris permissions
+    desc: apply the openserverless permissions
     cmds:
     - task: t:permission
 
@@ -162,7 +162,7 @@ tasks:
     desc: deploy an instance and follow the operator logs
     cmds:
     - task: d:instance
-    - kubectl -n nuvolaris logs pod/nuvolaris-operator -f
+    - kubectl -n openserverless logs pod/openserverless-operator -f
 
   mongo:
     desc: run the mongo integration test
@@ -219,7 +219,7 @@ tasks:
   workflow:
     desc: apply the workflow test manifest
     cmds:
-    - kubectl -n nuvolaris apply -f tests/workflow-test.yaml
+    - kubectl -n openserverless apply -f tests/workflow-test.yaml
 
   defin:
     desc: remove finalizers to force-delete the wsk controller resource
@@ -249,16 +249,16 @@ tasks:
     ignore_error: true
     cmds:
       - | 
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/ansible/files/*.json nuvolaris/files
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/bin/wskadmin tools/cli/wsk/wskadmin.py
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/tools/admin/*.py tools/cli/wsk
+        cp -v ../openserverless/openserverless-controller/openwhisk/ansible/files/*.json openserverless/files
+        cp -v ../openserverless/openserverless-controller/openwhisk/bin/wskadmin tools/cli/wsk/wskadmin.py
+        cp -v ../openserverless/openserverless-controller/openwhisk/tools/admin/*.py tools/cli/wsk
     sources:
-      - ../nuvolaris/nuvolaris-controller/openwhisk/ansible/files/*.json
-      - ../nuvolaris/nuvolaris-controller/openwhisk/bin/wskadmin
-      - ../nuvolaris/nuvolaris-controller/openwhisk/tools/admin/*.py
+      - ../openserverless/openserverless-controller/openwhisk/ansible/files/*.json
+      - ../openserverless/openserverless-controller/openwhisk/bin/wskadmin
+      - ../openserverless/openserverless-controller/openwhisk/tools/admin/*.py
     generates:
-      - nuvolaris/files/*.json
-      - nuvolaris/tools/cli/wsk/*.py
+      - openserverless/files/*.json
+      - openserverless/tools/cli/wsk/*.py
 
   # generate ssh keys
   ssh-key:
@@ -268,35 +268,35 @@ tasks:
       - ssh-keygen  -y -f clusters/id_rsa >clusters/id_rsa.pub
 
   clean:
-    desc: delete all deployed resources in the nuvolaris namespace
+    desc: delete all deployed resources in the openserverless namespace
     cmds:
-      - cmd: kubectl -n nuvolaris delete wsku --all
+      - cmd: kubectl -n openserverless delete wsku --all
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete kubegres --timeout=60s
+      - cmd: kubectl -n openserverless delete kubegres --timeout=60s
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete milvus --timeout=60s
+      - cmd: kubectl -n openserverless delete milvus --timeout=60s
         ignore_error: true        
-      - cmd: kubectl -n nuvolaris delete wsk/controller --grace-period=0 --timeout=5s
+      - cmd: kubectl -n openserverless delete wsk/controller --grace-period=0 --timeout=5s
         ignore_error: true
       - cmd: task defin
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete all --all --grace-period=0
+      - cmd: kubectl -n openserverless delete all --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete pvc --all --grace-period=0
+      - cmd: kubectl -n openserverless delete pvc --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete ing --all --grace-period=0
+      - cmd: kubectl -n openserverless delete ing --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete cm/config --grace-period=0
+      - cmd: kubectl -n openserverless delete cm/config --grace-period=0
         ignore_error: true
       - cmd: kubectl delete clusterissuers/letsencrypt-issuer
         ignore_error: true              
 
 
   utest:
-    desc: run python doctests for nuvolaris modules (T=filter)
+    desc: run python doctests for openserverless modules (T=filter)
     cmds:
       - |
-        for test in nuvolaris/{{.T}}*.py
+        for test in openserverless/{{.T}}*.py
         do  echo "*** [{{.KUBE}}] $test"
             poetry run python3 -m doctest $test {{.CLI_ARGS}}
         done
@@ -312,7 +312,7 @@ tasks:
     cmds:
       - task: iclean
       - |
-        kubectl apply -f deploy/nuvolaris-permissions
+        kubectl apply -f deploy/openserverless-permissions
         rm -f _failed.txt
         for test in tests/{{.T}}*.ipy tests/{{.KUBE}}/{{.T}}*.ipy
         do  
@@ -486,7 +486,7 @@ tasks:
   shell:
     desc: open an interactive shell in the given pod (POD=name)
     cmds:
-    - kubectl -n nuvolaris exec --stdin --tty {{.POD}} -- /bin/bash
+    - kubectl -n openserverless exec --stdin --tty {{.POD}} -- /bin/bash
 
   1:
     cmds:

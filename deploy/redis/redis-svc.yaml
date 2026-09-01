@@ -20,7 +20,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   type: NodePort
   selector:

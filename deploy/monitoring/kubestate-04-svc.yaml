@@ -20,10 +20,10 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/component: metrics
-    app.kubernetes.io/instance: nuvolaris-prometheus
+    app.kubernetes.io/instance: openserverless-prometheus
     app.kubernetes.io/name: kube-state-metrics
-  name: nuvolaris-prometheus-kube-state-metrics
-  namespace: nuvolaris
+  name: openserverless-prometheus-kube-state-metrics
+  namespace: openserverless
 spec:
   type: ClusterIP 
   sessionAffinity: None  
@@ -34,5 +34,5 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    app.kubernetes.io/instance: nuvolaris-prometheus
+    app.kubernetes.io/instance: openserverless-prometheus
     app.kubernetes.io/name: kube-state-metrics

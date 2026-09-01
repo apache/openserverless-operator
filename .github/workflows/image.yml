@@ -60,7 +60,7 @@ jobs:
         uses: container-tools/kind-action@v2.0.4
         with:
             version: v0.22.0
-            cluster_name: nuvolaris
+            cluster_name: openserverless
             config: .github/kind.yaml
       - name: Install
         run: poetry install

@@ -15,15 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import nuvolaris.config as cfg
-import nuvolaris.kube as kube
-import nuvolaris.kustomize as kus
-import nuvolaris.testutil as tu
+import openserverless.config as cfg
+import openserverless.kube as kube
+import openserverless.kustomize as kus
+import openserverless.testutil as tu
 
 #print("kind")
 cfg.clean()
-assert(cfg.detect_labels()['nuvolaris.kube'] == "kind")
-assert(cfg.detect_storage()['nuvolaris.storageclass'] == "standard")
+assert(cfg.detect_labels()['openserverless.kube'] == "kind")
+assert(cfg.detect_storage()['openserverless.storageclass'] == "standard")
 
 # check hostpath
 cfg.configure(tu.load_sample_config())

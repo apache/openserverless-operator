@@ -18,10 +18,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-etcd
-  namespace: nuvolaris
+  name: openserverless-etcd
+  namespace: openserverless
   labels:
-    app.kubernetes.io/name: nuvolaris-etcd    
+    app.kubernetes.io/name: openserverless-etcd    
 spec:
   type: ClusterIP
   sessionAffinity: None
@@ -33,15 +33,15 @@ spec:
       port: 2380
       targetPort: peer
   selector:
-    app.kubernetes.io/name: nuvolaris-etcd    
+    app.kubernetes.io/name: openserverless-etcd    
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-etcd-headless
-  namespace: nuvolaris
+  name: openserverless-etcd-headless
+  namespace: openserverless
   labels:
-    app.kubernetes.io/name: nuvolaris-etcd    
+    app.kubernetes.io/name: openserverless-etcd    
   annotations:
     service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
 spec:
@@ -56,4 +56,4 @@ spec:
       port: 2380
       targetPort: peer
   selector:
-    app.kubernetes.io/name: nuvolaris-etcd    
+    app.kubernetes.io/name: openserverless-etcd    

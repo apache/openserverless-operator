@@ -27,7 +27,7 @@ metadata:
     app.kubernetes.io/version: "1.1.3"
     app.kubernetes.io/managed-by: Helm
   name: 'milvus-operator-metrics-service'
-  namespace: "nuvolaris"
+  namespace: "openserverless"
 spec:
   ports:
   - name: metrics
@@ -47,7 +47,7 @@ metadata:
     app.kubernetes.io/version: "1.1.3"
     app.kubernetes.io/managed-by: Helm
   name: 'milvus-operator-webhook-service'
-  namespace: "nuvolaris"
+  namespace: "openserverless"
 spec:
   ports:
   - port: 443

@@ -18,8 +18,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nuvolaris-postgres-conf
-  namespace: nuvolaris
+  name: openserverless-postgres-conf
+  namespace: openserverless
 
 data:
   # This bash script is run once, the 1st time a Primary PostgreSql container is created. It is run in the Primary container only.
@@ -40,7 +40,7 @@ data:
     #!/bin/bash
     set -e
 
-    # This script assumes that the env-var $POSTGRES_NUVOLARIS_DB_PASSWORD contains the password of the custom user to create.
+    # This script assumes that the env-var $POSTGRES_OPENSERVERLESS_DB_PASSWORD contains the password of the custom user to create.
     # You can add any env-var in your Kubegres resource config YAML.
 
     dt=$(date '+%d/%m/%Y %H:%M:%S');
@@ -48,12 +48,12 @@ data:
     echo "$dt - Running: psql -v ON_ERROR_STOP=1 --username $POSTGRES_USER --dbname $POSTGRES_DB ...";
 
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    CREATE DATABASE nuvolaris;
-    CREATE USER nuvolaris WITH PASSWORD '$POSTGRES_NUVOLARIS_DB_PASSWORD';
-    GRANT ALL PRIVILEGES ON DATABASE "nuvolaris" to nuvolaris;
+    CREATE DATABASE openserverless;
+    CREATE USER openserverless WITH PASSWORD '$POSTGRES_OPENSERVERLESS_DB_PASSWORD';
+    GRANT ALL PRIVILEGES ON DATABASE "openserverless" to openserverless;
     EOSQL
 
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname nuvolaris <<-EOSQL
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname openserverless <<-EOSQL
     CREATE EXTENSION IF NOT EXISTS vector;
     EOSQL
 

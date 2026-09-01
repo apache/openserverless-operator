@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/name: milvus-operator
     app.kubernetes.io/instance: milvus-operator
   name: milvus-operator
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   selector:
     matchLabels:
@@ -33,7 +33,7 @@ spec:
   template:
     metadata:
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"
+        whisks.openserverless.org/annotate-version: "true"
       labels:
         name: milvus-operator
         app.kubernetes.io/name: milvus-operator
@@ -42,7 +42,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
-      serviceAccountName: nuvolaris-milvus-operator
+      serviceAccountName: openserverless-milvus-operator
       terminationGracePeriodSeconds: 10    
       containers:
         - name: manager
@@ -52,7 +52,7 @@ spec:
           - /manager
           args: 
           - -namespace 
-          - "nuvolaris" 
+          - "openserverless" 
           - -name 
           - "milvus-operator" 
           - --health-probe-bind-address=:8081 

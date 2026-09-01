@@ -19,8 +19,8 @@ import json
 import logging
 from datetime import datetime
 
-import nuvolaris.bcrypt_util as bu
-from nuvolaris.user_config import UserConfig
+import openserverless.bcrypt_util as bu
+from openserverless.user_config import UserConfig
 
 
 class UserMetadata:
