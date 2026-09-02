@@ -22,7 +22,7 @@ vars:
   N: ""
   T: ""
   P: ""
-  BASETAG: 0.1.0-incubating
+  BASETAG: 0.9.0-incubating
   KUBE:
     sh: ./detect.sh
   NS: "openserverless"
@@ -35,9 +35,9 @@ dotenv:
 includes:
   d:
     taskfile: TaskfileDev.yml
-  t: 
+  t:
     taskfile: TaskfileTest.yml
-  b: 
+  b:
     taskfile: TaskfileBuild.yml
   o:
     taskfile: TaskfileOlaris.yml
@@ -50,7 +50,7 @@ includes:
   aks:
     taskfile: clusters/aks.yml
     dir: clusters
-  lks:  
+  lks:
     taskfile: clusters/lks.yml
     dir: clusters
   gke:
@@ -58,7 +58,7 @@ includes:
     dir: clusters
   mik:
     taskfile: clusters/microk8s.yml
-    dir: clusters 
+    dir: clusters
   k3s:
     taskfile: clusters/k3s.yml
     dir: clusters
@@ -87,7 +87,7 @@ tasks:
       - poetry install
     status:
       - test -e $GOBIN/kopf
-      
+
   env:
     desc: print the current environment variables
     cmds:
@@ -231,7 +231,7 @@ tasks:
     desc: "[deprecated] generate and force a new git tag based on the current time"
     cmds:
     - git tag -d $(git tag)
-    - git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)
+    - git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)-SNAPSHOT
     - env PAGER= git tag
 
   # configure env
@@ -248,7 +248,7 @@ tasks:
     desc: update configuration files copied from the openwhisk source repo
     ignore_error: true
     cmds:
-      - | 
+      - |
         cp -v ../openserverless/openserverless-controller/openwhisk/ansible/files/*.json openserverless/files
         cp -v ../openserverless/openserverless-controller/openwhisk/bin/wskadmin tools/cli/wsk/wskadmin.py
         cp -v ../openserverless/openserverless-controller/openwhisk/tools/admin/*.py tools/cli/wsk
@@ -275,7 +275,7 @@ tasks:
       - cmd: kubectl -n openserverless delete kubegres --timeout=60s
         ignore_error: true
       - cmd: kubectl -n openserverless delete milvus --timeout=60s
-        ignore_error: true        
+        ignore_error: true
       - cmd: kubectl -n openserverless delete wsk/controller --grace-period=0 --timeout=5s
         ignore_error: true
       - cmd: task defin
@@ -289,7 +289,7 @@ tasks:
       - cmd: kubectl -n openserverless delete cm/config --grace-period=0
         ignore_error: true
       - cmd: kubectl delete clusterissuers/letsencrypt-issuer
-        ignore_error: true              
+        ignore_error: true
 
 
   utest:
@@ -315,7 +315,7 @@ tasks:
         kubectl apply -f deploy/openserverless-permissions
         rm -f _failed.txt
         for test in tests/{{.T}}*.ipy tests/{{.KUBE}}/{{.T}}*.ipy
-        do  
+        do
             if test -e "$test"
             then  echo "*** [{{.KUBE}}] $test"
                   rm -f deploy/*/kustomization.yaml deploy/*/__*
@@ -390,7 +390,7 @@ tasks:
         then  echo "*** current: {{.KUBE}}"
               ls clusters/*.kubeconfig | sort | awk '{ print NR, $0 }'
               echo "*** select with 'task #'"
-        else  CFG="$(ls -1 clusters/*.kubeconfig | tail +{{.N}} | head -1)" 
+        else  CFG="$(ls -1 clusters/*.kubeconfig | tail +{{.N}} | head -1)"
               cp $CFG ~/.kube/config
               echo "cluster: $(./detect.sh)"
               kubectl get nodes
@@ -418,13 +418,13 @@ tasks:
     - task: b:docker-login
 
   # openserverless-operator section
-  tag: 
+  tag:
     silent: true
-    desc: generate a new tag based on the current time 
+    desc: generate a new tag based on the current time
     cmds:
     - git tag -d $(git tag) || true
     - git tag -f {{.BASETAG}}.$(date +%y%m%d%H%M)
-    - env PAGER= git tag 
+    - env PAGER= git tag
 
   install-registry:
     desc: install a local registry
@@ -432,9 +432,9 @@ tasks:
     - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
     - sudo systemctl restart k3s
     - helm repo add twuni https://helm.twun.io
-    - > 
-      helm install docker-registry twuni/docker-registry 
-      --namespace kube-system  
+    - >
+      helm install docker-registry twuni/docker-registry
+      --namespace kube-system
       --set image.tag=2.8.3
       --set service.type=NodePort
       --set service.nodePort=30050
@@ -451,14 +451,14 @@ tasks:
   kaniko-build:
     desc: build in current kubernetes with Kaniko
     env:
-      TAG: 
+      TAG:
         sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
     - test -n "$GITHUB_USER" || true "did you configure your .env?"
     - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
     - kubectl -n default delete job/kaniko-build || true
     - kubectl -n default apply -f _kaniko-build.yaml
-    - kubectl wait po --for=condition=ready -l app=kaniko-build -n default 
+    - kubectl wait po --for=condition=ready -l app=kaniko-build -n default
 
   build-logs:
     desc: show logs of the latest build
@@ -467,7 +467,7 @@ tasks:
 
   build:
     desc: build the operator image
-    cmds: 
+    cmds:
     - task: install-registry
     - task: tag-commit-push
     - task: kaniko-build
@@ -476,12 +476,12 @@ tasks:
   deploy:
     desc: deploy the current operator image
     env:
-      TAG: 
+      TAG:
         sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
     - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
     - kubectl apply -f _operator-deploy.yaml
-        
+
 
   shell:
     desc: open an interactive shell in the given pod (POD=name)
