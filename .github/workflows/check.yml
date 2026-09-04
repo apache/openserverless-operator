@@ -17,11 +17,9 @@
 #
 
 name: openserverless-operator-check
-on: 
+on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   check:
@@ -32,8 +30,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: License   
-        uses: apache/skywalking-eyes@main
+      - name: License
+        uses: apache/skywalking-eyes@v9.0.0
       - name: Assign TAG
         run: |
           TAG=$(git rev-parse --short HEAD)
@@ -42,7 +40,7 @@ jobs:
       - name: Assign Custom Image Name
         if:  ${{ github.repository_owner != 'apache'}}
         run: |
-          echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"       
+          echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"
       - name: Kind
         uses: container-tools/kind-action@v2.0.4
         with:
@@ -61,18 +59,9 @@ jobs:
         run: task build-and-load
       - name: AddIngress
         run: task kind:ingress
-      - name: Ngrok
-        if: ${{ env.NGROK == 'on' }}
-        run: bash .github/debug-github-actions.sh
-        env:
-          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
-          USER_PASS: ${{ secrets.USER_PASS }}
-      - name: Wait
-        if: ${{ env.NGROK == 'on' }}
-        run: bash .github/wait.sh               
       - name: Unit Test
         run: task utest
         continue-on-error: false
       - name: Integration Test
         run: task itest
-        continue-on-error: false        
+        continue-on-error: false
