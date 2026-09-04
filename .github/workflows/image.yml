@@ -21,7 +21,10 @@ name: Build OpenServerless Operator
 on:
   push:
     tags:
-    - '[0-9a-z-]*'
+    - '*.*.*.*'
+    branches-ignore:
+    - '*'
+  workflow_dispatch:
 
 jobs:
   image:
@@ -49,6 +52,17 @@ jobs:
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           echo "MY_OPERATOR_IMAGE=ghcr.io/$OWNER/openserverless-operator" >> "$GITHUB_ENV"
+      - name: Generate .env
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          if [ "$OWNER" = "apache" ]; then
+            IMAGE=$(awk -F= '/ARG OPERATOR_IMAGE_DEFAULT=/ { print $2 ; exit }' Dockerfile)
+          else
+            IMAGE="ghcr.io/$OWNER/openserverless-operator"
+          fi
+          echo "GITHUB_USER=$OWNER" > .env
+          echo "MY_OPERATOR_IMAGE=$IMAGE" >> .env
+          cat .env
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
