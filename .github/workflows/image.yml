@@ -27,25 +27,28 @@ jobs:
   image:
     name: Build OpenServerless Operator Image
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
     steps:
       #- name: Remove unnecessary files
       #  run: |
       #    sudo rm -rf /usr/share/dotnet
       #    sudo rm -rf "$AGENT_TOOLSDIRECTORY"
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: License
         uses: apache/skywalking-eyes@v0.9.0
-      - name: Assign TAG from pull request
-        if:  ${{ github.event_name == 'pull_request' }}
-        run: |
-          echo "IMG_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
       - name: Assign TAG from push
-        if:  ${{ github.event_name != 'pull_request' }}
         run: |
           echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
+      - name: Assign Custom Image Name
+        if:  ${{ github.repository_owner != 'apache'}}
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "MY_OPERATOR_IMAGE=ghcr.io/$OWNER/openserverless-operator" >> "$GITHUB_ENV"
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:

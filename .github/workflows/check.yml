@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: License
@@ -40,7 +40,8 @@ jobs:
       - name: Assign Custom Image Name
         if:  ${{ github.repository_owner != 'apache'}}
         run: |
-          echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "MY_OPERATOR_IMAGE=ghcr.io/$OWNER/openserverless-operator" >> "$GITHUB_ENV"
       - name: Kind
         uses: container-tools/kind-action@v2.0.4
         with:
