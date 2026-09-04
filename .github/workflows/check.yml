@@ -63,7 +63,7 @@ jobs:
               cluster_name: openserverless
               config: .github/kind.yaml
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
       - name: Setup
