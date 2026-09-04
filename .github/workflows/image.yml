@@ -16,7 +16,7 @@
 # under the License.
 #
 
-name: Build OpenServerless Operator
+name: Build Image
 
 on:
   push:

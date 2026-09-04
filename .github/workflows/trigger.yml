@@ -1,0 +1,53 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Trigger Build
+
+# Creates a new snapshot tag and pushes it, which starts the "Build Image"
+# workflow. This builds nothing itself - see BUILD.md in apache/openserverless.
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    name: Trigger OpenServerless Operator Build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          # the whole history and all the tags: "task tag" deletes the
+          # existing tags and "git describe" needs them to be present
+          fetch-depth: 0
+      - name: Setup
+        run: bash .github/cisetup.sh
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Tag
+        run: task tag
+      - name: Push the tag
+        run: task ci
+      - name: Summary
+        run: |
+          echo "Pushed tag: $(git describe --tags --abbrev=0)" >> "$GITHUB_STEP_SUMMARY"
+          echo "The 'Build Image' workflow has been started by this tag." >> "$GITHUB_STEP_SUMMARY"

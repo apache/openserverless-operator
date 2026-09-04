@@ -459,8 +459,11 @@ def validate_ow_auth(auth):
         >>> auth = tutil.generate_ow_auth()
         >>> util.validate_ow_auth(auth)
         True
+        >>> # the errors logged below are expected: the inputs are invalid on purpose
+        >>> logging.disable(logging.ERROR)
         >>> util.validate_ow_auth('21321:3213216')
         False
+        >>> logging.disable(logging.NOTSET)
     """
     try:
         parts = auth.split(':')

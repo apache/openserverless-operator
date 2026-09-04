@@ -86,12 +86,13 @@ class SeaweedfsClient:
                 raise SeaweedfsUnauthorizedException()
 
     def _exec_weed_command(self,command):
-        # the command is wrapped in a single quoted shell string, so any quote or
-        # shell metacharacter reaching this point would break out of it.
-        if not isinstance(command, str) or re.search(r"[\'\"`$;&|<>\n\r\\]", command):
+        # the command is piped to weed shell via stdin, so it is never interpreted
+        # by a shell and no quoting or character filtering is needed. Only newlines
+        # are rejected, since they would be read as separate weed shell commands.
+        if not isinstance(command, str) or re.search(r"[\n\r]", command):
             raise ValueError("invalid characters in weed shell command")
         logging.debug(f"executing command: {command} inside pod {self.pod_name}")
-        res = kube.kubectl("exec","-it",self.pod_name,"--","/bin/sh","-c",f"echo '{command}' | weed shell")
+        res = kube.kubectl("exec","-i",self.pod_name,"--","weed","shell",input=f"{command}\n")
         return res                               
 
     def make_bucket(self, bucket_name, quota_in_mb=None):
