@@ -137,10 +137,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     WSK_VERSION=1.2.0 && \
     WSK_BASE=https://github.com/apache/openwhisk-cli/releases/download && \
     curl -sL "$WSK_BASE/$WSK_VERSION/OpenWhisk_CLI-$WSK_VERSION-linux-$ARCH.tgz" | tar xzvf - -C /usr/bin/ && \
-    # install minio
-    MINIO_BASE=https://dl.min.io/client/mc/release/linux && \
-    MC_VER=RELEASE.2025-05-21T01-59-54Z && \
-    curl -sL "$MINIO_BASE-$ARCH/archive/mc.${MC_VER}" -o /usr/bin/mc && chmod +x /usr/bin/mc && \
     # install taskfile
     curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/bin
 

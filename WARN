@@ -31,13 +31,7 @@ Category X components that this Dockerfile ADDS on purpose must be removed.
 CATEGORY X
 ==============================================================================
 
-  Component : MinIO Client (mc)
-  License   : AGPL-3.0
-  Category  : X
-  Action    :
-      AGPL-3.0 is Category X. The `mc` binary is downloaded and baked into the image.
-      REMOVE it, or invoke MinIO through the Apache-2.0 licensed `minio` Python SDK
-      (already a dependency) instead of shelling out to `mc`.
+  None. This Dockerfile does not add any Category X component.
 
 
 ==============================================================================
@@ -95,12 +89,23 @@ CATEGORY A
       are no longer dependencies. Its transitive dependencies `scramp` (MIT-0)
       and `asn1crypto` (MIT) are Category A. No action required.
 
+  Component : minio (Python SDK)
+  License   : Apache-2.0
+  Category  : A
+  Action    :
+      Apache-compatible. It REPLACES the AGPL-3.0 MinIO Client (`mc`) previously
+      listed as Category X: the `mc` binary is no longer downloaded or baked into
+      the image, and MinIO is accessed through this SDK instead. No action
+      required.
+
 
 ==============================================================================
 SUMMARY OF REQUIRED REMOVALS (Category X added by this Dockerfile)
 ==============================================================================
 
-  [ ] MinIO Client (mc)  --  AGPL-3.0
+  None outstanding.
+
+  [x] MinIO Client (mc)  --  AGPL-3.0  --  REMOVED from the Dockerfile
 
 ==============================================================================
 ADDITIONAL NOTES

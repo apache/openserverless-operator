@@ -240,9 +240,6 @@ with the Apache License 2.0 are enumerated in the WARN file.
 Summary by license
 ------------------------------------------------------------------------------
 
-AGPL-3.0
-    MinIO Client (mc) (RELEASE.2025-05-21T01-59-54Z)
-
 Apache-2.0
     OpenWhisk CLI (wsk) (1.2.0)
     aiohttp (3.11.11)
@@ -423,8 +420,6 @@ Build-time and bundled command-line tools
       kubernetes-sigs/kustomize.
   OpenWhisk CLI (wsk) (1.2.0) -- Apache-2.0
       Apache OpenWhisk.
-  MinIO Client (mc) (RELEASE.2025-05-21T01-59-54Z) -- AGPL-3.0
-      *** SEE WARN ***
   Task (taskfile) (latest) -- MIT
       Installed from taskfile.dev at build time.
   curl, zip, unzip ((Debian bullseye)) -- curl: MIT; zip/unzip: Info-ZIP

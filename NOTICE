@@ -167,9 +167,6 @@ Build-time and bundled command-line tools
   * OpenWhisk CLI (wsk) (1.2.0)
       License: Apache-2.0
       Apache OpenWhisk.
-  * MinIO Client (mc) (RELEASE.2025-05-21T01-59-54Z)
-      License: AGPL-3.0
-      *** SEE WARN ***
   * Task (taskfile) (latest)
       License: MIT
       Installed from taskfile.dev at build time.
