@@ -90,11 +90,11 @@ tasks:
         git tag $TAG
         echo New tag $TAG
 
-  build:
-  - task: b:build
-
   ci:
     - git push --tags
+
+  build:
+  - task: b:build
 
   setup:
     desc: setup the local development environment (deps, ssh key, env config, poetry)

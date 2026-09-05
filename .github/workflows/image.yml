@@ -62,11 +62,6 @@ jobs:
       - name: Assign TAG from push
         run: |
           echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
-      - name: Assign Custom Image Name
-        if:  ${{ github.repository_owner != 'apache'}}
-        run: |
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "MY_OPERATOR_IMAGE=ghcr.io/$OWNER/openserverless-operator" >> "$GITHUB_ENV"
       - name: Generate .env
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')

@@ -16,11 +16,11 @@
 # under the License.
 #
 
-import psycopg
+import pg8000.dbapi
 import common.util as ut
 
 from common.command_data import CommandData
-from psycopg.rows import dict_row
+from urllib.parse import urlparse, unquote
 import json
 
 class Psql():
@@ -43,30 +43,57 @@ class Psql():
             raise Exception("user does not have valid POSTGRES environment set")
 
 
+    def _connect(self):
+        """
+        Opens a pg8000 connection from the configured postgres URL. pg8000 takes
+        connection arguments as keywords, so the URL is parsed here.
+        """
+        url = urlparse(self._postgres_url)
+        return pg8000.dbapi.connect(
+            host=url.hostname,
+            port=url.port or 5432,
+            user=unquote(url.username) if url.username else None,
+            password=unquote(url.password) if url.password else None,
+            database=url.path.lstrip("/") or None,
+        )
+
     def _query(self, input:CommandData):
         """
         Queries for matching query records and returns datas in a key, value format.
         """
         query = input.command()
-        with psycopg.connect(self._postgres_url) as conn:
+        conn = self._connect()
+        try:
             # Open a cursor to perform database operations
-            with conn.cursor(row_factory=dict_row) as cur:
+            cur = conn.cursor()
+            try:
                 cur.execute(query)
-                result = cur.fetchall()
-                input.result(json.dumps(result))
+                columns = [desc[0] for desc in cur.description]
+                result = [dict(zip(columns, row)) for row in cur.fetchall()]
+                input.result(json.dumps(result, default=str))
                 input.status(200)
                 return input
+            finally:
+                cur.close()
+        finally:
+            conn.close()
 
     def _script(self, input:CommandData):
         script = input.command()
-        with psycopg.connect(self._postgres_url) as conn:
+        conn = self._connect()
+        try:
             # Open a cursor to perform database operations
-            with conn.cursor() as cur:
+            cur = conn.cursor()
+            try:
                 cur.execute(script)
                 conn.commit()
-                input.result(cur.statusmessage)
+                input.result(f"{cur.rowcount} row(s) affected")
                 input.status(200)
-                return input                
+                return input
+            finally:
+                cur.close()
+        finally:
+            conn.close()
             
     def _is_a_query(self, input:CommandData):        
         return 'select' in input.command().lower()

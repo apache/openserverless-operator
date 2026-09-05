@@ -18,7 +18,6 @@
 
 name: Check
 on:
-  push:
   pull_request:
   workflow_dispatch:
 
@@ -40,11 +39,6 @@ jobs:
           TAG=$(git rev-parse --short HEAD)
           echo "IMG_TAG=$TAG" >> "$GITHUB_ENV"
           echo "OPERATOR_TAG=$TAG" >> "$GITHUB_ENV"
-      - name: Assign Custom Image Name
-        if:  ${{ github.repository_owner != 'apache'}}
-        run: |
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "MY_OPERATOR_IMAGE=ghcr.io/$OWNER/openserverless-operator" >> "$GITHUB_ENV"
       - name: Generate .env
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')

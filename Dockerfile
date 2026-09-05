@@ -94,7 +94,7 @@ RUN echo "Installing poetry" && \
     # Install minimal dependencies
     echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt-get update && apt-get install -y --no-install-recommends \
-    curl gnupg zip unzip && \
+    curl zip unzip && \
     curl -sSL https://install.python-poetry.org | python - && \
     cd /home/openserverless && poetry install --no-root --no-interaction --no-ansi && rm -rf $POETRY_CACHE_DIR
 
@@ -125,7 +125,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     # Install minimal dependencies
     echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt-get update && apt-get install -y --no-install-recommends \
-    curl gnupg zip unzip && \
+    curl zip unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     # install kubectl
     KVER="v1.23.0" && \
@@ -157,4 +157,7 @@ RUN poetry install --only main --no-interaction --no-ansi && rm -rf ${POETRY_CAC
 RUN mkdir -p /home/openserverless/deploy/whisk-system && \
     ./whisk-system.sh && \
     cd deploy && tar cvf ../deploy.tar *
+# Apache release metadata (see DISCLAIMER, LICENSE, NOTICE)
+COPY DISCLAIMER LICENSE NOTICE /
+
 CMD ["./run.sh"]
