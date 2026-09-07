@@ -22,13 +22,13 @@ vars:
     sh: ../detect.sh
   WHISK: '{{default "whisk" .WHISK}}'
   CONFIG: "../tests/{{.KUBE}}/{{.WHISK}}.yaml"
-  APIHOST: 
+  APIHOST:
     sh: kubectl -n openserverless get cm/config -o yaml | awk '/apihost:/ {print $2}'
   SYSTEM:
     sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.openwhisk.namespaces.whisk-system}'
   WSKSYS: wsk --apihost {{.APIHOST}} -u {{.SYSTEM}}
   DEPLOY: ../deploy/whisk-system
-  
+
   CDB_USER:
     sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.couchdb.admin.user}'
 
@@ -36,12 +36,12 @@ vars:
     sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.couchdb.admin.password}'
 
   NUV_MINIO_AUTH:
-    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.minio.openserverless.password}'    
+    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.minio.openserverless.password}'
 
-  CDB_HOST: couchdb    
+  CDB_HOST: couchdb
 
-  MINIO_HOST: minio.openserverless.svc.cluster.local   
-  MINIO_PORT: 9000    
+  MINIO_HOST: minio.openserverless.svc.cluster.local
+  MINIO_PORT: 9000
 
   #GIHTUB_SA_TOKEN:
   #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.token}'
@@ -50,7 +50,7 @@ vars:
   #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.ca\.crt}'
 
   #GIHTUB_SA_NS:
-  #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.namespace}'         
+  #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.namespace}'
 
 tasks:
 
@@ -68,10 +68,10 @@ tasks:
 
   echo:
     - zip -j {{.DEPLOY}}/echo.zip echo/*
-    - "{{.WSKSYS}} action update echo {{.DEPLOY}}/echo.zip --kind python:3"
+    - "{{.WSKSYS}} action update echo {{.DEPLOY}}/echo.zip --kind python:sys"
 
   login:prepare:
-    - |- 
+    - |-
       mkdir -p login/openserverless
       cp ../openserverless/config.py ../openserverless/couchdb_util.py ../openserverless/bcrypt_util.py login/openserverless
     - |-
@@ -80,21 +80,21 @@ tasks:
       zip -r ../{{.DEPLOY}}/login.zip *
 
   login:deploy:
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
-      -p couchdb_host "{{.CDB_HOST}}"  
-    - > 
-      {{.WSKSYS}} action update nuv/login 
-      {{.DEPLOY}}/login.zip --kind python:3 --web true
-    - > 
+      -p couchdb_host "{{.CDB_HOST}}"
+    - >
+      {{.WSKSYS}} action update nuv/login
+      {{.DEPLOY}}/login.zip --kind python:sys --web true
+    - >
       {{.WSKSYS}} action get nuv/login --url
 
   content:prepare:
-    - |- 
+    - |-
       mkdir -p content/common
-      cp ./common/minio_util.py content/common      
+      cp ./common/minio_util.py content/common
     - |-
       cd content
       rm  -f ../{{.DEPLOY}}/content.zip
@@ -102,18 +102,18 @@ tasks:
 
   content:deploy:
     - task: content:prepare
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p minio_host {{.MINIO_HOST}}
-      -p minio_port {{.MINIO_PORT}}  
-    - > 
-      {{.WSKSYS}} action update nuv/content 
-      {{.DEPLOY}}/content.zip --kind python:3 --web true
-    - > 
+      -p minio_port {{.MINIO_PORT}}
+    - >
+      {{.WSKSYS}} action update nuv/content
+      {{.DEPLOY}}/content.zip --kind python:sys --web true
+    - >
       {{.WSKSYS}} action get nuv/content --url
 
   devel:redis:prepare:
-    - |- 
+    - |-
       mkdir -p devel/redis/openserverless
       mkdir -p devel/redis/common
       cp ./common/*.py devel/redis/common
@@ -125,19 +125,19 @@ tasks:
 
   devel:redis:deploy:
     - task: devel:redis:prepare
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
       -p couchdb_host "{{.CDB_HOST}}"
-    - > 
+    - >
       {{.WSKSYS}} action update nuv/redis
-      {{.DEPLOY}}/redis.zip --kind python:3 --web raw
-    - > 
-      {{.WSKSYS}} action get nuv/redis --url  
+      {{.DEPLOY}}/redis.zip --kind python:sys --web raw
+    - >
+      {{.WSKSYS}} action get nuv/redis --url
 
   devel:psql:prepare:
-    - |- 
+    - |-
       mkdir -p devel/psql/openserverless
       mkdir -p devel/psql/common
       cp ./common/*.py  devel/psql/common
@@ -149,19 +149,19 @@ tasks:
 
   devel:psql:deploy:
     - task: devel:psql:prepare
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
       -p couchdb_host "{{.CDB_HOST}}"
-    - > 
+    - >
       {{.WSKSYS}} action update nuv/psql
-      {{.DEPLOY}}/psql.zip --kind python:3 --web raw
-    - > 
-      {{.WSKSYS}} action get nuv/psql --url 
+      {{.DEPLOY}}/psql.zip --kind python:sys --web raw
+    - >
+      {{.WSKSYS}} action get nuv/psql --url
 
   devel:minio:prepare:
-    - |- 
+    - |-
       mkdir -p devel/minio/openserverless
       mkdir -p devel/minio/common
       cp ./common/*.py  devel/minio/common
@@ -173,19 +173,19 @@ tasks:
 
   devel:minio:deploy:
     - task: devel:minio:prepare
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
       -p couchdb_host "{{.CDB_HOST}}"
-    - > 
+    - >
       {{.WSKSYS}} action update nuv/minio
-      {{.DEPLOY}}/minio.zip --kind python:3 --web raw
-    - > 
-      {{.WSKSYS}} action get nuv/minio --url 
+      {{.DEPLOY}}/minio.zip --kind python:sys --web raw
+    - >
+      {{.WSKSYS}} action get nuv/minio --url
 
   devel:upload:prepare:
-    - |- 
+    - |-
       mkdir -p devel/upload/openserverless
       mkdir -p devel/upload/common
       cp ./common/*.py  devel/upload/common
@@ -197,19 +197,19 @@ tasks:
 
   devel:upload:deploy:
     - task: devel:upload:prepare
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
       -p couchdb_host "{{.CDB_HOST}}"
-    - > 
+    - >
       {{.WSKSYS}} action update nuv/devel_upload
-      {{.DEPLOY}}/devel_upload.zip --kind python:3 --web raw
-    - > 
-      {{.WSKSYS}} action get nuv/devel_upload --url 
+      {{.DEPLOY}}/devel_upload.zip --kind python:sys --web raw
+    - >
+      {{.WSKSYS}} action get nuv/devel_upload --url
 
   devel:ferretdb:prepare:
-    - |- 
+    - |-
       mkdir -p devel/ferretdb/openserverless
       mkdir -p devel/ferretdb/common
       cp ./common/*.py devel/ferretdb/common
@@ -221,19 +221,19 @@ tasks:
 
   devel:ferretdb:deploy:
     - task: devel:ferretdb:prepare
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
       -p couchdb_host "{{.CDB_HOST}}"
-    - > 
+    - >
       {{.WSKSYS}} action update nuv/ferretdb
-      {{.DEPLOY}}/ferretdb.zip --kind python:3 --web raw
-    - > 
+      {{.DEPLOY}}/ferretdb.zip --kind python:sys --web raw
+    - >
       {{.WSKSYS}} action get nuv/ferretdb --url
 
   devel:download:prepare:
-    - |- 
+    - |-
       mkdir -p devel/download/openserverless
       mkdir -p devel/download/common
       cp ./common/*.py  devel/download/common
@@ -245,16 +245,16 @@ tasks:
 
   devel:download:deploy:
     - task: devel:download:prepare
-    - > 
+    - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
       -p couchdb_host "{{.CDB_HOST}}"
-    - > 
+    - >
       {{.WSKSYS}} action update nuv/devel_download
-      {{.DEPLOY}}/devel_download.zip --kind python:3 --web raw
-    - > 
-      {{.WSKSYS}} action get nuv/devel_download --url                                               
+      {{.DEPLOY}}/devel_download.zip --kind python:sys --web raw
+    - >
+      {{.WSKSYS}} action get nuv/devel_download --url
 
   login:webtest:
     - >
@@ -282,7 +282,7 @@ tasks:
 
   content-delete:yaml:
     - >
-      curl -X DELETE -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml            
+      curl -X DELETE -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml
 
   content:chess:
     - >
@@ -294,11 +294,11 @@ tasks:
 
   devel:redis:get:
     - >
-      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/redis -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/redis_get.json 
+      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/redis -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/redis_get.json
 
   devel:psql:select:
     - >
-      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_select.json 
+      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_select.json
 
   devel:psql:desc:
     - >
@@ -306,31 +306,31 @@ tasks:
 
   devel:psql:create:
     - >
-      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_create1.json 
+      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_create1.json
     - >
-      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_create2.json                        
+      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_create2.json
     - >
-      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_create3.json        
+      curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_create3.json
 
   devel:minio:ls:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_buckets.json       
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_buckets.json
 
   devel:minio:lsb:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_ls.json               
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_ls.json
 
   devel:minio:rm:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_rm.json 
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_rm.json
 
   devel:minio:mv:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_mv.json 
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_mv.json
 
   devel:minio:cp:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_cp.json 
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_cp.json
 
   devel:upload:webtest:
     - >
@@ -357,7 +357,7 @@ tasks:
 
   content:all:
     - task: content:prepare
-    - task: content:deploy   
+    - task: content:deploy
 
   # prepares all the system related actions
   prepare:
@@ -370,7 +370,7 @@ tasks:
 
   all:
     - task: prepare
-    - task: deploy 
+    - task: deploy
 
   deploy:devel:
     - task: devel:redis:deploy
@@ -388,7 +388,7 @@ tasks:
     - echo "{{.GIHTUB_SA_CRT}}"
 
   github:package:deploy:
-    - > 
+    - >
       {{.WSKSYS}} package update github
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_passwo986149f29564be9d0543a11d6657bca63deb7ff5rd "{{.CDB_PASSWORD}}"
@@ -404,7 +404,7 @@ tasks:
 
 
   github:callback:prepare:
-    - |- 
+    - |-
       mkdir -p github/callback/openserverless
       mkdir -p github/callback/common
       cp github/common/*.py github/callback/common
@@ -416,14 +416,14 @@ tasks:
 
   github:callback:deploy:
     - task: github:callback:prepare
-    - > 
+    - >
       {{.WSKSYS}} action update github/callback
-      {{.DEPLOY}}/callback.zip --kind python:3 --web true
-    - > 
-      {{.WSKSYS}} action get github/callback --url 
+      {{.DEPLOY}}/callback.zip --kind python:sys --web true
+    - >
+      {{.WSKSYS}} action get github/callback --url
 
   github:webhook:prepare:
-    - |- 
+    - |-
       mkdir -p github/webhook/openserverless
       mkdir -p github/webhook/common
       cp github/common/*.py github/webhook/common
@@ -435,14 +435,14 @@ tasks:
 
   github:webhook:deploy:
     - task: github:webhook:prepare
-    - > 
+    - >
       {{.WSKSYS}} action update github/webhook
-      {{.DEPLOY}}/webhook.zip --kind python:3 --web raw
-    - > 
+      {{.DEPLOY}}/webhook.zip --kind python:sys --web raw
+    - >
       {{.WSKSYS}} action get github/webhook --url
 
   deploy:github:
     - task: github:package:deploy
     - task: github:callback:deploy
-    - task: github:webhook:deploy           
-                    
+    - task: github:webhook:deploy
+

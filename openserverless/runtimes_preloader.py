@@ -25,14 +25,8 @@ import json
 
 def create(owner=None):
     logging.info(f"*** configuring runtime preloader")
-    config = cfg.getall()
-    only_apache = config.get(
-        "openserverless.preload.only-apache",
-        config.get("openserverless.preloader.only_apache", True)
-    )
-
     runtimes_as_json = util.get_runtimes_json_from_config_map()
-    data=rutil.parse_runtimes(json.loads(runtimes_as_json), only_apache)
+    data=rutil.parse_runtimes(json.loads(runtimes_as_json))
     if not data['containers']:
         logging.info("*** skipped runtime preloader: no valid runtime images found")
         return "skipped runtime preloader"
