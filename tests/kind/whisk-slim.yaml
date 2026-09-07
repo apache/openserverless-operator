@@ -67,8 +67,6 @@ spec:
     slim: true
     affinity: false 
     tolerations: false
-    preload:
-      only-apache: true
   couchdb:
     host: couchdb
     port: 5984

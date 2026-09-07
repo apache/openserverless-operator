@@ -46,7 +46,7 @@ def prepare_login_action():
     login = {
         "name":"login",
         "function":"login.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"true",
         "inputs":get_couchdb_inputs()
     }
@@ -57,7 +57,7 @@ def prepare_secrets_action():
     secrets = {
         "name":"secrets",
         "function":"secrets.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"true",
         "inputs":get_couchdb_inputs()
     }
@@ -71,84 +71,84 @@ def prepare_content_action():
 
     content_inputs=[]
     content_inputs.append({"key":"minio_host", "value":minio_full_host})
-    content_inputs.append({"key":"minio_port", "value":minio_port})    
+    content_inputs.append({"key":"minio_port", "value":minio_port})
 
     content = {
         "name":"content",
         "function":"content.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"true",
         "inputs":content_inputs
     }
 
-    return content 
+    return content
 
 def prepare_redis_action():
 
     redis = {
         "name":"redis",
         "function":"redis.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"raw",
         "inputs":get_couchdb_inputs()
     }
 
-    return redis 
+    return redis
 
 def prepare_psql_action():
     psql = {
         "name":"psql",
         "function":"psql.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"raw",
         "inputs":get_couchdb_inputs()
     }
 
-    return psql  
+    return psql
 
 def prepare_minio_action():
     minio = {
         "name":"minio",
         "function":"minio.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"raw",
         "inputs":get_couchdb_inputs()
     }
 
-    return minio  
+    return minio
 
 def prepare_dev_upload_action():
     dev_upload = {
         "name":"devel_upload",
         "function":"devel_upload.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"raw",
         "inputs":get_couchdb_inputs()
     }
 
-    return dev_upload  
+    return dev_upload
 
 def prepare_ferretdb_action():
     ferretdb = {
         "name":"ferretdb",
         "function":"ferretdb.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"raw",
         "inputs":get_couchdb_inputs()
     }
 
-    return ferretdb 
+    return ferretdb
 
 def prepare_dev_download_action():
     dev_download = {
         "name":"devel_download",
         "function":"devel_download.zip",
-        "runtime":"python:3",
+        "runtime":"python:sys",
         "web":"raw",
         "inputs":get_couchdb_inputs()
     }
 
-    return dev_download             
+    return dev_download
 
 
 def prepare_system_actions():
@@ -200,7 +200,7 @@ def safe_deploy(wskClient):
     deployProjectResponse = wskClient.wsk("project","deploy","--project","deploy/whisk-system")
     process_wsk_result(deployProjectResponse, "Success")
 
-    actionListResult = wskClient.wsk("action","list") 
+    actionListResult = wskClient.wsk("action","list")
     process_wsk_result(actionListResult, "whisk-system/nuv/login")
 
     return True

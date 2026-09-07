@@ -1,0 +1,120 @@
+==============================================================================
+WARN -- Apache License 2.0 incompatibilities
+Container image: apache/openserverless-operator
+==============================================================================
+
+This file lists third-party components bundled by the Dockerfile beside
+it whose licenses are NOT compatible with the Apache License, Version 2.0,
+together with components that require special handling.
+
+Classification follows the ASF third-party licensing policy:
+
+    https://www.apache.org/legal/resolved.html
+
+  Category A  Apache-2.0 compatible. May be included in a release.
+  Category B  May be included in BINARY form only, unmodified and as a
+              separate file, with the reciprocal license disclosed.
+  Category X  MUST NOT be included in an Apache release artifact.
+
+IMPORTANT SCOPE NOTE
+------------------------------------------------------------------------------
+The Apache release artifact for OpenServerless is the SOURCE distribution,
+which contains this Dockerfile and the files beside it -- all Apache-2.0
+licensed. The published container image is a CONVENIENCE BINARY assembled
+at build time from third-party base images and package repositories.
+Category X components inherited from a base operating system image are
+disclosed below but are not redistributed by the ASF in source form.
+Category X components that this Dockerfile ADDS on purpose must be removed.
+
+
+==============================================================================
+CATEGORY X
+==============================================================================
+
+  None. This Dockerfile does not add any Category X component.
+
+
+==============================================================================
+CATEGORY X (as bundled)
+==============================================================================
+
+  Component : Debian/Ubuntu/Alpine base image userland
+  License   : mixed, incl. GPL-2.0/GPL-3.0
+  Category  : X (as bundled)
+  Action    :
+      The base image contains GPL-licensed operating-system components. The Apache release
+      artifact is the SOURCE (this Dockerfile and the files beside it); the published
+      container image is a convenience binary assembled from third-party base images.
+      No action required beyond this disclosure.
+
+
+==============================================================================
+CATEGORY B
+==============================================================================
+
+  Component : certifi / ca-certificates
+  License   : MPL-2.0
+  Category  : B
+  Action    :
+      Category B: MPL-2.0 may be included in binary form only, unmodified and as a
+      separate file. That is satisfied here. No action required.
+
+
+==============================================================================
+CATEGORY A
+==============================================================================
+
+  Component : zip / unzip (Info-ZIP)
+  License   : Info-ZIP License
+  Category  : A
+  Action    :
+      BSD-like and Apache-compatible. No action required.
+
+  Component : curl
+  License   : MIT (curl License)
+  Category  : A
+  Action    :
+      Apache-compatible. The `gnupg` package previously installed beside it has
+      been REMOVED from the Dockerfile: nothing in the operator invokes gpg, and
+      apt verifies stock Debian repository signatures with its own bundled gpgv
+      and the debian-archive-keyring, so gnupg was never required. No action
+      required.
+
+  Component : pg8000
+  License   : BSD-3-Clause
+  Category  : A
+  Action    :
+      Pure-Python PostgreSQL driver, Apache-compatible. It REPLACES the LGPL
+      `psycopg` / `psycopg-binary` pair previously listed as Category X, which
+      are no longer dependencies. Its transitive dependencies `scramp` (MIT-0)
+      and `asn1crypto` (MIT) are Category A. No action required.
+
+  Component : minio (Python SDK)
+  License   : Apache-2.0
+  Category  : A
+  Action    :
+      Apache-compatible. It REPLACES the AGPL-3.0 MinIO Client (`mc`) previously
+      listed as Category X: the `mc` binary is no longer downloaded or baked into
+      the image, and MinIO is accessed through this SDK instead. No action
+      required.
+
+
+==============================================================================
+SUMMARY OF REQUIRED REMOVALS (Category X added by this Dockerfile)
+==============================================================================
+
+  None outstanding.
+
+  [x] MinIO Client (mc)  --  AGPL-3.0  --  REMOVED from the Dockerfile
+
+==============================================================================
+ADDITIONAL NOTES
+==============================================================================
+
+The operator image also embeds Kubernetes manifests under deploy/ that
+reference third-party container images (CouchDB, Redis, MongoDB, Kafka,
+Zookeeper, MinIO, PostgreSQL, cert-manager, ingress-nginx, Milvus, etcd,
+FerretDB, SeaweedFS). Those images are pulled at deployment time by the
+end user and are NOT redistributed as part of this image; their licenses
+are governed by their respective publishers.
+

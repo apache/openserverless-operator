@@ -16,42 +16,65 @@
 # under the License.
 #
 
-name: Build OpenServerless Operator
+name: Build Image
 
 on:
   push:
     tags:
-    - '[0-9]*'
+    - '*.*.*.*'
+    branches-ignore:
+    - '*'
+  workflow_dispatch:
+
 jobs:
   image:
     name: Build OpenServerless Operator Image
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: write
     steps:
-      - name: Remove unnecessary files
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      #- name: Remove unnecessary files
+      #  run: |
+      #    sudo rm -rf /usr/share/dotnet
+      #    sudo rm -rf "$AGENT_TOOLSDIRECTORY"
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           submodules: recursive
+          # full history and tags: "task tag" replaces the existing tags
+          # and "git describe" needs them to be present
+          fetch-depth: 0
       - name: License
-        uses: apache/skywalking-eyes@main
-      - name: Assign TAG from pull request
-        if:  ${{ github.event_name == 'pull_request' }}
+        uses: apache/skywalking-eyes@v0.9.0
+      # Manual run: create a new snapshot tag on the current HEAD and push it.
+      # The push of the tag does not start another run (GITHUB_TOKEN pushes do
+      # not trigger workflows), so this same run goes on and builds it.
+      - name: Tag HEAD (manual run)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          echo "IMG_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          # task is installed later by cisetup.sh, get it now
+          sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          task tag
+          task ci
       - name: Assign TAG from push
-        if:  ${{ github.event_name != 'pull_request' }}
         run: |
           echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
-      #- name: Assign Custom Image Name
-      #  if:  ${{ github.repository_owner != 'apache'}}
-      #  run: |
-      #    echo "MY_OPERATOR_IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}" >> "$GITHUB_ENV"
-      #    echo "IMAGE_REGISTRY=ghcr.io" >> "$GITHUB_ENV"
+      - name: Generate .env
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          if [ "$OWNER" = "apache" ]; then
+            IMAGE=$(awk -F= '/ARG OPERATOR_IMAGE_DEFAULT=/ { print $2 ; exit }' Dockerfile)
+          else
+            IMAGE="ghcr.io/$OWNER/openserverless-operator"
+          fi
+          echo "GITHUB_USER=$OWNER" > .env
+          echo "MY_OPERATOR_IMAGE=$IMAGE" >> .env
+          cat .env
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
       - name: Setup
@@ -74,17 +97,42 @@ jobs:
       #- name: Integration Test
       #  run: task itest
       #  continue-on-error: false
+
+      - name: Select registry
+        env:
+          DOCKERHUB_REGISTRY: ${{ secrets.DOCKERHUB_REGISTRY }}
+        run: |
+            if [ -n "$DOCKERHUB_REGISTRY" ]; then
+              REGISTRY="$DOCKERHUB_REGISTRY"
+            elif [ "${{ github.repository_owner }}" = "apache" ]; then
+              REGISTRY="docker.io"
+            else
+              REGISTRY="ghcr.io"
+            fi
+            echo "REGISTRY=$REGISTRY" >> "$GITHUB_ENV"
+
+      - name: Select registry credentials
+        run: |
+          if [ "${REGISTRY%%/*}" = "ghcr.io" ]; then
+            echo "REGISTRY_USER=${{ github.actor }}" >> "$GITHUB_ENV"
+            echo "REGISTRY_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> "$GITHUB_ENV"
+          else
+            echo "REGISTRY_USER=${{ secrets.DOCKERHUB_USER }}" >> "$GITHUB_ENV"
+            echo "REGISTRY_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}" >> "$GITHUB_ENV"
+          fi
       - name: Registry login
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
         with:
-          registry: 'docker.io'
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_TOKEN }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
         with:
           image: tonistiigi/binfmt:qemu-v7.0.0-28
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
       - name: Image
         run: task buildx-and-push TAG="$IMG_TAG"

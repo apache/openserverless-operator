@@ -27,7 +27,9 @@ vars:
     sh: ./detect.sh
   NS: "openserverless"
   PREFIX: ""
-  TAG:
+  SUFFIX: "-snapshot"
+  TAG:  ""
+
 
 dotenv:
   - .env
@@ -75,6 +77,24 @@ tasks:
     desc: alias for "use" (show/select the current kubernetes cluster)
     cmds:
     - task: use
+
+  tag:
+    silent: true
+    vars:
+      TS:
+        sh: date '+%y %m %d %H %M' | awk '{printf "%s%s%02d%s%02d\n", $1, substr("abcdefghijkl",$2+0,1), $3, substr("abcdefghijklmnopqrstuvwx",$4+1,1), $5}'
+    cmds:
+      - git tag -d $(git tag)
+      - |
+        TAG="{{.BASETAG}}.{{.TS}}{{.SUFFIX}}"
+        git tag $TAG
+        echo New tag $TAG
+
+  ci:
+    - git push --tags
+
+  build:
+  - task: b:build
 
   setup:
     desc: setup the local development environment (deps, ssh key, env config, poetry)
@@ -226,13 +246,15 @@ tasks:
     cmds:
     - task: d:defin
 
-  # old., to be removed
+  # deprecated
   image-tag:
     desc: "[deprecated] generate and force a new git tag based on the current time"
     cmds:
-    - git tag -d $(git tag)
-    - git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)-SNAPSHOT
-    - env PAGER= git tag
+    - echo "deprecated use, task tag"
+    #- git tag -d $(git tag)
+    #- git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)-SNAPSHOT
+    #- env PAGER= git tag
+
 
   # configure env
   configure-env:
@@ -417,15 +439,6 @@ tasks:
     cmds:
     - task: b:docker-login
 
-  # openserverless-operator section
-  tag:
-    silent: true
-    desc: generate a new tag based on the current time
-    cmds:
-    - git tag -d $(git tag) || true
-    - git tag -f {{.BASETAG}}.$(date +%y%m%d%H%M)
-    - env PAGER= git tag
-
   install-registry:
     desc: install a local registry
     cmds:
@@ -440,38 +453,6 @@ tasks:
       --set service.nodePort=30050
     status:
     - kubectl -n kube-system get po -l app=docker-registry | grep docker-registry
-
-  tag-commit-push:
-    desc: tag, commit and push to your default upstream repo (see README.md)
-    cmds:
-    - task: tag
-    - git commit -m "{{.TAG}}" -a || true
-    - git push || true
-
-  kaniko-build:
-    desc: build in current kubernetes with Kaniko
-    env:
-      TAG:
-        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
-    cmds:
-    - test -n "$GITHUB_USER" || true "did you configure your .env?"
-    - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
-    - kubectl -n default delete job/kaniko-build || true
-    - kubectl -n default apply -f _kaniko-build.yaml
-    - kubectl wait po --for=condition=ready -l app=kaniko-build -n default
-
-  build-logs:
-    desc: show logs of the latest build
-    cmds:
-    - kubectl -n default logs -l app=kaniko-build -f
-
-  build:
-    desc: build the operator image
-    cmds:
-    - task: install-registry
-    - task: tag-commit-push
-    - task: kaniko-build
-    - task: build-logs
 
   deploy:
     desc: deploy the current operator image

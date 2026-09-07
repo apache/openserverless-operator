@@ -16,33 +16,40 @@
 # under the License.
 #
 
-name: openserverless-operator-check
-on: 
-  push:
-    branches: [main]
+name: Check
+on:
   pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   check:
     name: Check OpenServerless Operator
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           submodules: recursive
-      - name: License   
-        uses: apache/skywalking-eyes@main
+      - name: License
+        uses: apache/skywalking-eyes@v0.9.0
       - name: Assign TAG
         run: |
           TAG=$(git rev-parse --short HEAD)
           echo "IMG_TAG=$TAG" >> "$GITHUB_ENV"
           echo "OPERATOR_TAG=$TAG" >> "$GITHUB_ENV"
-      - name: Assign Custom Image Name
-        if:  ${{ github.repository_owner != 'apache'}}
+      - name: Generate .env
         run: |
-          echo "MY_OPERATOR_IMAGE=${{ vars.MY_OPERATOR_IMAGE }}" >> "$GITHUB_ENV"       
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          if [ "$OWNER" = "apache" ]; then
+            IMAGE=$(awk -F= '/ARG OPERATOR_IMAGE_DEFAULT=/ { print $2 ; exit }' Dockerfile)
+          else
+            IMAGE="ghcr.io/$OWNER/openserverless-operator"
+          fi
+          echo "GITHUB_USER=$OWNER" > .env
+          echo "MY_OPERATOR_IMAGE=$IMAGE" >> .env
+          cat .env
       - name: Kind
         uses: container-tools/kind-action@v2.0.4
         with:
@@ -50,7 +57,7 @@ jobs:
               cluster_name: openserverless
               config: .github/kind.yaml
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
       - name: Setup
@@ -61,18 +68,9 @@ jobs:
         run: task build-and-load
       - name: AddIngress
         run: task kind:ingress
-      - name: Ngrok
-        if: ${{ env.NGROK == 'on' }}
-        run: bash .github/debug-github-actions.sh
-        env:
-          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
-          USER_PASS: ${{ secrets.USER_PASS }}
-      - name: Wait
-        if: ${{ env.NGROK == 'on' }}
-        run: bash .github/wait.sh               
       - name: Unit Test
         run: task utest
         continue-on-error: false
       - name: Integration Test
         run: task itest
-        continue-on-error: false        
+        continue-on-error: false
