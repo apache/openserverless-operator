@@ -17,7 +17,7 @@
 #
 #------------------------------------------------------------------------------
 # Sources
-FROM python:3.12-slim-bullseye AS sources
+FROM python:3.12-slim-bookworm AS sources
 
 RUN groupadd --gid 1001 openserverless && \
     useradd -m openserverless -s /bin/bash --uid 1001 --gid 1001 --groups root
@@ -75,7 +75,7 @@ ADD --chown=openserverless:openserverless quota.sh /home/openserverless/
 
 #------------------------------------------------------------------------------
 # Python dependencies
-FROM python:3.12-slim-bullseye AS deps
+FROM python:3.12-slim-bookworm AS deps
 
 # --- Install Poetry ---
 ARG POETRY_VERSION=2.3.2
@@ -100,7 +100,7 @@ RUN echo "Installing poetry" && \
 
 #------------------------------------------------------------------------------
 # Final stage
-FROM python:3.12-slim-bullseye
+FROM python:3.12-slim-bookworm
 
 ARG OPERATOR_IMAGE_DEFAULT=docker.io/apache/openserverless-operator
 ARG OPERATOR_TAG_DEFAULT=0.1.0-testing.2309191654
