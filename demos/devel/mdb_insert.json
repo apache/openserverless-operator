@@ -1,12 +1,12 @@
 {
-    "insert":"nuvolaris",    
+    "insert":"openserverless",    
     "documents":[
         {
             "Name":"Affare",
             "Surname":"fatto"
         },
         {
-            "Name":"Nuvolaris",
+            "Name":"OpenServerless",
             "Surname":"rocks"
         },
         {

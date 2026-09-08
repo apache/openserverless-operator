@@ -50,7 +50,7 @@ def main(args):
     """
     Action implementing the callback activated when a user subscribe to the nuv-github-app.
     This implementation will use the code parameter to retrieve access_token and refresh_token representing the user
-    and will create a nuvolaris user having an openwhisk namespace and minio bucket with 100m quota.
+    and will create a openserverless user having an openwhisk namespace and minio bucket with 100m quota.
     """
     print(args)
     
@@ -70,15 +70,15 @@ def main(args):
             user_data = github_client.github_user_detail(token_data['access_token'])
 
             if not 'login' in user_data:
-                return build_error(html.generate_html_error(args['apihost'],"Nuvolaris it is not able to validate your GITHUB account. Account creation stopped."))
+                return build_error(html.generate_html_error(args['apihost'],"OpenServerless it is not able to validate your GITHUB account. Account creation stopped."))
 
             username = user_data['login']
-            #check that the provided github login it is compliant to nuvolaris standard
+            #check that the provided github login it is compliant to openserverless standard
             if len(username) < 5:
-                return build_error(html.generate_html_error(args['apihost'],f"Your GITHUB account {username} does not match Nuvolaris account criteria. It should be at least 5 characters."))
+                return build_error(html.generate_html_error(args['apihost'],f"Your GITHUB account {username} does not match OpenServerless account criteria. It should be at least 5 characters."))
             
             if not _is_valid_username(username):
-                return build_error(html.generate_html_error(args['apihost'],f"Your GITHUB account {username} does not match Nuvolaris account criteria. User name must consist of only lower case characters (max 61 chars)"))
+                return build_error(html.generate_html_error(args['apihost'],f"Your GITHUB account {username} does not match OpenServerless account criteria. User name must consist of only lower case characters (max 61 chars)"))
 
             #check that there is no wsk user already existing with the same login
             exiting_whisk_user = kube_client.get_whisk_user(user_data['login'])
@@ -91,7 +91,7 @@ def main(args):
             
             return build_response(html.generate_html_response(args['apihost'],whisk_user,user_data))
         else:
-            return build_error(html.generate_html_error(args['apihost'],"Nuvolaris it is not able to validate your GITHUB account. GITHUB code token is not valid anymore, please try to activate the nuvolaris GITHUB app again."))
+            return build_error(html.generate_html_error(args['apihost'],"OpenServerless it is not able to validate your GITHUB account. GITHUB code token is not valid anymore, please try to activate the openserverless GITHUB app again."))
     except Exception as ex:
         print(ex)
 

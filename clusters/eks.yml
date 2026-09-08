@@ -25,18 +25,18 @@ tasks:
   destroy:
     - eksctl delete cluster -f eks-cluster.yml --disable-nodegroup-eviction
   
-  #--name nuvolaris-cluster --region=us-east-1
+  #--name openserverless-cluster --region=us-east-1
 
   list: eksctl get cluster --region=us-east-1
 
   config: |-
-    aws eks update-kubeconfig --kubeconfig eks.kubeconfig --name=nuvolaris-eks --region=us-east-1
+    aws eks update-kubeconfig --kubeconfig eks.kubeconfig --name=openserverless-eks --region=us-east-1
     cp eks.kubeconfig ~/.kube/config
     kubectl get nodes 
 
-  avail-addons: eksctl utils describe-addon-versions --cluster=nuvolaris-eks --region=us-east-1
+  avail-addons: eksctl utils describe-addon-versions --cluster=openserverless-eks --region=us-east-1
 
-  list-addon: eksctl get addons --cluster=nuvolaris-eks --region=us-east-1
+  list-addon: eksctl get addons --cluster=openserverless-eks --region=us-east-1
 
   reset:
     - kubectl delete -f ../deploy/cert-manager/cert-manager.yaml

@@ -19,7 +19,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: apisix
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     app.kubernetes.io/name: apisix
     app.kubernetes.io/instance: apisix
@@ -76,7 +76,7 @@ spec:
       initContainers:
         - name: wait-etcd
           image: busybox:1.28
-          command: ['sh', '-c', "until nc -z apisix-etcd.nuvolaris.svc.cluster.local 2379; do echo waiting for etcd `date`; sleep 2; done;"]
+          command: ['sh', '-c', "until nc -z apisix-etcd.openserverless.svc.cluster.local 2379; do echo waiting for etcd `date`; sleep 2; done;"]
       volumes:
         - configMap:
             name: apisix

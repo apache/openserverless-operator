@@ -15,24 +15,24 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all
 
-import nuvolaris.config as cfg
-import nuvolaris.kube as kube
-import nuvolaris.mongodb as mdb
-import nuvolaris.testutil as tu
-from nuvolaris.user_config import UserConfig
-from nuvolaris.user_metadata import UserMetadata
+import openserverless.config as cfg
+import openserverless.kube as kube
+import openserverless.mongodb as mdb
+import openserverless.testutil as tu
+from openserverless.user_config import UserConfig
+from openserverless.user_metadata import UserMetadata
 
 # test
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.put("mongodb.useOperator", False))
 assert(mdb.create())
-while not kube.wait("pod/nuvolaris-mongodb-0", "condition=ready"): pass
-assert(kube.get("service/nuvolaris-mongodb-svc"))
+while not kube.wait("pod/openserverless-mongodb-0", "condition=ready"): pass
+assert(kube.get("service/openserverless-mongodb-svc"))
 
-flavour = kube.kubectl("get", "pod/nuvolaris-mongodb-0", jsonpath=r"{.metadata.labels.nuvolaris\.mongodb\.flavour}")
+flavour = kube.kubectl("get", "pod/openserverless-mongodb-0", jsonpath=r"{.metadata.labels.openserverless\.mongodb\.flavour}")
 assert("standalone"==flavour[0])
 
 spec = tu.load_sample_config("whisk-user")
@@ -45,5 +45,5 @@ assert(mdb.create_db_user(ucfg, udata))
 assert(mdb.delete_db_user(ucfg.get('namespace'),ucfg.get('mongodb.database')))
 assert(mdb.delete())
 
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all

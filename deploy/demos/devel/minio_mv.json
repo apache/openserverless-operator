@@ -1,9 +1,9 @@
 {
     "command":"mv",
     "args":[
-        "nuvolaris-web",
+        "openserverless-web",
         "content.html",
-        "nuvolaris-web",
+        "openserverless-web",
         "tidy/content.html"
     ]
 }

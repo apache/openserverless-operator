@@ -18,18 +18,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nuvolaris-prometheus-alertmanager
-  namespace: nuvolaris
+  name: openserverless-prometheus-alertmanager
+  namespace: openserverless
   labels:
     app.kubernetes.io/component: server
-    app.kubernetes.io/instance: nuvolaris-prometheus
+    app.kubernetes.io/instance: openserverless-prometheus
     app.kubernetes.io/name: alertmanager   
 spec:  
   replicas: 1  
   selector:
     matchLabels:
       app.kubernetes.io/component: server
-      app.kubernetes.io/instance: nuvolaris-prometheus
+      app.kubernetes.io/instance: openserverless-prometheus
       app.kubernetes.io/name: alertmanager
   strategy:
     type: Recreate  
@@ -37,14 +37,14 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: server
-        app.kubernetes.io/instance: nuvolaris-prometheus
+        app.kubernetes.io/instance: openserverless-prometheus
         app.kubernetes.io/name: alertmanager
         name: alertmanager
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"                  
+        whisks.openserverless.org/annotate-version: "true"                  
     spec:
-      serviceAccount: nuvolaris-prometheus-alertmanager
-      serviceAccountName: nuvolaris-prometheus-alertmanager
+      serviceAccount: openserverless-prometheus-alertmanager
+      serviceAccountName: openserverless-prometheus-alertmanager
       terminationGracePeriodSeconds: 300    
       automountServiceAccountToken: true
       containers:
@@ -93,8 +93,8 @@ spec:
       volumes:
       - configMap:
           defaultMode: 420
-          name: nuvolaris-prometheus-alertmanager
+          name: openserverless-prometheus-alertmanager
         name: config
       - name: storage-volume
         persistentVolumeClaim:
-          claimName: storage-nuvolaris-prometheus-alertmanager
+          claimName: storage-openserverless-prometheus-alertmanager

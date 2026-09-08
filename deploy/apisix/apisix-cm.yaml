@@ -19,7 +19,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: apisix
-  namespace: nuvolaris
+  namespace: openserverless
 data:
   config.yaml: |-
     #
@@ -243,6 +243,6 @@ data:
 
       etcd:
         host:                          # it's possible to define multiple etcd hosts addresses of the same etcd cluster.
-          - "http://apisix-etcd.nuvolaris.svc.cluster.local:2379"
+          - "http://apisix-etcd.openserverless.svc.cluster.local:2379"
         prefix: "/apisix"    # configuration prefix in etcd
         timeout: 30    # 30 seconds

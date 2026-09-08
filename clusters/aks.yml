@@ -26,7 +26,7 @@ tasks:
   list: az aks list
 
   config: 
-    - az aks get-credentials --resource-group nuvolaris --name nuvolaris --file aks.kubeconfig
+    - az aks get-credentials --resource-group openserverless --name openserverless --file aks.kubeconfig
     - cp aks.kubeconfig ~/.kube/config
   
   

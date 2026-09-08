@@ -20,7 +20,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: ops-cuda-runtime
-  namespace: nuvolaris  
+  namespace: openserverless  
 spec:  
   replicas: 1
   selector:
@@ -48,7 +48,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ops-cuda-service
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     name: ops-cuda-service
     app: ops-cuda-service

@@ -15,18 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-%system kubectl -n nuvolaris delete all --all
-%system kubectl -n nuvolaris delete pvc --all
+%system kubectl -n openserverless delete all --all
+%system kubectl -n openserverless delete pvc --all
 
-import nuvolaris.config as cfg
-import nuvolaris.kafka as kafka
-import nuvolaris.kube as kube
-import nuvolaris.testutil as tu
-import nuvolaris.zookeeper as zookeeper
+import openserverless.config as cfg
+import openserverless.kafka as kafka
+import openserverless.kube as kube
+import openserverless.testutil as tu
+import openserverless.zookeeper as zookeeper
 
 # test
 assert(cfg.configure(tu.load_sample_config(name="whisk-full")))
-assert(cfg.detect_storage()["nuvolaris.storageclass"])
+assert(cfg.detect_storage()["openserverless.storageclass"])
 
 assert(zookeeper.create())
 
@@ -37,7 +37,7 @@ zookeeper_version = kube.kubectl("get", f"pods/{pod_name}", jsonpath="{.spec.con
 assert(zookeeper_version[0] == "ghcr.io/nuvolaris/zookeeper:3.4.14")
 
 # check the url is stored into the configuration
-assert(cfg.get("nuvolaris.zookeeper.url") == "zookeeper-0.zookeeper:2181")
+assert(cfg.get("openserverless.zookeeper.url") == "zookeeper-0.zookeeper:2181")
 
 assert(kafka.create())
 
@@ -45,7 +45,7 @@ pod_name = kafka.get_kafka_pod_name()
 assert(pod_name)
 
 # check the url is stored into the configuration
-assert(cfg.get("nuvolaris.kafka.url") == "kafka:9092")
+assert(cfg.get("openserverless.kafka.url") == "kafka:9092")
 
 assert(kafka.delete())
 assert(zookeeper.delete())

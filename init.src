@@ -16,7 +16,7 @@
 # under the License.
 #
 export $(xargs <.env)
-export O=deploy/nuvolaris-operator
+export O=deploy/openserverless-operator
 alias ka="kubectl apply -f"
 alias kg="kubectl get"
 alias kd="kubectl delete -f"
@@ -25,4 +25,4 @@ alias kdes="kubectl describe"
 function kfin { 
     kubectl patch "$@"  -p '{"metadata":{"finalizers":[]}}' --type=merge 
 }
-kubectl config set-context --current --namespace nuvolaris
+kubectl config set-context --current --namespace openserverless

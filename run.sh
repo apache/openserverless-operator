@@ -26,10 +26,10 @@ then mkdir -p deploy
      cd ..
 fi
 # start the operator if possible
-KOPF="${VIRTUAL_ENV:-/home/nuvolaris/.venv}/bin/kopf"
-if kubectl -n nuvolaris get cm/config
+KOPF="${VIRTUAL_ENV:-/home/openserverless/.venv}/bin/kopf"
+if kubectl -n openserverless get cm/config
 then if test -x "$KOPF"
-     then exec "$KOPF" run -n nuvolaris -m nuvolaris nuvolaris/main.py nuvolaris/user_handlers.py nuvolaris/workflows.py "$@"
+     then exec "$KOPF" run -n openserverless -m openserverless openserverless/main.py openserverless/user_handlers.py openserverless/workflows.py "$@"
      else echo "kopf not found at $KOPF - run 'task setup' first."
      fi
 else echo "You need to 'kubectl apply -f deploy/permissions' before starting the operator."

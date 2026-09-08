@@ -43,7 +43,7 @@ env:
     APIHOST:
       sh: echo {{.APIKUBE}} | sed -e 's|^.*//\(.*\):.*$|\1|'
     APIHOST_OSH:
-      sh: echo {{.APIKUBE}} | sed -e 's|^.*//\(.*\):.*$|\1|' | sed -e 's/^api./nuvolaris.apps./'
+      sh: echo {{.APIKUBE}} | sed -e 's|^.*//\(.*\):.*$|\1|' | sed -e 's/^api./openserverless.apps./'
       
 tasks:
 
@@ -75,13 +75,13 @@ tasks:
       INVOKER_TAG: "{{.INVOKER_TAG}}"
 
   instance:
-    -  envsubst <{{.CONFIG}} | kubectl -n nuvolaris apply -f -
+    -  envsubst <{{.CONFIG}} | kubectl -n openserverless apply -f -
   
   show:
     - echo "*** {{.CONFIG}}" 
     - envsubst <{{.CONFIG}}
 
-  destroy: kubectl -n nuvolaris delete wsk/controller
+  destroy: kubectl -n openserverless delete wsk/controller
 
   couchdb:
     - rm -f deploy/*/kustomization.yaml deploy/*/__*
@@ -89,18 +89,18 @@ tasks:
     - kubectl apply -f deploy/couchdb
 
   couchdb-forward:
-    - kubectl -n nuvolaris port-forward svc/couchdb 5985:5984
+    - kubectl -n openserverless port-forward svc/couchdb 5985:5984
 
   mongodb:
     - kubectl apply -f deploy/mongodb-operator
     - kubectl apply -f deploy/mongodb
 
   defin: > 
-    kubectl -n nuvolaris patch wsk/controller --type=merge --patch '{"metadata": {"finalizers":[] } }'
+    kubectl -n openserverless patch wsk/controller --type=merge --patch '{"metadata": {"finalizers":[] } }'
     
-  defin2: kubectl -n nuvolaris get wsk/controller -o yaml | grep -v Final | kubectl apply -f -
+  defin2: kubectl -n openserverless get wsk/controller -o yaml | grep -v Final | kubectl apply -f -
 
   killpy: ps auwwx | grep python  | awk '{print $2}' | xargs kill -9
 
-  enter: kubectl exec -ti nuvolaris-operator -- bash
+  enter: kubectl exec -ti openserverless-operator -- bash
 

@@ -19,7 +19,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: openwhisk-runtimes
-  namespace: nuvolaris
+  namespace: openserverless
 data:
   runtimes.json: |
         {
@@ -42,7 +42,7 @@ data:
                     "kind": "nodejs:18",
                     "default": true,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-nodejs-v18",
                         "tag": "3.0.0-beta.2311231822"
                     },
@@ -83,7 +83,7 @@ data:
                     "kind": "nodejs:16",
                     "default": false,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-nodejs-v16",
                         "tag": "3.0.0-beta.2311231822"
                     },
@@ -99,7 +99,7 @@ data:
                     "kind": "python:3",
                     "default": true,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-python-v311",
                         "tag": "3.0.0-beta.2311231822"
                     },
@@ -126,7 +126,7 @@ data:
                     "kind": "python:310",
                     "default": false,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-python-v310",
                         "tag": "3.0.0-beta.2311231822"
                     },
@@ -140,7 +140,7 @@ data:
                     "kind": "python:310kube",
                     "default": false,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-python-v310-kube",
                         "tag": "3.0.0-beta.2310270000"
                     },
@@ -156,7 +156,7 @@ data:
                     "kind": "java:8",
                     "default": true,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-java-v8",
                         "tag": "0.3.0-morpheus.22110809"
                     },
@@ -174,7 +174,7 @@ data:
                     "default": true,
                     "deprecated": false,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-php-v8.2",
                         "tag": "3.0.0-beta.2312062204"
                     },
@@ -188,7 +188,7 @@ data:
                     "default": false,
                     "deprecated": false,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-php-v8.1",
                         "tag": "3.0.0-beta.2312062204"
                     },
@@ -202,7 +202,7 @@ data:
                     "default": false,
                     "deprecated": false,
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
+                        "prefix": "ghcr.io/openserverless",
                         "name": "action-php-v8.0",
                         "tag": "3.0.0-beta.2312062204"
                     },
@@ -252,8 +252,8 @@ data:
                         "attachmentType": "text/plain"
                     },
                     "image": {
-                        "prefix": "ghcr.io/nuvolaris",
-                        "name": "go-nuvolaris-metaflow",
+                        "prefix": "ghcr.io/openserverless",
+                        "name": "go-openserverless-metaflow",
                         "tag": "bc86ab6"
                     }
                 }

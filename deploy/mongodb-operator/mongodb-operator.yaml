@@ -23,7 +23,7 @@ metadata:
   labels:
     owner: mongodb
   name: mongodb-kubernetes-operator
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   replicas: 1
   selector:

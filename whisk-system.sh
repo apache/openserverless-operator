@@ -19,17 +19,17 @@
 echo CONTROLLER: "$CONTROLLER_IMAGE:$CONTROLLER_TAG"
 echo OPERATOR: "$OPERATOR_IMAGE:$OPERATOR_TAG"
 
-echo preparing nuvolaris system actions....
+echo preparing openserverless system actions....
 
-mkdir -p ${HOME}/actions/login/nuvolaris
+mkdir -p ${HOME}/actions/login/openserverless
 mkdir -p ${HOME}/deploy/whisk-system
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/nuvolaris/bcrypt_util.py ${HOME}/actions/login/nuvolaris
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/openserverless/bcrypt_util.py ${HOME}/actions/login/openserverless
 cd ${HOME}/actions/login
 rm  -f ${HOME}/deploy/whisk-system/login.zip
 zip -r ${HOME}/deploy/whisk-system/login.zip *
 
-mkdir -p ${HOME}/actions/secrets/nuvolaris
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/nuvolaris/user_config.py ${HOME}/actions/secrets/nuvolaris
+mkdir -p ${HOME}/actions/secrets/openserverless
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/openserverless/user_config.py ${HOME}/actions/secrets/openserverless
 cd ${HOME}/actions/secrets
 rm  -f ${HOME}/deploy/whisk-system/secrets.zip
 zip -r ${HOME}/deploy/whisk-system/secrets.zip *
@@ -40,49 +40,49 @@ cp ${HOME}/actions/common/minio_util.py ${HOME}/actions/content/common
 rm  -f ${HOME}/deploy/whisk-system/content.zip
 zip -r ${HOME}/deploy/whisk-system/content.zip *
 
-mkdir -p ${HOME}/actions/devel/redis/nuvolaris
+mkdir -p ${HOME}/actions/devel/redis/openserverless
 mkdir -p ${HOME}/actions/devel/redis/common
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/actions/devel/redis/nuvolaris
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/redis/openserverless
 cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/redis/common
 cd ${HOME}/actions/devel/redis
 rm  -f ${HOME}/deploy/whisk-system/redis.zip
 zip -r ${HOME}/deploy/whisk-system/redis.zip *
 
-mkdir -p ${HOME}/actions/devel/psql/nuvolaris
+mkdir -p ${HOME}/actions/devel/psql/openserverless
 mkdir -p ${HOME}/actions/devel/psql/common
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/actions/devel/psql/nuvolaris
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/psql/openserverless
 cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/psql/common
 cd ${HOME}/actions/devel/psql
 rm  -f ${HOME}/deploy/whisk-system/psql.zip
 zip -r ${HOME}/deploy/whisk-system/psql.zip *
 
-mkdir -p ${HOME}/actions/devel/minio/nuvolaris
+mkdir -p ${HOME}/actions/devel/minio/openserverless
 mkdir -p ${HOME}/actions/devel/minio/common
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/actions/devel/minio/nuvolaris
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/minio/openserverless
 cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/minio/common
 cd ${HOME}/actions/devel/minio
 rm  -f ${HOME}/deploy/whisk-system/minio.zip
 zip -r ${HOME}/deploy/whisk-system/minio.zip *
 
-mkdir -p ${HOME}/actions/devel/ferretdb/nuvolaris
+mkdir -p ${HOME}/actions/devel/ferretdb/openserverless
 mkdir -p ${HOME}/actions/devel/ferretdb/common
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/actions/devel/ferretdb/nuvolaris
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/ferretdb/openserverless
 cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/ferretdb/common
 cd ${HOME}/actions/devel/ferretdb
 rm  -f ${HOME}/deploy/whisk-system/ferretdb.zip
 zip -r ${HOME}/deploy/whisk-system/ferretdb.zip *
 
-mkdir -p ${HOME}/actions/devel/download/nuvolaris
+mkdir -p ${HOME}/actions/devel/download/openserverless
 mkdir -p ${HOME}/actions/devel/download/common
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/actions/devel/download/nuvolaris
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/download/openserverless
 cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/download/common
 cd ${HOME}/actions/devel/download
 rm  -f ${HOME}/deploy/whisk-system/devel_download.zip
 zip -r ${HOME}/deploy/whisk-system/devel_download.zip *
 
-mkdir -p ${HOME}/actions/devel/upload/nuvolaris
+mkdir -p ${HOME}/actions/devel/upload/openserverless
 mkdir -p ${HOME}/actions/devel/upload/common
-cp ${HOME}/nuvolaris/config.py ${HOME}/nuvolaris/couchdb_util.py ${HOME}/actions/devel/upload/nuvolaris
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/upload/openserverless
 cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/upload/common
 cd ${HOME}/actions/devel/upload
 rm  -f ${HOME}/deploy/whisk-system/devel_upload.zip

@@ -19,7 +19,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-static-conf-cm
-  namespace: nuvolaris
+  namespace: openserverless
 data:
   default.conf: |
     server {
@@ -46,14 +46,14 @@ data:
           #proxy_hide_header     x-amz-server-side-encryption;        
           #proxy_set_header Host $http_host;
 
-          proxy_pass http://minio.nuvolaris.svc.cluster.local:9000/;
+          proxy_pass http://minio.openserverless.svc.cluster.local:9000/;
           error_page 301 404 = @spa;
           proxy_intercept_errors on;       
       }
 
       location @spa {
         rewrite /(.*?)/ /$1/index.html;
-        proxy_pass http://minio.nuvolaris.svc.cluster.local:9000;
+        proxy_pass http://minio.openserverless.svc.cluster.local:9000;
         error_page 404 = /404.html;
         proxy_intercept_errors on;
       }

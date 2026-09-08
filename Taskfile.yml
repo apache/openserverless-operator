@@ -22,14 +22,14 @@ vars:
   N: ""
   T: ""
   P: ""
-  BASETAG:
-    # fixed to 0.1.0-incubating - overridable with MY_BASETAG env var
-    sh: echo "${MY_BASETAG:-0.1.0-incubating}"
+  BASETAG: 0.9.0-incubating
   KUBE:
     sh: ./detect.sh
-  NS: "nuvolaris"
+  NS: "openserverless"
   PREFIX: ""
-  TAG:
+  SUFFIX: "-snapshot"
+  TAG:  ""
+
 
 dotenv:
   - .env
@@ -37,9 +37,9 @@ dotenv:
 includes:
   d:
     taskfile: TaskfileDev.yml
-  t: 
+  t:
     taskfile: TaskfileTest.yml
-  b: 
+  b:
     taskfile: TaskfileBuild.yml
   o:
     taskfile: TaskfileOlaris.yml
@@ -52,7 +52,7 @@ includes:
   aks:
     taskfile: clusters/aks.yml
     dir: clusters
-  lks:  
+  lks:
     taskfile: clusters/lks.yml
     dir: clusters
   gke:
@@ -60,7 +60,7 @@ includes:
     dir: clusters
   mik:
     taskfile: clusters/microk8s.yml
-    dir: clusters 
+    dir: clusters
   k3s:
     taskfile: clusters/k3s.yml
     dir: clusters
@@ -70,9 +70,6 @@ includes:
   sys:
     taskfile: actions/system.yml
     dir: actions
-  talos:
-    taskfile: clusters/talos-gcp.yml
-    dir: clusters  
 
 tasks:
 
@@ -80,6 +77,24 @@ tasks:
     desc: alias for "use" (show/select the current kubernetes cluster)
     cmds:
     - task: use
+
+  tag:
+    silent: true
+    vars:
+      TS:
+        sh: date '+%y %m %d %H %M' | awk '{printf "%s%s%02d%s%02d\n", $1, substr("abcdefghijkl",$2+0,1), $3, substr("abcdefghijklmnopqrstuvwx",$4+1,1), $5}'
+    cmds:
+      - git tag -d $(git tag)
+      - |
+        TAG="{{.BASETAG}}.{{.TS}}{{.SUFFIX}}"
+        git tag $TAG
+        echo New tag $TAG
+
+  ci:
+    - git push --tags
+
+  build:
+  - task: b:build
 
   setup:
     desc: setup the local development environment (deps, ssh key, env config, poetry)
@@ -92,7 +107,7 @@ tasks:
       - poetry install
     status:
       - test -e $GOBIN/kopf
-      
+
   env:
     desc: print the current environment variables
     cmds:
@@ -119,11 +134,11 @@ tasks:
     - watch kubectl -n {{.NS}} get po,job --no-headers
 
   logs:
-    desc: tail the operator logs to nuvolaris-operator.log
+    desc: tail the operator logs to openserverless-operator.log
     cmds:
     - >
-      rm -f nuvolaris-operator.log ;
-      kubectl -n nuvolaris logs pod/nuvolaris-operator -f | tee nuvolaris-operator.log
+      rm -f openserverless-operator.log ;
+      kubectl -n openserverless logs pod/openserverless-operator -f | tee openserverless-operator.log
 
   cli:
     desc: run the interactive development CLI
@@ -144,7 +159,7 @@ tasks:
     - task: d:run
 
   permission:
-    desc: apply the nuvolaris permissions
+    desc: apply the openserverless permissions
     cmds:
     - task: t:permission
 
@@ -167,7 +182,7 @@ tasks:
     desc: deploy an instance and follow the operator logs
     cmds:
     - task: d:instance
-    - kubectl -n nuvolaris logs pod/nuvolaris-operator -f
+    - kubectl -n openserverless logs pod/openserverless-operator -f
 
   mongo:
     desc: run the mongo integration test
@@ -224,20 +239,22 @@ tasks:
   workflow:
     desc: apply the workflow test manifest
     cmds:
-    - kubectl -n nuvolaris apply -f tests/workflow-test.yaml
+    - kubectl -n openserverless apply -f tests/workflow-test.yaml
 
   defin:
     desc: remove finalizers to force-delete the wsk controller resource
     cmds:
     - task: d:defin
 
-  # old., to be removed
+  # deprecated
   image-tag:
     desc: "[deprecated] generate and force a new git tag based on the current time"
     cmds:
-    - git tag -d $(git tag)
-    - git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)
-    - env PAGER= git tag
+    - echo "deprecated use, task tag"
+    #- git tag -d $(git tag)
+    #- git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)-SNAPSHOT
+    #- env PAGER= git tag
+
 
   # configure env
   configure-env:
@@ -253,17 +270,17 @@ tasks:
     desc: update configuration files copied from the openwhisk source repo
     ignore_error: true
     cmds:
-      - | 
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/ansible/files/*.json nuvolaris/files
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/bin/wskadmin tools/cli/wsk/wskadmin.py
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/tools/admin/*.py tools/cli/wsk
+      - |
+        cp -v ../openserverless/openserverless-controller/openwhisk/ansible/files/*.json openserverless/files
+        cp -v ../openserverless/openserverless-controller/openwhisk/bin/wskadmin tools/cli/wsk/wskadmin.py
+        cp -v ../openserverless/openserverless-controller/openwhisk/tools/admin/*.py tools/cli/wsk
     sources:
-      - ../nuvolaris/nuvolaris-controller/openwhisk/ansible/files/*.json
-      - ../nuvolaris/nuvolaris-controller/openwhisk/bin/wskadmin
-      - ../nuvolaris/nuvolaris-controller/openwhisk/tools/admin/*.py
+      - ../openserverless/openserverless-controller/openwhisk/ansible/files/*.json
+      - ../openserverless/openserverless-controller/openwhisk/bin/wskadmin
+      - ../openserverless/openserverless-controller/openwhisk/tools/admin/*.py
     generates:
-      - nuvolaris/files/*.json
-      - nuvolaris/tools/cli/wsk/*.py
+      - openserverless/files/*.json
+      - openserverless/tools/cli/wsk/*.py
 
   # generate ssh keys
   ssh-key:
@@ -273,35 +290,35 @@ tasks:
       - ssh-keygen  -y -f clusters/id_rsa >clusters/id_rsa.pub
 
   clean:
-    desc: delete all deployed resources in the nuvolaris namespace
+    desc: delete all deployed resources in the openserverless namespace
     cmds:
-      - cmd: kubectl -n nuvolaris delete wsku --all
+      - cmd: kubectl -n openserverless delete wsku --all
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete kubegres --timeout=60s
+      - cmd: kubectl -n openserverless delete kubegres --timeout=60s
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete milvus --timeout=60s
-        ignore_error: true        
-      - cmd: kubectl -n nuvolaris delete wsk/controller --grace-period=0 --timeout=5s
+      - cmd: kubectl -n openserverless delete milvus --timeout=60s
+        ignore_error: true
+      - cmd: kubectl -n openserverless delete wsk/controller --grace-period=0 --timeout=5s
         ignore_error: true
       - cmd: task defin
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete all --all --grace-period=0
+      - cmd: kubectl -n openserverless delete all --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete pvc --all --grace-period=0
+      - cmd: kubectl -n openserverless delete pvc --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete ing --all --grace-period=0
+      - cmd: kubectl -n openserverless delete ing --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete cm/config --grace-period=0
+      - cmd: kubectl -n openserverless delete cm/config --grace-period=0
         ignore_error: true
       - cmd: kubectl delete clusterissuers/letsencrypt-issuer
-        ignore_error: true              
+        ignore_error: true
 
 
   utest:
-    desc: run python doctests for nuvolaris modules (T=filter)
+    desc: run python doctests for openserverless modules (T=filter)
     cmds:
       - |
-        for test in nuvolaris/{{.T}}*.py
+        for test in openserverless/{{.T}}*.py
         do  echo "*** [{{.KUBE}}] $test"
             poetry run python3 -m doctest $test {{.CLI_ARGS}}
         done
@@ -317,10 +334,10 @@ tasks:
     cmds:
       - task: iclean
       - |
-        kubectl apply -f deploy/nuvolaris-permissions
+        kubectl apply -f deploy/openserverless-permissions
         rm -f _failed.txt
         for test in tests/{{.T}}*.ipy tests/{{.KUBE}}/{{.T}}*.ipy
-        do  
+        do
             if test -e "$test"
             then  echo "*** [{{.KUBE}}] $test"
                   rm -f deploy/*/kustomization.yaml deploy/*/__*
@@ -395,7 +412,7 @@ tasks:
         then  echo "*** current: {{.KUBE}}"
               ls clusters/*.kubeconfig | sort | awk '{ print NR, $0 }'
               echo "*** select with 'task #'"
-        else  CFG="$(ls -1 clusters/*.kubeconfig | tail +{{.N}} | head -1)" 
+        else  CFG="$(ls -1 clusters/*.kubeconfig | tail +{{.N}} | head -1)"
               cp $CFG ~/.kube/config
               echo "cluster: $(./detect.sh)"
               kubectl get nodes
@@ -422,76 +439,35 @@ tasks:
     cmds:
     - task: b:docker-login
 
-  # openserverless-operator section
-  tag: 
-    silent: true
-    desc: generate a new tag based on the current time 
-    cmds:
-    - git tag -d $(git tag) || true
-    - git tag -f {{.BASETAG}}.$(date +%y%m%d%H%M)
-    - env PAGER= git tag 
-
   install-registry:
     desc: install a local registry
     cmds:
     - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
     - sudo systemctl restart k3s
     - helm repo add twuni https://helm.twun.io
-    - > 
-      helm install docker-registry twuni/docker-registry 
-      --namespace kube-system  
+    - >
+      helm install docker-registry twuni/docker-registry
+      --namespace kube-system
       --set image.tag=2.8.3
       --set service.type=NodePort
       --set service.nodePort=30050
     status:
     - kubectl -n kube-system get po -l app=docker-registry | grep docker-registry
 
-  tag-commit-push:
-    desc: tag, commit and push to your default upstream repo (see README.md)
-    cmds:
-    - task: tag
-    - git commit -m "{{.TAG}}" -a || true
-    - git push || true
-
-  kaniko-build:
-    desc: build in current kubernetes with Kaniko
-    env:
-      TAG: 
-        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
-    cmds:
-    - test -n "$GITHUB_USER" || true "did you configure your .env?"
-    - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
-    - kubectl -n default delete job/kaniko-build || true
-    - kubectl -n default apply -f _kaniko-build.yaml
-    - kubectl wait po --for=condition=ready -l app=kaniko-build -n default 
-
-  build-logs:
-    desc: show logs of the latest build
-    cmds:
-    - kubectl -n default logs -l app=kaniko-build -f
-
-  build:
-    desc: build the operator image
-    cmds: 
-    - task: install-registry
-    - task: tag-commit-push
-    - task: kaniko-build
-    - task: build-logs
-
   deploy:
     desc: deploy the current operator image
     env:
-      TAG: 
+      TAG:
         sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
     - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
     - kubectl apply -f _operator-deploy.yaml
-        
+
 
   shell:
     desc: open an interactive shell in the given pod (POD=name)
     cmds:
-    - kubectl -n nuvolaris exec --stdin --tty {{.POD}} -- /bin/bash
+    - kubectl -n openserverless exec --stdin --tty {{.POD}} -- /bin/bash
 
   1:
     cmds:

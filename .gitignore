@@ -40,7 +40,7 @@ clusters/worker.yaml
 *.kubeconfig
 run.pid
 *.off
-actions/**/nuvolaris/**/*
+actions/**/openserverless/**/*
 !actions/**/__main__.py
 _*.yaml
 apihost.txt
@@ -57,4 +57,3 @@ actions/github/webhook/common
 .direnv/
 .idea/**
 .vscode/**
-misc

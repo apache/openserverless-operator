@@ -19,11 +19,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nuvolaris-milvus
-  namespace: nuvolaris
+  name: openserverless-milvus
+  namespace: openserverless
   labels:
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
 spec:
   storageClassName: standard
   accessModes:

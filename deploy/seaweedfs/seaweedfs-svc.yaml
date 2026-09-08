@@ -19,7 +19,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: seaweedfs
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   type: NodePort
   ports:

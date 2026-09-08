@@ -27,4 +27,4 @@ db.createUser({
     ]
 });
 
-db.nuv_test_collection.insertOne({"message":"Welcome to nuvolaris!"})
+db.nuv_test_collection.insertOne({"message":"Welcome to openserverless!"})

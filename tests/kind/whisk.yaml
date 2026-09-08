@@ -15,11 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Whisk
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
 spec: 
   components:
     # start openwhisk controller
@@ -53,10 +53,10 @@ spec:
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
-      nuvolaris: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
+      openserverless: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
 #  controller:
 #    image: "ghcr.io/nuvolaris/openwhisk-controller:0.3.0-morpheus.22122609"    
-  nuvolaris:
+  openserverless:
     password: nuvpassw0rd
     storageclass: auto #standard
     provisioner: auto #rancher.io/local-path
@@ -111,8 +111,8 @@ spec:
     volume-size: 2
     default:
       password: s0meP@ass3
-    nuvolaris:
-      #prefix: nuvolaris      
+    openserverless:
+      #prefix: openserverless      
       password: s0meP@ass3
   mongodb:
     host: mongodb
@@ -120,8 +120,8 @@ spec:
     admin: 
       user: whisk_admin
       password: 0therPa55
-    nuvolaris:
-      user: nuvolaris
+    openserverless:
+      user: openserverless
       password: s0meP@ass3
     exposedExternally: False
     useOperator: False
@@ -130,8 +130,8 @@ spec:
     admin:
       user: minioadmin
       password: minioadmin    
-    nuvolaris:
-      user: nuvolaris
+    openserverless:
+      user: openserverless
       password: tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   postgres:    
     volume-size: 2
@@ -139,7 +139,7 @@ spec:
     admin:      
       password: 0therPa55
       replica-password: 0therPa55RR
-    nuvolaris:
+    openserverless:
       password: s0meP@ass3
     backup:
       enabled: true 
@@ -153,7 +153,7 @@ spec:
       slack:        
         enabled: true
         default: true 
-        slack_channel_name: '#monitoring-nuvolaris'
+        slack_channel_name: '#monitoring-openserverless'
         slack_api_url: https://hooks.slack.com/services/RND/VALUE
       gmail:       
         enabled: false
@@ -182,7 +182,7 @@ spec:
     mode: internal
     volume-size: 20
     auth:
-      username: nuvolaris
+      username: openserverless
       password: 4pwdregistry
     hostname: auto
     ingress:

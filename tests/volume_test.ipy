@@ -16,12 +16,12 @@
 # under the License.
 #
 
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all
 
-import nuvolaris.config as cfg
-import nuvolaris.kube as kube
-import nuvolaris.kustomize as kus
+import openserverless.config as cfg
+import openserverless.kube as kube
+import openserverless.kustomize as kus
 
 cfg.clean()
 cfg.detect_labels()
@@ -34,7 +34,7 @@ data = {"name": "test-nginx",
         "container": "test-nginx",
         "size": "1", 
         "dir": "/usr/share/nginx/html",
-        "storageClass": cfg.get("nuvolaris.storageclass")
+        "storageClass": cfg.get("openserverless.storageclass")
 }
 #print(data)
 patch = kus.patchTemplate("test-sts", "set-attach.yaml", data) 

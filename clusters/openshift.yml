@@ -41,13 +41,13 @@ tasks:
 
   user:
     - oc apply -f openshift-user.yaml
-    - oc adm policy add-role-to-user admin nuvolaris
-    - oc apply -f ../deploy/nuvolaris-permissions/whisk-crd.yaml
+    - oc adm policy add-role-to-user admin openserverless
+    - oc apply -f ../deploy/openserverless-permissions/whisk-crd.yaml
     - oc apply -f openshift-aggregate.yaml
 
   project:
-    - oc new-project nuvolaris --description="Nuvolaris" --display-name="Nuvolaris"
-    - oc project nuvolaris
+    - oc new-project openserverless --description="OpenServerless" --display-name="OpenServerless"
+    - oc project openserverless
 
   config: 
     - oc login "$OPENSHIFT_API"  --username="$OPENSHIFT_USER" --password="$OPENSHIFT_PASSWORD"

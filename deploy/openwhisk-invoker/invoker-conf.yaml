@@ -20,7 +20,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: openwhisk-pod-templates
-  namespace: nuvolaris
+  namespace: openserverless
 data:
   ow_pod_templates.yaml: |
     apiVersion: v1

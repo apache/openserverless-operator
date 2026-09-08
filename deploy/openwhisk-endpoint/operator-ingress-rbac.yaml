@@ -24,10 +24,10 @@ metadata:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: nuvolaris-operator-ingress-role
+  name: openserverless-operator-ingress-role
   namespace: ingress-nginx
   labels:
-    app: nuvolaris-operator-ingress-role
+    app: openserverless-operator-ingress-role
 rules:
 
 - apiGroups: [""]
@@ -38,15 +38,15 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: nuvolaris-operator-ingress-rb
+  name: openserverless-operator-ingress-rb
   namespace: ingress-nginx
   labels:
-    app: nuvolaris-operator-ingress-rb
+    app: openserverless-operator-ingress-rb
 subjects:
 - kind: ServiceAccount
-  namespace: nuvolaris
-  name:  nuvolaris-operator
+  namespace: openserverless
+  name:  openserverless-operator
 roleRef:
   kind: Role
-  name: nuvolaris-operator-ingress-role
+  name: openserverless-operator-ingress-role
   apiGroup: rbac.authorization.k8s.io

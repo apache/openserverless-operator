@@ -20,7 +20,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: base-kubegres-backup-config
-  namespace: nuvolaris
+  namespace: openserverless
 data:
   backup_database.sh: |
     #!/bin/bash

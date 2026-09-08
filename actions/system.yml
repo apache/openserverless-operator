@@ -24,8 +24,8 @@ tasks:
 
   login:prepare:
     - |- 
-      mkdir -p login/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py login/nuvolaris
+      mkdir -p login/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py login/openserverless
     - |-
       cd login
       rm  -f ../{{.DEPLOY}}/login.zip
@@ -42,8 +42,8 @@ tasks:
 
   redis:prepare:
     - |- 
-      mkdir -p devel/redis/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/redis/nuvolaris 
+      mkdir -p devel/redis/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/redis/openserverless 
     - |- 
       mkdir -p devel/redis/common
       cp ./common/authorize.py ./common/command_data.py ./common/util.py  devel/redis/common        
@@ -54,8 +54,8 @@ tasks:
 
   psql:prepare:
     - |- 
-      mkdir -p devel/psql/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/psql/nuvolaris 
+      mkdir -p devel/psql/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/psql/openserverless 
     - |- 
       mkdir -p devel/psql/common
       cp ./common/authorize.py ./common/command_data.py ./common/util.py  devel/psql/common        
@@ -66,8 +66,8 @@ tasks:
 
   minio:prepare:
     - |- 
-      mkdir -p devel/minio/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/minio/nuvolaris 
+      mkdir -p devel/minio/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/minio/openserverless 
     - |- 
       mkdir -p devel/minio/common
       cp ./common/*.py devel/minio/common        
@@ -78,8 +78,8 @@ tasks:
 
   devel_upload:prepare:
     - |- 
-      mkdir -p devel/upload/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/upload/nuvolaris 
+      mkdir -p devel/upload/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/upload/openserverless 
     - |- 
       mkdir -p devel/upload/common
       cp ./common/*.py  devel/upload/common        
@@ -90,8 +90,8 @@ tasks:
 
   devel_download:prepare:
     - |- 
-      mkdir -p devel/download/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/download/nuvolaris 
+      mkdir -p devel/download/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/download/openserverless 
     - |- 
       mkdir -p devel/download/common
       cp ./common/*.py  devel/download/common        
@@ -103,8 +103,8 @@ tasks:
 
   ferretdb:prepare:
     - |- 
-      mkdir -p devel/ferretdb/nuvolaris
-      cp ../nuvolaris/config.py ../nuvolaris/couchdb_util.py devel/ferretdb/nuvolaris 
+      mkdir -p devel/ferretdb/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/ferretdb/openserverless 
     - |- 
       mkdir -p devel/ferretdb/common
       cp ./common/*.py  devel/ferretdb/common        
@@ -115,8 +115,8 @@ tasks:
 
   secrets:prepare:
     - |-
-      rm -rf secrets/nuvolaris && mkdir -p secrets/nuvolaris
-      cp ../nuvolaris/config.py  ../nuvolaris/couchdb_util.py  ../nuvolaris/user_config.py secrets/nuvolaris
+      rm -rf secrets/openserverless && mkdir -p secrets/openserverless
+      cp ../openserverless/config.py  ../openserverless/couchdb_util.py  ../openserverless/user_config.py secrets/openserverless
     - |-
       cd secrets
       rm  -f ../{{.DEPLOY}}/secrets.zip

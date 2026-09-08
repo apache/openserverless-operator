@@ -31,8 +31,8 @@ vars:
         then awk -F= '/GITHUB_USER=/{print $2}' ../.env
         else echo unknown
         fi
-  STACK: "{{.GITHUB_USER}}-nuvolaris-dev"
-  MIK_KUBECONFIG: "microk8s-{{.GITHUB_USER}}.kubeconfig"
+  STACK: "{{.GITHUB_USER}}-openserverless-dev"
+  KUBECONFIG: "microk8s-{{.GITHUB_USER}}.kubeconfig"
   
 tasks:
 
@@ -73,8 +73,8 @@ tasks:
         ssh -i id_rsa -o "StrictHostKeyChecking=no" \
         "ubuntu@$(cat {{.APIHOST}})" sudo cloud-init status --wait
         scp -i id_rsa -o "StrictHostKeyChecking=no" \
-        "ubuntu@$(cat {{.APIHOST}}):/etc/kubeconfig" {{.MIK_KUBECONFIG}}
-      - cp -v {{.MIK_KUBECONFIG}} ~/.kube/config
+        "ubuntu@$(cat {{.APIHOST}}):/etc/kubeconfig" {{.KUBECONFIG}}
+      - cp -v {{.KUBECONFIG}} ~/.kube/config
       - kubectl get nodes
 
   import-key: 
@@ -90,6 +90,6 @@ tasks:
     cmds:
     - echo user  {{.GITHUB_USER}}
     - echo stack {{.STACK}}
-    - echo kubeconfig {{.MIK_KUBECONFIG}}
+    - echo kubeconfig {{.KUBECONFIG}}
     silent: true
     

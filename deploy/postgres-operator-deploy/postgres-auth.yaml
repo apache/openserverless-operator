@@ -18,10 +18,10 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: postgres-nuvolaris-secret
-  namespace: nuvolaris
+  name: postgres-openserverless-secret
+  namespace: openserverless
 type: Opaque
 stringData:
   superUserPassword: postgresSuperUserPsw
   replicationUserPassword: postgresReplicaPsw
-  nuvolarisUserPassword: gfjsgfksjdsfjasgfjkagfksgjhagjkjkhsj
+  openserverlessUserPassword: gfjsgfksjdsfjasgfjkagfksgjhagjkjkhsj

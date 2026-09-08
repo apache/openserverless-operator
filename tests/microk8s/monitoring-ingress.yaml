@@ -22,7 +22,7 @@ metadata:
     #cert-manager.io/cluster-issuer: letsencrypt-issuer
     kubernetes.io/ingress.class: public
   name: monitoring
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   rules:
   - host: monitoring.44.203.144.96.nip.io
@@ -30,7 +30,7 @@ spec:
       paths:
       - backend:
           service:
-            name: nuvolaris-prometheus-server
+            name: openserverless-prometheus-server
             port:
               number: 9999
         path: /

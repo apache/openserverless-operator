@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import nuvolaris.config as cfg
+import openserverless.config as cfg
 
 cfg.clean()
-assert(cfg.detect_labels()['nuvolaris.kube']=="eks")
-assert(cfg.detect_storage()["nuvolaris.storageclass"]=="gp2")
+assert(cfg.detect_labels()['openserverless.kube']=="eks")
+assert(cfg.detect_storage()["openserverless.storageclass"]=="gp2")

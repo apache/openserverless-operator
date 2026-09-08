@@ -43,7 +43,7 @@ data:
 kind: ConfigMap
 metadata:
   name: kubegres-manager-config
-  namespace: nuvolaris
+  namespace: openserverless
 ---
 apiVersion: v1
 kind: Service
@@ -51,7 +51,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: kubegres-controller-manager-metrics-service
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   ports:
   - name: https
@@ -67,7 +67,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: kubegres-controller-manager
-  namespace: nuvolaris 
+  namespace: openserverless 
 spec:
   replicas: 1
   selector:
@@ -77,7 +77,7 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
-        whisks.nuvolaris.org/annotate-version: "true"         
+        whisks.openserverless.org/annotate-version: "true"         
       labels:
         name: kubegres
         control-plane: controller-manager

@@ -18,7 +18,7 @@
 #
 
 import os
-from nuvolaris.milvus_simple_client import MilvusSimpleClient as MilvusClient
+from openserverless.milvus_simple_client import MilvusSimpleClient as MilvusClient
 
 # for this test minioClient should see this env variable
 os.environ['MILVUS_ROOT_USER']='root'
@@ -30,7 +30,7 @@ os.environ['MILVUS_ROOT_PASSWORD']='x£VqD7G6712o'
 #client.setup_user("userA","Afrodite1972#123")
 #client.setup_user("userB","Afrodite1972#123")
 
-client3 = MilvusClient(uri="http://localhost:19530",token="nuvolaris:Nuv0therPa55",db_name="nuvolaris")
+client3 = MilvusClient(uri="http://localhost:19530",token="openserverless:Nuv0therPa55",db_name="openserverless")
 print(client3.create_collection(collection_name="userA_collection", dimension=100))
 print(client3.list_collections())
 

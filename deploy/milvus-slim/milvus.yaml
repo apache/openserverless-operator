@@ -20,11 +20,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nuvolaris-milvus-standalone
-  namespace: nuvolaris
+  name: openserverless-milvus-standalone
+  namespace: openserverless
   labels:
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: nuvolaris-milvus
+    app.kubernetes.io/instance: openserverless-milvus
     component: "standalone"    
   annotations:
 spec:
@@ -34,17 +34,17 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: milvus
-      app.kubernetes.io/instance: nuvolaris-milvus
+      app.kubernetes.io/instance: openserverless-milvus
       component: "standalone"
   template:
     metadata:
       labels:
-        name: nuvolaris-milvus
+        name: openserverless-milvus
         app.kubernetes.io/name: milvus
-        app.kubernetes.io/instance: nuvolaris-milvus
+        app.kubernetes.io/instance: openserverless-milvus
         component: "standalone"
       annotations:        
-        whisks.nuvolaris.org/annotate-version: "true"                       
+        whisks.openserverless.org/annotate-version: "true"                       
     spec:
       serviceAccountName: default
       initContainers:
@@ -102,9 +102,9 @@ spec:
         name: tools
       - name: milvus-config
         configMap:
-          name: nuvolaris-milvus
+          name: openserverless-milvus
       - name: milvus-data-disk
         persistentVolumeClaim:
-          claimName: nuvolaris-milvus
+          claimName: openserverless-milvus
       - name: disk
         emptyDir: {}

@@ -15,13 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Whisk
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
-  nuvolaris:
+  openserverless:
     password: nuvpassw0rd
     affinity: false 
     tolerations: false    
@@ -57,7 +57,7 @@ spec:
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
-      nuvolaris: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
+      openserverless: cbd68075-dac2-475e-8c07-d62a30c7e683:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
   couchdb:
     host: couchdb
     port: 5984
@@ -94,8 +94,8 @@ spec:
     volume-size: 10
     default:
       password: s0meP@ass3
-    nuvolaris:
-      prefix: nuvolaris      
+    openserverless:
+      prefix: openserverless      
       password: s0meP@ass3
   mongodb:
     host: mongodb
@@ -103,8 +103,8 @@ spec:
     admin: 
       user: whisk_admin
       password: 0therPa55
-    nuvolaris:
-      user: nuvolaris
+    openserverless:
+      user: openserverless
       password: s0meP@ass3
     exposedExternally: False
     useOperator: False
@@ -113,8 +113,8 @@ spec:
     admin:
       user: minioadmin
       password: minioadmin    
-    nuvolaris:
-      user: nuvolaris
+    openserverless:
+      user: openserverless
       password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   postgres:    
     volume-size: 5
@@ -122,7 +122,7 @@ spec:
     admin:      
       password: 0therPa55
       replicas-password: 0therPa55RR
-    nuvolaris:
+    openserverless:
       password: s0meP@ass3
     backup:
       enabled: false 
@@ -136,7 +136,7 @@ spec:
       slack:        
         enabled: true
         default: true 
-        slack_channel_name: '#monitoring-nuvolaris'
+        slack_channel_name: '#monitoring-openserverless'
         slack_api_url: https://hooks.slack.com/services/RND/VALUE
       gmail:       
         enabled: false
@@ -154,15 +154,15 @@ spec:
     mode: internal
     volume-size: 20
     auth:
-      username: nuvolaris
+      username: openserverless
       password: 4pwdregistry
     hostname: auto
     ingress:
       enabled: false
   seaweedfs:
     volume-size: 60  
-    nuvolaris:
-      user: nuvolaris
+    openserverless:
+      user: openserverless
       password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
     ingress:
       s3-enabled: true

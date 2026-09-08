@@ -20,7 +20,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: kafka-pvc-data
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     app: kafka
 spec:

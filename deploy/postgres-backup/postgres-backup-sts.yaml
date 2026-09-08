@@ -18,25 +18,25 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nuvolaris-postgres-backup
-  namespace: nuvolaris
+  name: openserverless-postgres-backup
+  namespace: openserverless
 spec:
-  serviceName: nuvolaris-postgres-backup
+  serviceName: openserverless-postgres-backup
   replicas: 1
   selector:
     matchLabels:
-      name: nuvolaris-postgres-backup   
+      name: openserverless-postgres-backup   
   template:
     metadata:
       labels:
-        name: nuvolaris-postgres-backup
-        app: nuvolaris-postgres-backup
+        name: openserverless-postgres-backup
+        app: openserverless-postgres-backup
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"         
+        whisks.openserverless.org/annotate-version: "true"         
     spec:
       restartPolicy: Always    
       containers:
-      - name: nuvolaris-postgres-backup
+      - name: openserverless-postgres-backup
         image: ghcr.io/nuvolaris/pg-dumper:16.3.2405222002
         imagePullPolicy: IfNotPresent
         command: ["/bin/bash","-c","/root/backup_start.sh"]
@@ -47,30 +47,30 @@ spec:
           valueFrom:
             secretKeyRef:
               key: superUserPassword
-              name: postgres-nuvolaris-secret
+              name: postgres-openserverless-secret
         - name: KUBEGRES_RESOURCE_NAME
-          value: nuvolaris-postgres
+          value: openserverless-postgres
         - name: BACKUP_DESTINATION_FOLDER
           value: /var/lib/backup
         - name: BACKUP_SOURCE_DB_HOST_NAME
-          value: nuvolaris-postgres-replica
+          value: openserverless-postgres-replica
         - name: BACKUP_IMPORT_DB_HOST_NAME
-          value: nuvolaris-postgres
+          value: openserverless-postgres
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               key: superUserPassword
-              name: postgres-nuvolaris-secret
+              name: postgres-openserverless-secret
         - name: POSTGRES_REPLICATION_PASSWORD
           valueFrom:
             secretKeyRef:
               key: replicationUserPassword
-              name: postgres-nuvolaris-secret
-        - name: POSTGRES_NUVOLARIS_DB_PASSWORD
+              name: postgres-openserverless-secret
+        - name: POSTGRES_OPENSERVERLESS_DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: nuvolarisUserPassword
-              name: postgres-nuvolaris-secret
+              key: openserverlessUserPassword
+              name: postgres-openserverless-secret
         volumeMounts:
         - mountPath: /tmp/backup_database.sh
           name: config

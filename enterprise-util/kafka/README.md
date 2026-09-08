@@ -17,7 +17,7 @@
   ~ under the License.
   ~
 -->
-# Nuvolaris Enterprise Operator Custom Kafka Image with JMX exporter for Prometheus
+# OpenServerless Enterprise Operator Custom Kafka Image with JMX exporter for Prometheus
 
 This folder contains a Dockefile to build a distributed the Enterprise Oeprator Kafka runtime with the Prometheus Kafka JMX exporter enabled.
 

@@ -21,19 +21,19 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 import sys, os, os.path, yaml, json
-import nuvolaris.kube as kube
-import nuvolaris.kustomize as kus
-import nuvolaris.config as cfg
-import nuvolaris.couchdb as cdb
-import nuvolaris.templates as tpl
+import openserverless.kube as kube
+import openserverless.kustomize as kus
+import openserverless.config as cfg
+import openserverless.couchdb as cdb
+import openserverless.templates as tpl
 import requests as req
-import nuvolaris.testutil as tu
+import openserverless.testutil as tu
 
-k='kubectl -n nuvolaris'
-ka='kubectl -n nuvolaris apply'
-kd='kubectl -n nuvolaris delete'
-kde='kubectl -n nuvolaris describe'
-kg='kubectl -n nuvolaris get'
+k='kubectl -n openserverless'
+ka='kubectl -n openserverless apply'
+kd='kubectl -n openserverless delete'
+kde='kubectl -n openserverless describe'
+kg='kubectl -n openserverless get'
 kns='kubectl config  set-context --current --namespace'
 
 def yd(r):
