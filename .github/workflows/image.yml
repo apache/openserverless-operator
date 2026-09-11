@@ -59,9 +59,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           task tag
           task ci
-      - name: Assign TAG from push
-        run: |
           echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
+      - name: Assign TAG from push
+        if: ${{ github.event_name == 'push' }}
+        run: echo "IMG_TAG=${{ github.ref_name }}" >> "$GITHUB_ENV"
+
       - name: Generate .env
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
