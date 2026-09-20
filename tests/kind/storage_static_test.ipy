@@ -15,13 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+
 import os
 
 import openserverless.config as cfg
-import openserverless.kube as kube
-import openserverless.minio_deploy as minio
+import openserverless.seaweedfs_deploy as seaweedfs
+import openserverless.storage_static as static
 import openserverless.testutil as tu
-import openserverless.util as util
+
 
 tu.run_proc("kubectl -n openserverless delete all --all")
 tu.run_proc("kubectl -n openserverless delete pvc --all")
@@ -30,18 +31,12 @@ tu.run_proc("kubectl -n openserverless delete pvc --all")
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["openserverless.storageclass"])
 
-# for this test minioClient should see this env variable
-os.environ['MINIO_API_HOST']='localhost'
+# for this test the seaweedfs filer should see these env variables
+os.environ['SEAWEEDFS_API_HOST']='localhost'
+os.environ['SEAWEEDFS_API_PORT']='9090'
 
-assert(minio.create())
+assert(seaweedfs.create())
+assert(static.create())
 
-pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'minio')].metadata.name}")
-assert(pod_name)
-
-actual_minio_root_user = kube.kubectl("get", f"pods/{pod_name}", jsonpath="{.spec.containers[0].env[0].value}")
-configured_minio_root_user = cfg.get('minio.admin.user')
-assert(actual_minio_root_user[0] == configured_minio_root_user)
-
-cm_minio_url = kube.kubectl("get", f"cm/config", jsonpath="{.metadata.annotations.s3_host}")
-assert(cm_minio_url)
-assert(minio.delete())
+assert(static.delete())
+assert(seaweedfs.delete())

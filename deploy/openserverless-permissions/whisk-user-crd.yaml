@@ -104,26 +104,26 @@ spec:
                   - prefix
                   - password                       
                 object-storage:
-                  description: used to setup openserverless MINIO instance with custom user resources
+                  description: used to setup openserverless S3 (seaweedfs) instance with custom user resources
                   type: object
                   x-kubernetes-preserve-unknown-fields: true
                   properties:
                     password:
-                      description: password to access the internal MINIO instance
+                      description: password to access the internal S3 (seaweedfs) instance
                       type: string
                     quota:
                       description: maximum quota assignable in mb to each defined bucket. Defaults to auto which will not set any specific quota
                       type: string
                     data:
-                      description: used to configure the user MINIO dedicated buckets
+                      description: used to configure the user S3 dedicated buckets
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
                       properties:
                         enabled:
-                          description: boolean flag to configure a MINIO data bucket for the user. defaulted to false
+                          description: boolean flag to configure an S3 data bucket for the user. defaulted to false
                           type: boolean
                         bucket:
-                          description: MINIO data bucket name
+                          description: S3 data bucket name
                           type: string
                           x-kubernetes-validations:
                             - rule: "self.matches('^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$')"
@@ -132,7 +132,7 @@ spec:
                       - enabled 
                       - bucket 
                     route:
-                      description: used to configure a user MINIO static web content provider bucket
+                      description: used to configure a user S3 static web content provider bucket
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
                       properties:

@@ -20,7 +20,7 @@ import json
 
 from common.util import is_json
 from common.authorize import Authorize
-from command.minio import Minio
+from command.s3 import S3
 from common.command_data import CommandData
 from base64 import b64decode
 
@@ -75,6 +75,6 @@ def main(args):
     try:        
         user_data = Authorize(args['couchdb_host'],args['couchdb_user'],args['couchdb_password']).login(headers['x-impersonate-auth'])               
         cmd = CommandData(json.loads(parse_body(args)))          
-        return build_response(Minio(user_data).execute(cmd))
+        return build_response(S3(user_data).execute(cmd))
     except Exception as e:        
-        return build_error(f"failed to execute nuv devel minio. Reason: {str(e)}")
+        return build_error(f"failed to execute nuv devel s3. Reason: {str(e)}")

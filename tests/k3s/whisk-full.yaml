@@ -41,11 +41,11 @@ spec:
     cron: false 
     # enable TLS
     tls: false
-    # minio enabled or not
-    minio: true 
+    # seaweedfs enabled or not
+    seaweedfs: true
     # zookeeper enabled or not
     zookeeper: false
-    # minio static enabled or not
+    # seaweedfs static enabled or not
     static: true  
     # monitoring enabled or not
     monitoring: false
@@ -136,11 +136,8 @@ spec:
       password: s0meP@ass3
     exposedExternally: False
     useOperator: False
-  minio:
+  seaweedfs:
     volume-size: 10
-    admin:
-      user: minioadmin
-      password: minioadmin    
     openserverless:
       user: openserverless
       password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG 

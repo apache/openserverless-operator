@@ -44,8 +44,8 @@ spec:
     cron: true 
     # enable TLS
     tls: true
-    # minio enabled or not
-    minio: true 
+    # seaweedfs enabled or not
+    seaweedfs: true
     # zookeeper enabled or not
     zookeeper: true      
   openwhisk:
@@ -98,11 +98,11 @@ spec:
   tls:
     acme-registered-email: francesco@nuvolaris.io
     acme-server-url: https://acme-v02.api.letsencrypt.org/directory
-  minio:
+  seaweedfs:
     volume-size: 5
     openserverless:
-      root-user: minioadmin
-      root-password: minioadmin
+      user: openserverless
+      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   zookeeper:
     host: zookeeper
     data-volume-size: 10

@@ -34,9 +34,9 @@ spec:
         app: openserverless-static
     spec:
       initContainers:
-      - name: check-minio
+      - name: check-seaweedfs
         image: busybox:1.36.0
-        command: ['sh', '-c', "until nslookup openserverless-minio.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for minio; sleep 2; done"]     
+        command: ['sh', '-c', "until nslookup seaweedfs.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for seaweedfs; sleep 2; done"]
       containers:
       - name: openserverless-static
         image: nginxinc/nginx-unprivileged:1.24
