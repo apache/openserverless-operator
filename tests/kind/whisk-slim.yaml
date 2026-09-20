@@ -113,16 +113,7 @@ spec:
       #prefix: openserverless      
       password: s0meP@ass3
   mongodb:
-    host: mongodb
     volume-size: 5
-    admin: 
-      user: whisk_admin
-      password: 0therPa55
-    openserverless:
-      user: openserverless
-      password: s0meP@ass3
-    exposedExternally: False
-    useOperator: False
   postgres:    
     volume-size: 5
     replicas: 1

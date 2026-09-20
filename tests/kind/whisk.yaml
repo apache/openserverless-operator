@@ -115,16 +115,7 @@ spec:
       #prefix: openserverless      
       password: s0meP@ass3
   mongodb:
-    host: mongodb
     volume-size: 2
-    admin: 
-      user: whisk_admin
-      password: 0therPa55
-    openserverless:
-      user: openserverless
-      password: s0meP@ass3
-    exposedExternally: False
-    useOperator: False
   seaweedfs:
     volume-size: 2
     openserverless:

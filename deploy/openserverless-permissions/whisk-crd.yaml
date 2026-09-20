@@ -213,47 +213,15 @@ spec:
                   - admin
                   - controller
                 mongodb:
-                  description: used to configure a openserverless shared mongodb instance
+                  description: used to configure the openserverless shared mongodb-compatible instance (served by FerretDB)
                   type: object
+                  x-kubernetes-preserve-unknown-fields: true
                   properties:
-                    host:
-                      description: mongodb hostname
-                      type: string
                     volume-size:
                       description: mongodb volume size in GB
                       type: integer
-                    exposedExternally:
-                      type: boolean
-                    useOperator:
-                      description: boolean flag used to deploy mongodb using teh community operator. It default to false
-                      type: boolean
-                    admin:
-                      description: mongodb admin suer credentials
-                      type: object
-                      properties:
-                        user:
-                          type: string
-                        password:
-                          type: string
-                      required:
-                      - user
-                      - password
-                    openserverless:
-                      description: mongodb openserverless database credentials
-                      type: object
-                      properties:
-                        user:
-                          type: string
-                        password:
-                          type: string
-                      required:
-                      - user
-                      - password                      
                   required:
-                    - host
                     - volume-size
-                    - admin
-                    - openserverless
                 postgres:
                   description: used to configure a openserverless shared postgres instance
                   type: object

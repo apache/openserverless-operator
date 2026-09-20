@@ -22,10 +22,9 @@ import openserverless.config as cfg
 import openserverless.kube as kube
 import openserverless.redis as redis
 import openserverless.couchdb as couchdb
-import openserverless.bucket as bucket
 import openserverless.openwhisk as openwhisk
 import openserverless.cronjob as cron
-import openserverless.ferretdb as mongodb
+import openserverless.ferretdb as ferretdb
 import openserverless.issuer as issuer
 import openserverless.endpoint as endpoint
 import openserverless.zookeeper as zookeeper
@@ -193,7 +192,7 @@ def whisk_create(spec, name, **kwargs):
         state['postgres'] = "off"
 
     if cfg.get('components.mongodb'):
-        msg = mongodb.create(owner)
+        msg = ferretdb.create(owner)
         logging.info(msg)
         state['mongodb'] = "on"
     else:
@@ -330,7 +329,7 @@ def whisk_delete(spec, **kwargs):
         logging.info(msg)
         
     if cfg.get("components.mongodb"):
-        msg = mongodb.delete()
+        msg = ferretdb.delete()
         logging.info(msg)         
 
     if cfg.get("components.cron"):

@@ -302,20 +302,6 @@ def wait_for_http(url: str, timeout: int = 60, up_statuses: List[Union[int, str]
                 logging.error(f"Protocol error: {e}")
         time.sleep(1)
 
-# return mongodb configuration parameter with default valued if not configured
-def get_mongodb_config_data():
-    data = {
-        'mongo_admin_user': cfg.get('mongodb.admin.user') or "whisk_user",
-        'mongo_admin_password': cfg.get('mongodb.admin.password') or "0therPa55",
-        'mongo_openserverless_user': cfg.get('mongodb.openserverless.user') or "openserverless",
-        'mongo_openserverless_password': cfg.get('mongodb.openserverless.password') or "s0meP@ass3",
-        'size': cfg.get('mongodb.volume-size') or 10,
-        'pvcName': 'mongodb-data',
-        'storageClass':cfg.get("openserverless.storageclass"),
-        'pvcAccessMode':'ReadWriteOnce'
-        }
-    return data
-
 def parse_image(img):
     """
     Parse a string representing a pod image in the form <image>:<tag> and return

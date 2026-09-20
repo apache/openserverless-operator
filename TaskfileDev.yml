@@ -90,10 +90,6 @@ tasks:
   couchdb-forward:
     - kubectl -n openserverless port-forward svc/couchdb 5985:5984
 
-  mongodb:
-    - kubectl apply -f deploy/mongodb-operator
-    - kubectl apply -f deploy/mongodb
-
   defin: > 
     kubectl -n openserverless patch wsk/controller --type=merge --patch '{"metadata": {"finalizers":[] } }'
     
