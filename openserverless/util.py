@@ -92,8 +92,8 @@ def get_default_storage_provisioner():
 
 def get_ingress_namespace(runtime):
     """
-    Attempt to determine the namespace where the ingress-nginx-controller service has been deployed 
-    checking the openserverless.ingresslb 
+    Attempt to determine the namespace where the ingress-nginx-controller service has been deployed
+    checking the openserverless.ingresslb
     - When set to 'auto' it will attempt to calculate it according to the kubernetes runtime
     - When set to <> 'auto' it will return the configured value. The configured value should be in the form <namespace>/<ingress-nginx-controller-service-name>
     >>> import openserverless.config as cfg
@@ -122,8 +122,8 @@ def get_ingress_namespace(runtime):
 
 def get_ingress_service_name(runtime):
     """
-    Attempt to determine the namespace where the ingress-nginx-controller service has been deployed 
-    checking the openserverless.ingresslb 
+    Attempt to determine the namespace where the ingress-nginx-controller service has been deployed
+    checking the openserverless.ingresslb
     - When set to 'auto' it will attempt to calculate it according to the kubernetes runtime
     - When set to <> 'auto' it will return the configured value. The configured value should be in the form <namespace>/<ingress-nginx-controller-service-name>
     >>> import openserverless.config as cfg
@@ -524,27 +524,6 @@ def get_service(jsonpath,namespace="openserverless"):
 
     raise Exception(f"could not find any svc matching jsonpath={jsonpath}")
 
-# return minio configuration parameters with default values if not configured
-def get_minio_config_data():
-    data = {
-        "applypodsecurity":get_enable_pod_security(),
-        "name":"minio-deployment",
-        "container":"minio",
-        "minio_host": cfg.get('minio.host') or 'openserverless-minio',
-        "minio_volume_size": cfg.get('minio.volume-size') or "5",
-        "minio_root_user": cfg.get('minio.admin.user') or "minio",
-        "minio_root_password": cfg.get('minio.admin.password') or "minio123",
-        "storage_class": cfg.get("openserverless.storageclass"),
-        "minio_nuv_user": cfg.get('minio.openserverless.user') or "openserverless",
-        "minio_nuv_password": cfg.get('minio.openserverless.password') or "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
-        "minio_s3_ingress_enabled": cfg.get('minio.ingress.s3-enabled') or False,
-        "minio_console_ingress_enabled": cfg.get('minio.ingress.console-enabled') or False,
-        "minio_s3_ingress_hostname": cfg.get('minio.ingress.s3-hostname') or "auto",
-        "minio_console_ingress_hostname": cfg.get('minio.ingress.console-hostname') or "auto"
-    }
-    minio_affinity_tolerations_data(data)
-    return data
-
 # return postgres configuration parameter with default valued if not configured
 def get_postgres_config_data():
     data = {
@@ -603,7 +582,7 @@ def get_value_from_config_map(namespace="openserverless", path='{.metadata.annot
 def get_enable_pod_security():
     """
     Return true if there is the need to enable pod security context
-    for some specific pod. This is a test based on some empiric assumption on runtime 
+    for some specific pod. This is a test based on some empiric assumption on runtime
     basis and/or storage class.
     @TODO: find a better way to determine when this function should return true.
     """
@@ -631,11 +610,6 @@ def get_storage_static_config_data():
         "applypodsecurity": get_enable_pod_security()
     }
 
-    if cfg.get('components.minio'):
-        minio_host=cfg.get('minio.host') or "openserverless-minio"
-        minio_port=cfg.get('minio.port') or "9000"
-        data['storage_url']=f"http://{minio_host}.openserverless.svc.cluster.local:{minio_port}"
-
     if cfg.get('components.seaweedfs'):
         seaweedfs_api_host   = cfg.get("seaweedfs.host") or "seaweedfs"
         seaweedfs_api_port   = cfg.get("seaweedfs.port") or "9000"
@@ -662,12 +636,7 @@ def redis_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
     data["pod_anti_affinity_name"] = "redis"
 
-# populate specific affinity data for minio
-def minio_affinity_tolerations_data(data):
-    common_affinity_tolerations_data(data)
-    data["pod_anti_affinity_name"] = "minio"
-
-# populate specific affinity data for minio
+# populate specific affinity data for storage static
 def storage_static_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
     data["pod_anti_affinity_name"] = "openserverless-static"
@@ -708,7 +677,7 @@ def registry_affinity_tolerations_data(data):
 # populate specific affinity data for seaweedfs
 def seaweedfs_affinity_tolerations_data(data):
     common_affinity_tolerations_data(data)
-    data["pod_anti_affinity_name"] = "seaweedfs"        
+    data["pod_anti_affinity_name"] = "seaweedfs"
 
 # wait for a pod name using a label selector and eventually an optional jsonpath
 @nuv_retry()
@@ -914,7 +883,7 @@ def get_milvus_config_data():
         'milvus_etcd_password': cfg.get('milvus.password.etcd') or "0therPa55",
         'milvus_etcd_root_password':cfg.get("etcd.root.password") or "s0meP@ass3wd",
         'milvus_etcd_prefix': 'milvus',
-        'milvus_s3_username': 'miniomilvus',
+        'milvus_s3_username': 'seaweedfsmilvus',
         'milvus_s3_password': cfg.get('milvus.password.s3') or "s0meP@ass3",
         'milvus_bucket_name': 'vectors',
         'milvus_bucket_quota': cfg.get('milvus.volume-size.bucket') or 10240,
@@ -934,14 +903,9 @@ def get_milvus_config_data():
         'milvus_max_database_num': cfg.get('milvus.root-coord.max-database-num') or 64,
         'slim': cfg.get('openserverless.slim') or False,
         }
-    
-    if cfg.get('components.minio'):
-        data["bucket_server_hostname"]="openserverless-minio"
-        data["bucket_server_port"]="9000"
 
-    if cfg.get('components.seaweedfs'):
-        data["bucket_server_hostname"]="seaweedfs"
-        data["bucket_server_port"]="9000"        
+    data["bucket_server_hostname"]="seaweedfs"
+    data["bucket_server_port"]="9000"
 
     data["etcd_range"]=range(data["etcd_replicas"])
     milvus_standalone_affinity_tolerations_data(data)

@@ -17,7 +17,7 @@
 #
 
 import common.util as ut
-import common.minio_util as mutil
+import common.s3_util as mutil
 import json
 import re
 
@@ -25,33 +25,33 @@ from common.command_data import CommandData
 
 from minio.commonconfig import CopySource
 
-class Minio():
+class S3():
     """
-    Implementation of a Minio Command executor. It will require
+    Implementation of an S3 Command executor. It will require
     a user_data dictionary linked to a specific user.
     """
 
     def __init__(self, user_data):
         self._user_data = user_data        
-        self._minio_access_key= ut.get_env_value(user_data,"S3_ACCESS_KEY")        
-        self._minio_secret_key= ut.get_env_value(user_data,"S3_SECRET_KEY") 
-        self._minio_host= ut.get_env_value(user_data,"S3_HOST") 
-        self._minio_port= ut.get_env_value(user_data,"S3_PORT")
-        self._minio_data_bucket= ut.get_env_value(user_data,"S3_DATA_BUCKET")
-        self._minio_static_bucket= ut.get_env_value(user_data,"S3_STATIC_BUCKET")
+        self._s3_access_key= ut.get_env_value(user_data,"S3_ACCESS_KEY")
+        self._s3_secret_key= ut.get_env_value(user_data,"S3_SECRET_KEY")
+        self._s3_host= ut.get_env_value(user_data,"S3_HOST")
+        self._s3_port= ut.get_env_value(user_data,"S3_PORT")
+        self._s3_data_bucket= ut.get_env_value(user_data,"S3_DATA_BUCKET")
+        self._s3_static_bucket= ut.get_env_value(user_data,"S3_STATIC_BUCKET")
         self.validate()
 
     def validate(self):
         """
         Validate that the provided user_data contains the appropriate
-        metadata for being able to submit a postgres command.
+        metadata for being able to submit a storage command.
         """
-        if not self._minio_access_key or not self._minio_secret_key or not self._minio_host or not self._minio_port: 
-            raise Exception("user does not have valid MINIO environment set")
+        if not self._s3_access_key or not self._s3_secret_key or not self._s3_host or not self._s3_port:
+            raise Exception("user does not have valid S3 environment set")
 
     def _list_buckets(self, input:CommandData):
         print("**** listing user buckets")
-        mo_client = mutil.build_mo_client(self._minio_host, self._minio_port,self._minio_access_key, self._minio_secret_key)
+        mo_client = mutil.build_mo_client(self._s3_host, self._s3_port,self._s3_access_key, self._s3_secret_key)
         result = []
         
         buckets = mo_client.list_buckets()
@@ -65,7 +65,7 @@ class Minio():
     def _list_bucket_content(self,bucket,input:CommandData):
         print(f"**** listing bucket {bucket} content")
         
-        mo_client = mutil.build_mo_client(self._minio_host, self._minio_port,self._minio_access_key, self._minio_secret_key)
+        mo_client = mutil.build_mo_client(self._s3_host, self._s3_port,self._s3_access_key, self._s3_secret_key)
         result = []
         objects = mo_client.list_objects(bucket_name=bucket, recursive= True)
 
@@ -78,7 +78,7 @@ class Minio():
     def _rm_bucket_object(self,bucket,filename,input:CommandData):
         print(f"**** removing file {filename} inside bucket {bucket}")
         
-        mo_client = mutil.build_mo_client(self._minio_host, self._minio_port,self._minio_access_key, self._minio_secret_key)
+        mo_client = mutil.build_mo_client(self._s3_host, self._s3_port,self._s3_access_key, self._s3_secret_key)
         mo_client.remove_object(bucket, filename)        
         
         result = {"result":"OK"}
@@ -88,7 +88,7 @@ class Minio():
     def _mv_bucket_object(self,orig_bucket,orig_filename,dest_bucket,dest_filename,input:CommandData):
         print(f"**** moving file {orig_filename} from bucket {orig_bucket} to bucket {dest_bucket} with name {dest_filename}")
         
-        mo_client = mutil.build_mo_client(self._minio_host, self._minio_port,self._minio_access_key, self._minio_secret_key)
+        mo_client = mutil.build_mo_client(self._s3_host, self._s3_port,self._s3_access_key, self._s3_secret_key)
         object_name = mutil.mv_file(mo_client,orig_bucket,orig_filename,dest_bucket,dest_filename)
 
         if object_name:                
@@ -101,7 +101,7 @@ class Minio():
     def _cp_bucket_object(self,orig_bucket,orig_filename,dest_bucket,dest_filename,input:CommandData):
         print(f"**** copying file {orig_filename} from bucket {orig_bucket} to bucket {dest_bucket} with name {dest_filename}")
         
-        mo_client = mutil.build_mo_client(self._minio_host, self._minio_port,self._minio_access_key, self._minio_secret_key)
+        mo_client = mutil.build_mo_client(self._s3_host, self._s3_port,self._s3_access_key, self._s3_secret_key)
         object_name = mutil.cp_file(mo_client,orig_bucket,orig_filename,dest_bucket,dest_filename)
 
         if object_name:                
@@ -121,7 +121,7 @@ class Minio():
         """
         print(f"**** cleaning bucket {bucket} content matching {pattern}. Dry run mode {dry_run}")
         
-        mo_client = mutil.build_mo_client(self._minio_host, self._minio_port,self._minio_access_key, self._minio_secret_key)
+        mo_client = mutil.build_mo_client(self._s3_host, self._s3_port,self._s3_access_key, self._s3_secret_key)
         result = []
         objects = mo_client.list_objects(bucket_name=bucket, recursive= True)
 
@@ -140,10 +140,10 @@ class Minio():
         input.status(200)                         
 
     def execute(self, input:CommandData):
-        print(f"**** Minio command to execute {input.command()}")        
+        print(f"**** S3 command to execute {input.command()}")
         try:
             input.status(400)
-            input.result(f"could not execute minio command {input.command()} invalid arguments.")
+            input.result(f"could not execute s3 command {input.command()} invalid arguments.")
 
             if "ls" in input.command() and not "args" in input.get_metadata():                
                 self._list_buckets(input)
@@ -164,7 +164,7 @@ class Minio():
                 self._clean_bucket_content(input,input.args()[0],input.args()[1],input.args()[2])                
 
         except Exception as e:
-            input.result(f"could not execute minio command {e}")
+            input.result(f"could not execute s3 command {e}")
             input.status(400)
 
         return input

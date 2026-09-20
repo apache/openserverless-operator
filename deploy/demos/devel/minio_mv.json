@@ -1,9 +1,0 @@
-{
-    "command":"mv",
-    "args":[
-        "openserverless-web",
-        "content.html",
-        "openserverless-web",
-        "tidy/content.html"
-    ]
-}

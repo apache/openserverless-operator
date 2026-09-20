@@ -42,9 +42,9 @@ spec:
     cron: false
     # tls enabled or not
     tls: false
-    # minio enabled or not
-    minio: false 
-    # minio static enabled or not
+    # seaweedfs enabled or not
+    seaweedfs: false
+    # seaweedfs static enabled or not
     static: false        
   openwhisk:
     namespaces:
@@ -87,11 +87,11 @@ spec:
   tls:
     acme-registered-email: francesco@nuvolaris.io
     acme-server-url: https://acme-staging-v02.api.letsencrypt.org/directory
-  minio:
+  seaweedfs:
     volume-size: 2
     openserverless:
-      root-user: minioadmin
-      root-password: minioadmin
+      user: openserverless
+      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   configs:
     limits:
       actions:

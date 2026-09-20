@@ -94,8 +94,8 @@ def create(owner=None):
 
 def _annotate_nuv_metadata(data):
     """
-    annotate openserverless configmap with entries for minio connectivity S3_ENDPOINT, S3_PORT, S3_ACCESS_KEY, S3_SECRET_KEY
-    this is becasue MINIO
+    annotate openserverless configmap with entries for S3 connectivity S3_ENDPOINT, S3_PORT, S3_ACCESS_KEY, S3_SECRET_KEY
+    this is because SEAWEEDFS is the S3 provider
     """ 
     try:
         seaweed_service =  _get_seaweedfs_service()
@@ -114,7 +114,7 @@ def _annotate_nuv_metadata(data):
                     openwhisk.annotate(f"s3_port={port['port']}")                  
         return None
     except Exception as e:
-        logging.error(f"failed to build minio_host for openserverless: {e}")
+        logging.error(f"failed to build seaweedfs host for openserverless: {e}")
         return None      
 
 def create_seaweedfs_nuv_storage(data):
@@ -257,7 +257,7 @@ def patch(status, action, owner=None):
         logging.info(msg)        
         logging.info(f"*** hanlded request to {action} seaweedfs") 
     except Exception as e:
-        logging.error('*** failed to update minio: %s' % e)
+        logging.error('*** failed to update seaweedfs: %s' % e)
         operator_util.patch_operator_status(status,'seaweedfs','error')
 
 def patch_ingresses(status, action, owner=None):
@@ -266,7 +266,7 @@ def patch_ingresses(status, action, owner=None):
     """
     try:
         logging.info(f"*** handling request to {action} seaweedfs ingresses")
-        data = util.get_minio_config_data()
+        data = util.get_seaweedfs_config_data()
         if action == 'update':
             msg = seaweedfs_ingress.create_seaweedfs_ingresses(data, owner)
             operator_util.patch_operator_status(status,'seaweedfs-ingresses','on')
@@ -274,5 +274,5 @@ def patch_ingresses(status, action, owner=None):
         logging.info(msg)        
         logging.info(f"*** hanlded request to {action} seaweedfs ingresses") 
     except Exception as e:
-        logging.error('*** failed to update minio seaweedfs: %s' % e)    
+        logging.error('*** failed to update seaweedfs ingresses: %s' % e)
         operator_util.patch_operator_status(status,'seaweedfs-ingresses','error')        

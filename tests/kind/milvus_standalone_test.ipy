@@ -22,7 +22,6 @@ import os
 import openserverless.config as cfg
 import openserverless.etcd as etcd
 import openserverless.milvus_standalone as milvus
-import openserverless.minio_deploy as minio
 import openserverless.seaweedfs_deploy as seaweedfs
 import openserverless.testutil as tu
 from openserverless.milvus_simple_client import MilvusSimpleClient as MilvusClient
@@ -42,25 +41,17 @@ assert(cfg.detect_storage()["openserverless.storageclass"])
 assert(cfg.get("openserverless.slim") == None or cfg.get("openserverless.slim") == False)
 assert(cfg.get("components.milvus") == True)
 
-is_minio = cfg.get('components.minio') or False
 is_seaweedfs = cfg.get('components.seaweedfs') or False
-assert(is_minio or is_seaweedfs)
+assert(is_seaweedfs)
 
 
-# for this test minioClient and Milvus should see this env variable
-# for this test minioClient and Milvus should see this env variable
-if is_minio:
-    os.environ['MINIO_API_HOST']='localhost'
-if is_seaweedfs:
-    os.environ['SEAWEEDFS_API_HOST']='localhost'
-    os.environ['SEAWEEDFS_API_PORT']='9090'
+# for this test seaweedfs and Milvus should see this env variable
+os.environ['SEAWEEDFS_API_HOST']='localhost'
+os.environ['SEAWEEDFS_API_PORT']='9090'
 os.environ['MILVUS_API_HOST']='localhost'
 
 assert(etcd.create())
-if is_minio:
-   assert(minio.create())
-if is_seaweedfs:
-    assert(seaweedfs.create())
+assert(seaweedfs.create())
 assert(milvus.create())
 
 # generate some user config
@@ -110,10 +101,7 @@ assert(milvus.delete_ow_milvus(ucfg))
 
 assert(milvus.delete())
 assert(etcd.delete())
-if is_minio:
-   assert(minio.delete())    
-if is_seaweedfs:
-    assert(seaweedfs.delete())
+assert(seaweedfs.delete())
 
 tu.run_proc("kubectl -n openserverless delete all --all")
 tu.run_proc("kubectl -n openserverless delete pvc --all")
