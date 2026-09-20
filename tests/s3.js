@@ -19,26 +19,26 @@
 const Minio = require('minio');
 
 async function main(args) {        
-    console.log(`connecting to ${args.minio_host}:${args.minio_port}`)
-    let minioClient = new Minio.Client({
-        endPoint: args.minio_host,
-        port: args.minio_port,
+    console.log(`connecting to ${args.s3_host}:${args.s3_port}`)
+    let s3Client = new Minio.Client({
+        endPoint: args.s3_host,
+        port: args.s3_port,
         useSSL: false,
-        accessKey: args.minio_user,
-        secretKey: args.minio_pwd
+        accessKey: args.s3_user,
+        secretKey: args.s3_pwd
     });
 
     let response = {};
     let bucketName = 'test-bucket';
 
-    let bucketExists = await minioClient.bucketExists(bucketName);
+    let bucketExists = await s3Client.bucketExists(bucketName);
     console.log(`${bucketName} exists ${bucketExists}`);
 
     if(!bucketExists) {       
-        response.bucketOperation = await  minioClient.makeBucket(bucketName, 'us-east-1');
+        response.bucketOperation = await  s3Client.makeBucket(bucketName, 'us-east-1');
     }
 
-    response.buckets = await minioClient.listBuckets();
+    response.buckets = await s3Client.listBuckets();
     return {
         "body": response
     }

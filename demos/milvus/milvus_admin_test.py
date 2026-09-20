@@ -20,7 +20,7 @@
 import os
 from openserverless.milvus_simple_client import MilvusSimpleClient as MilvusClient
 
-# for this test minioClient should see this env variable
+# for this test Milvus should see this env variable
 os.environ['MILVUS_ROOT_USER']='root'
 os.environ['MILVUS_API_HOST']='localhost'
 os.environ['MILVUS_API_PORT']='19530'

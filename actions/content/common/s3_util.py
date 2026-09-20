@@ -36,11 +36,11 @@ def extract_mimetype(file):
 
 def build_mo_client(host, port, access_key, secret_key):
     """
-    Creates an Minio client pointing to the given MINIO HOST
-    :param host, minio host
-    :param port, minio api port normally it is the 9000
+    Creates an S3 client pointing to the given S3-compatible HOST
+    :param host, s3 host
+    :param port, s3 api port normally it is the 9000
     :param access_key user we are representing
-    :param secret_key to access minio
+    :param secret_key to access the object store
     """
     mo_client = Minio(f"{host}:{port}",access_key=access_key,secret_key=secret_key,secure=False)    
     return mo_client
@@ -119,7 +119,7 @@ def get_random_string(length):
 
 def rm_file(mo_client, bucket, file):
     """ Remove a file from a bucket
-    :parma mo_client a minio client instance to execute the command
+    :parma mo_client a S3 client instance to execute the command
     :param bucket the bucket name
     :param file the file name
     :return True if the file has been removed, False otherwise

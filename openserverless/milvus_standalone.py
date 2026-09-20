@@ -23,7 +23,6 @@ import openserverless.kustomize as kus
 import openserverless.config as cfg
 import openserverless.util as util
 import openserverless.operator_util as operator_util
-import openserverless.minio_util as mutil
 import openserverless.openwhisk as openwhisk
 
 from openserverless.milvus_admin_client import MilvusAdminClient
@@ -118,24 +117,6 @@ def create(owner=None):
     return res
 
 
-def create_minio_milvus_account(data: dict):
-    """"
-    Creates technical accounts for MINIO
-    """
-    try:
-        minioClient = mutil.MinioClient()
-        bucket_policy_names = []
-        bucket_policy_names.append(f"{data['milvus_bucket_name']}/*")
-
-        res = util.check(minioClient.add_user(data["milvus_s3_username"], data["milvus_s3_password"]),
-                         "create_milvus_s3_user", True)
-        res = util.check(minioClient.make_bucket(data["milvus_bucket_name"]), "create_milvus_s3_bucket", res)
-        return util.check(minioClient.assign_rw_bucket_policy_to_user(data["milvus_s3_username"], bucket_policy_names),
-                          "assign_milvus_s3_bucket_policy", res)
-    except Exception as ex:
-        logging.error("Could not create milvus MINIO accounts", ex)
-        return False 
-
 def create_seaweedfs_milvus_account(data: dict):
     """"
     Creates technical accounts for SEAWEEDFS
@@ -150,30 +131,12 @@ def create_seaweedfs_milvus_account(data: dict):
 
 def create_milvus_accounts(data: dict):
     """"
-    Creates technical accounts for ETCD and MINIO
+    Creates technical accounts for ETCD and SEAWEEDFS
     """
     # currently we use the ETCD root password, so we skip the ETCD user creation.
     # res = util.check(etcd.create_etcd_user(data['milvus_etcd_username'],data['milvus_etcd_password'],data['milvus_etcd_prefix']),"create_etcd_milvus_user",True)
 
-    if cfg.get('components.minio'):
-        return create_minio_milvus_account(data)
-    
-    if cfg.get('components.seaweedfs'):
-        return create_seaweedfs_milvus_account(data)
-
-def delete_minio_milvus_account(data: dict):
-    """
-    Deletes technical accounts for MINIO
-    """
-    try:
-        logging.info("removing milvus minio technical accounts.")
-        minioClient = mutil.MinioClient()
-        res = util.check(minioClient.remove_user(data["milvus_s3_username"]), "remove_user", True)
-        return util.check(minioClient.force_bucket_remove(data["milvus_bucket_name"]), "force_bucket_remove", res)
-        
-    except Exception as ex:
-        logging.error("Could not delete milvus MINIO accounts", ex)
-        return False 
+    return create_seaweedfs_milvus_account(data)
 
 def delete_seaweedfs_milvus_account(data: dict):
     """
@@ -191,16 +154,12 @@ def delete_seaweedfs_milvus_account(data: dict):
 
 def delete_milvus_accounts(data: dict):
     """"
-    Deletes technical accounts for ETCD and MINIO
+    Deletes technical accounts for ETCD and SEAWEEDFS
     """
     # currently we use the ETCD root password, so we skip the ETCD user deletion.
     
     logging.info("removing milvus technical accounts.")
-    if cfg.get('components.minio'):
-        return delete_minio_milvus_account(data)
-    
-    if cfg.get('components.seaweedfs'):
-        return delete_seaweedfs_milvus_account(data)
+    return delete_seaweedfs_milvus_account(data)
 
 
 def create_default_milvus_database(data):
@@ -222,7 +181,6 @@ def create_default_milvus_database(data):
 def _annotate_nuv_milvus_metadata(data):
     """
     annotate openserverless configmap with entries for MILVUS connectivity MILVUS_HOST, MILVUS_PORT, MILVUS_TOKEN, MILVUS_DB_NAME
-    this is becasue MINIO
     """
     try:
         milvus_service = util.get_service(

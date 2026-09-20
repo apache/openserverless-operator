@@ -34,7 +34,7 @@ tasks:
   content:prepare:
     - |- 
       mkdir -p content/common
-      cp ./common/minio_util.py content/common
+      cp ./common/s3_util.py content/common
     - |-
       cd content
       rm  -f ../{{.DEPLOY}}/content.zip
@@ -64,17 +64,17 @@ tasks:
       rm  -f ../../{{.DEPLOY}}/psql.zip
       zip -r ../../{{.DEPLOY}}/psql.zip *
 
-  minio:prepare:
+  s3:prepare:
     - |- 
-      mkdir -p devel/minio/openserverless
-      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/minio/openserverless 
+      mkdir -p devel/s3/openserverless
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/s3/openserverless
     - |- 
-      mkdir -p devel/minio/common
-      cp ./common/*.py devel/minio/common        
+      mkdir -p devel/s3/common
+      cp ./common/*.py devel/s3/common
     - |-
-      cd devel/minio
-      rm  -f ../../{{.DEPLOY}}/minio.zip
-      zip -r ../../{{.DEPLOY}}/minio.zip *
+      cd devel/s3
+      rm  -f ../../{{.DEPLOY}}/s3.zip
+      zip -r ../../{{.DEPLOY}}/s3.zip *
 
   devel_upload:prepare:
     - |- 
@@ -128,7 +128,7 @@ tasks:
     - task: content:prepare
     - task: redis:prepare   
     - task: psql:prepare 
-    - task: minio:prepare 
+    - task: s3:prepare
     - task: devel_upload:prepare
     - task: devel_download:prepare
     - task: ferretdb:prepare

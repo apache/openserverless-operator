@@ -40,9 +40,7 @@ spec:
     cron: false 
     # tls enabled or not
     tls: false
-    # minio enabled or not
-    minio: false 
-    # minio static enabled or not
+    # seaweedfs static enabled or not
     static: true
     # postgres enabled or not
     postgres: false
@@ -126,14 +124,6 @@ spec:
       password: s0meP@ass3
     exposedExternally: False
     useOperator: False
-  minio:
-    volume-size: 2
-    admin:
-      user: minioadmin
-      password: minioadmin    
-    openserverless:
-      user: openserverless
-      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   milvus:    
     volume-size:
       cluster: 20

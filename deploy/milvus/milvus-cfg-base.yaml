@@ -47,9 +47,9 @@ data:
       type: etcd 
          
     minio:
-      address: openserverless-minio
+      address: seaweedfs
       port: 9000
-      accessKeyID: miniomilvus
+      accessKeyID: seaweedfsmilvus
       secretAccessKey: s0meP@ass3
       useSSL: false
       bucketName: vectors

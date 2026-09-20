@@ -42,7 +42,6 @@ ADD --chown=openserverless:openserverless deploy/mongodb-standalone /home/opense
 ADD --chown=openserverless:openserverless deploy/cert-manager /home/openserverless/deploy/cert-manager
 ADD --chown=openserverless:openserverless deploy/ingress-nginx /home/openserverless/deploy/ingress-nginx
 ADD --chown=openserverless:openserverless deploy/issuer /home/openserverless/deploy/issuer
-ADD --chown=openserverless:openserverless deploy/minio /home/openserverless/deploy/minio
 ADD --chown=openserverless:openserverless deploy/kafka /home/openserverless/deploy/kafka
 ADD --chown=openserverless:openserverless deploy/zookeeper /home/openserverless/deploy/zookeeper
 ADD --chown=openserverless:openserverless deploy/nginx-static /home/openserverless/deploy/nginx-static

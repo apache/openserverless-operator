@@ -75,8 +75,8 @@ spec:
     cron: true 
     # tls enabled or not
     tls: false
-    # minio enabled or not
-    minio: true
+    # seaweedfs enabled or not
+    seaweedfs: true
     # start kafka
     kafka: true
     # start openwhisk invoker
@@ -112,11 +112,11 @@ spec:
   tls:
     acme-registered-email: xxxxx@youremailserver.com
     acme-server-url: https://acme-staging-v02.api.letsencrypt.org/directory
-  minio:
+  seaweedfs:
     volume-size: 2
     openserverless:
-      root-user: <minio_admin_user>
-      root-password: <minio_admin_pwd>
+      user: <seaweedfs_admin_user>
+      password: <seaweedfs_admin_pwd>
   configs:    
     limits:
       actions:
@@ -231,8 +231,8 @@ spec:
     cron: true 
     # tls enabled or not
     tls: false
-    # minio enabled or not
-    minio: true
+    # seaweedfs enabled or not
+    seaweedfs: true
     # start kafka
     kafka: false
     # start openwhisk invoker

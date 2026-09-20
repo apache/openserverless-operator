@@ -22,7 +22,7 @@ import string
 import mimetypes
 import io
 
-import common.minio_util as mutil
+import common.s3_util as mutil
 import common.util as ut
 
 from common.authorize import Authorize
@@ -73,7 +73,7 @@ def main(args):
     """
     Action implementing a generic download wrapper for the nuv devel plugin. The invoker must provide a x-impersonate-auth header containing the Openwhisk BASIC authentication of the wsku/user the action should impersonate 
     when calling this action. The upload action it is supposed to receive a path param similar to /<bucket>/<path>
-    and will attempt to retrieve the given path under the given MINIO <bucket>. The bucket must exists and the impersonated user must have read permission on it.
+    and will attempt to retrieve the given path under the given S3 <bucket>. The bucket must exists and the impersonated user must have read permission on it.
     """
     headers = args['__ow_headers']
     if('x-impersonate-auth' not in headers):
@@ -88,7 +88,7 @@ def main(args):
         print(f"processing request to download {download_data['path']} from bucket {download_data['bucket']}")
         user_data = Authorize(args['couchdb_host'],args['couchdb_user'],args['couchdb_password']).login(headers['x-impersonate-auth'])                   
 
-        mo_client = mutil.build_mo_client(ut.get_env_value(user_data,"MINIO_HOST"), ut.get_env_value(user_data,"MINIO_PORT"),ut.get_env_value(user_data,"MINIO_ACCESS_KEY")  , ut.get_env_value(user_data,"MINIO_SECRET_KEY"))
+        mo_client = mutil.build_mo_client(ut.get_env_value(user_data,"S3_HOST"), ut.get_env_value(user_data,"S3_PORT"),ut.get_env_value(user_data,"S3_ACCESS_KEY")  , ut.get_env_value(user_data,"S3_SECRET_KEY"))
 
         # see https://urllib3.readthedocs.io/en/latest/reference/urllib3.response.html for the format       
         response = mo_client.get_object(bucket_name = download_data['bucket'], object_name= download_data['path'])
