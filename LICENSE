@@ -466,11 +466,3 @@ userland is licensed under mixed licenses including GPL-2.0 and GPL-3.0.
 Those operating-system components are supplied by the upstream base image
 and are not redistributed by the ASF in source form. See the WARN file.
 
----------------
-
-The Kubernetes manifests embedded under deploy/ reference third-party
-container images (CouchDB, Redis, MongoDB, Kafka, Zookeeper, MinIO,
-PostgreSQL, cert-manager, ingress-nginx, Milvus, etcd, FerretDB, SeaweedFS).
-Those images are pulled at deployment time by the end user, are NOT
-redistributed as part of this product, and their licenses are governed by
-their respective publishers.
