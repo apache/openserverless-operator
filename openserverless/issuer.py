@@ -59,7 +59,7 @@ def create(owner=None):
 def delete_by_owner():
     spec = "deploy/issuer/__cluster-issuer.yaml"
     res = kube.kubectl("delete", "-f", spec,namespace=None)
-    logging.info(f"delete minio: {res}")
+    logging.info(f"delete cluster issuer: {res}")
     return res
 
 def delete_by_spec():

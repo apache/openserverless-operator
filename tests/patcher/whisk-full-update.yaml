@@ -34,14 +34,12 @@ spec:
     mongodb: true
     # start redis
     redis: true
-    # start s3ninja
-    s3bucket: false
     # start cron based action parser
     cron: true
     # activate tls support
     tls: false
-    # minio enabled or not
-    minio: true 
+    # seaweedfs enabled or not
+    seaweedfs: true
     # zookeeper enabled or not
     zookeeper: true
   openwhisk:
@@ -62,14 +60,7 @@ spec:
       user: controller_admin
       password: s0meP@ass2
   mongodb:
-    host: mongodb
     volume-size: 10
-    admin: 
-      user: whisk_admin
-      password: 0therPa55
-    openserverless:
-      user: openserverless
-      password: s0meP@ass3
     exposed: true
   kafka:
     host: kafka
@@ -93,11 +84,11 @@ spec:
     tag: "0.3.0-morpheus.22122609"    
   scheduler:
     schedule: "* * * * *"
-  minio:
+  seaweedfs:
     volume-size: 2
     openserverless:
-      root-user: minioadmin
-      root-password: minioadmin
+      user: openserverless
+      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   zookeeper:
     host: zookeeper
     data-volume-size: 5

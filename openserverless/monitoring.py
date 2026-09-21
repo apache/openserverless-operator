@@ -16,7 +16,7 @@
 # under the License.
 #
 #
-# Deploys a standalone mongodb
+# Deploys the monitoring stack
 #
 
 import kopf

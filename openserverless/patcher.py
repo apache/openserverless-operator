@@ -17,10 +17,9 @@
 #
 import logging, time
 import openserverless.openwhisk as openwhisk
-import openserverless.ferretdb as mongodb
+import openserverless.ferretdb as ferretdb
 import openserverless.redis as redis
 import openserverless.cronjob as cron
-import openserverless.minio_deploy as minio
 import openserverless.storage_static as static
 import openserverless.config as cfg
 import openserverless.kube as kube
@@ -130,7 +129,7 @@ def patch(diff, status, owner=None, name=None):
         components_updated = True
 
     if "mongodb" in what_to_do:
-        mongodb.patch(status,what_to_do['mongodb'], owner)
+        ferretdb.patch(status,what_to_do['mongodb'], owner)
         components_updated = True
 
     if "redis" in what_to_do:
@@ -139,10 +138,6 @@ def patch(diff, status, owner=None, name=None):
 
     if "cron" in what_to_do:
         cron.patch(status,what_to_do['cron'], owner)
-        components_updated = True 
-
-    if "minio" in what_to_do:
-        minio.patch(status,what_to_do['minio'], owner)
         components_updated = True 
 
     if "static" in what_to_do:
@@ -174,9 +169,6 @@ def patch(diff, status, owner=None, name=None):
     if "endpoint" in what_to_do and what_to_do['endpoint'] == "update":
         issuer.patch(status,what_to_do['endpoint'], owner)       
         endpoint.patch(status,what_to_do['endpoint'], owner)
-
-    if "minio-ingresses" in what_to_do and what_to_do['minio-ingresses'] == "update":
-        minio.patch_ingresses(status,what_to_do['minio-ingresses'], owner)
 
     if "seaweedfs-ingresses" in what_to_do and what_to_do['seaweedfs-ingresses'] == "update":
         seaweedfs.patch_ingresses(status,what_to_do['seaweedfs-ingresses'], owner)        

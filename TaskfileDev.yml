@@ -66,7 +66,6 @@ tasks:
       CONTROLLER_TAG: "{{.CONTROLLER_TAG}}"
       OPERATOR_TAG: "{{.OPERATOR_TAG}}"
       COUCHDB_SERVICE_HOST: "localhost"
-      MINIO_API_HOST: "localhost"
       OW_CONTROLLER_HOST : "localhost"
       VIRTUAL_ENV:
         sh: poetry env info --path 2>/dev/null || echo ""
@@ -90,10 +89,6 @@ tasks:
 
   couchdb-forward:
     - kubectl -n openserverless port-forward svc/couchdb 5985:5984
-
-  mongodb:
-    - kubectl apply -f deploy/mongodb-operator
-    - kubectl apply -f deploy/mongodb
 
   defin: > 
     kubectl -n openserverless patch wsk/controller --type=merge --patch '{"metadata": {"finalizers":[] } }'

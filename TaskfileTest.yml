@@ -31,10 +31,10 @@ vars:
   CONFIG: "tests/{{.KUBE}}/{{.WHISK}}.yaml"
   REDIS_URI: "redis://s0meP%40ass4@redis:6379"
   REDIS_PASSWORD: s0meP@ass4
-  MINIO_HOST: "openserverless-minio"
-  MINIO_PORT: 9000
-  MINIO_USER: "minioadmin"
-  MINIO_PWD : "minioadmin"
+  S3_HOST: "seaweedfs"
+  S3_PORT: 9000
+  S3_USER: "openserverless"
+  S3_PWD : "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG"
   APIKUBE:
       sh: kubectl config view -o json | jq -r '.clusters[0].cluster.server'
 
@@ -162,10 +162,10 @@ tasks:
     - ops -wsk -i action update mongo/mongo tests/mongo.js
     - ops -wsk -i action invoke mongo/mongo -r | grep "hello"
 
-  minio:
-    - ops -wsk -i package update minio -p minio_host {{.MINIO_HOST}} -p minio_port {{.MINIO_PORT}} -p minio_user {{.MINIO_USER}} -p minio_pwd {{.MINIO_PWD}}
-    - ops -wsk -i action update minio/minio tests/minio.js
-    - ops -wsk -i action invoke minio/minio -r
+  s3:
+    - ops -wsk -i package update s3 -p s3_host {{.S3_HOST}} -p s3_port {{.S3_PORT}} -p s3_user {{.S3_USER}} -p s3_pwd {{.S3_PWD}}
+    - ops -wsk -i action update s3/s3 tests/s3.js
+    - ops -wsk -i action invoke s3/s3 -r
     
   mongo2:
     - ops -wsk -i project deploy --manifest tests/mongo.yaml
@@ -177,21 +177,21 @@ tasks:
     - ops -wsk -i action update postgres/postgres tests/postgres.js
     - ops -wsk -i action invoke postgres/postgres -r | grep "OpenServerless Postgres is up and running!"
 
-  minio2:
+  s3-nuv:
     silent: true
-    desc: minio test
+    desc: s3 test
     cmds:    
     - |
-      MINIO_ACCESS_KEY=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_access_key}')
-      MINIO_SECRET_KEY=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_secret_key}')
-      MINIO_HOST=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_host}')
-      MINIO_PORT=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_port}')
-      MINIO_BUCKET_DATA=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_bucket_data}')
-      MINIO_BUCKET_WEB=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_bucket_static}')
-      ops -wsk -i action update minio/minio-nuv tests/minio-nuv.js \
-      -p minio_access "$MINIO_ACCESS_KEY" \
-      -p minio_secret "$MINIO_SECRET_KEY" \
-      -p minio_host "$MINIO_HOST" \
-      -p minio_port "$MINIO_PORT" \
-      -p minio_data "$MINIO_BUCKET_DATA" 
-    - ops -wsk -i action invoke minio/minio-nuv -r        
+      S3_ACCESS_KEY=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_access_key}')
+      S3_SECRET_KEY=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_secret_key}')
+      S3_HOST=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_host}')
+      S3_PORT=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_port}')
+      S3_BUCKET_DATA=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_bucket_data}')
+      S3_BUCKET_WEB=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.s3_bucket_static}')
+      ops -wsk -i action update s3/s3-nuv tests/s3-nuv.js \
+      -p s3_access "$S3_ACCESS_KEY" \
+      -p s3_secret "$S3_SECRET_KEY" \
+      -p s3_host "$S3_HOST" \
+      -p s3_port "$S3_PORT" \
+      -p s3_data "$S3_BUCKET_DATA"
+    - ops -wsk -i action invoke s3/s3-nuv -r

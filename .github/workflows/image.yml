@@ -59,9 +59,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           task tag
           task ci
-      - name: Assign TAG from push
-        run: |
           echo "IMG_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
+      - name: Assign TAG from push
+        if: ${{ github.event_name == 'push' }}
+        run: echo "IMG_TAG=${{ github.ref_name }}" >> "$GITHUB_ENV"
+
       - name: Generate .env
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
@@ -80,7 +82,7 @@ jobs:
       - name: Setup
         run: bash .github/cisetup.sh
       - name: Kind
-        uses: container-tools/kind-action@v2.0.4
+        uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
         with:
             version: v0.22.0
             cluster_name: openserverless

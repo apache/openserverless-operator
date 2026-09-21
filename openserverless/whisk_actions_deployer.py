@@ -65,13 +65,13 @@ def prepare_secrets_action():
     return secrets
 
 def prepare_content_action():
-    minio_host= cfg.get("minio.host") or "openserverless-minio"
-    minio_port= cfg.get("minio.port") or "9000"
-    minio_full_host = f"{minio_host}.openserverless.svc.cluster.local"
+    s3_host= cfg.get("seaweedfs.host") or "seaweedfs"
+    s3_port= cfg.get("seaweedfs.port") or "9000"
+    s3_full_host = f"{s3_host}.openserverless.svc.cluster.local"
 
     content_inputs=[]
-    content_inputs.append({"key":"minio_host", "value":minio_full_host})
-    content_inputs.append({"key":"minio_port", "value":minio_port})
+    content_inputs.append({"key":"s3_host", "value":s3_full_host})
+    content_inputs.append({"key":"s3_port", "value":s3_port})
 
     content = {
         "name":"content",
@@ -106,16 +106,16 @@ def prepare_psql_action():
 
     return psql
 
-def prepare_minio_action():
-    minio = {
-        "name":"minio",
-        "function":"minio.zip",
+def prepare_s3_action():
+    s3 = {
+        "name":"s3",
+        "function":"s3.zip",
         "runtime":"python:sys",
         "web":"raw",
         "inputs":get_couchdb_inputs()
     }
 
-    return minio
+    return s3
 
 def prepare_dev_upload_action():
     dev_upload = {
@@ -160,7 +160,7 @@ def prepare_system_actions():
     actions.append(prepare_content_action())
     actions.append(prepare_redis_action())
     actions.append(prepare_psql_action())
-    actions.append(prepare_minio_action())
+    actions.append(prepare_s3_action())
     actions.append(prepare_dev_upload_action())
     actions.append(prepare_ferretdb_action())
     actions.append(prepare_dev_download_action())
