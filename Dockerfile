@@ -28,7 +28,6 @@ WORKDIR /home/openserverless
 ADD --chown=openserverless:openserverless openserverless/*.py /home/openserverless/openserverless/
 ADD --chown=openserverless:openserverless openserverless/files /home/openserverless/openserverless/files
 ADD --chown=openserverless:openserverless openserverless/templates /home/openserverless/openserverless/templates
-ADD --chown=openserverless:openserverless openserverless/policies /home/openserverless/openserverless/policies
 ADD --chown=openserverless:openserverless deploy/openserverless-operator /home/openserverless/deploy/openserverless-operator
 ADD --chown=openserverless:openserverless deploy/openserverless-permissions /home/openserverless/deploy/openserverless-permissions
 ADD --chown=openserverless:openserverless deploy/openwhisk-standalone /home/openserverless/deploy/openwhisk-standalone
@@ -36,9 +35,6 @@ ADD --chown=openserverless:openserverless deploy/openwhisk-endpoint /home/opense
 ADD --chown=openserverless:openserverless deploy/couchdb /home/openserverless/deploy/couchdb
 ADD --chown=openserverless:openserverless deploy/redis /home/openserverless/deploy/redis
 ADD --chown=openserverless:openserverless deploy/scheduler /home/openserverless/deploy/scheduler
-ADD --chown=openserverless:openserverless deploy/mongodb-operator /home/openserverless/deploy/mongodb-operator
-ADD --chown=openserverless:openserverless deploy/mongodb-operator-deploy /home/openserverless/deploy/mongodb-operator-deploy
-ADD --chown=openserverless:openserverless deploy/mongodb-standalone /home/openserverless/deploy/mongodb-standalone
 ADD --chown=openserverless:openserverless deploy/cert-manager /home/openserverless/deploy/cert-manager
 ADD --chown=openserverless:openserverless deploy/ingress-nginx /home/openserverless/deploy/ingress-nginx
 ADD --chown=openserverless:openserverless deploy/issuer /home/openserverless/deploy/issuer
