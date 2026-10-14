@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import kopf, logging, time, os
+import kopf, logging, time, os, json
 import openserverless.kube as kube
 import openserverless.kustomize as kus
 import openserverless.config as cfg
@@ -117,20 +117,47 @@ def _annotate_nuv_metadata(data):
         logging.error(f"failed to build seaweedfs host for openserverless: {e}")
         return None      
 
+def _configured_storage_buckets():
+    """Read public and private bucket names from tenant configuration."""
+    users = json.loads(kube.kubectl("get", "whisksusers", "-o", "json"))
+    web_buckets = {"openserverless-web"}
+    private_buckets = {"openserverless-data"}
+    for user in users.get("items", []):
+        storage = user.get("spec", {}).get("object-storage", {})
+        if storage.get("data", {}).get("enabled"):
+            private_buckets.add(storage["data"]["bucket"])
+        route = storage.get("route", {})
+        if route.get("enabled") and not user.get("metadata", {}).get("deletionTimestamp"):
+            web_buckets.add(route["bucket"])
+    return web_buckets, private_buckets
+
+def reconcile_anonymous_web_access(client):
+    """Replace all legacy anonymous grants with configured public buckets."""
+    web_buckets, private_buckets = _configured_storage_buckets()
+    # Delete the identity before adding grants: legacy configurations may
+    # contain both an unscoped grant and stale bucket-scoped grants.
+    if not client.delete_user("anonymous"):
+        raise RuntimeError("Could not revoke existing anonymous S3 grants")
+    safe_web_buckets = web_buckets - private_buckets
+    if not client.add_anonymous_access(safe_web_buckets):
+        raise RuntimeError("Could not grant public access to web buckets")
+    if web_buckets & private_buckets:
+        raise ValueError("Public and private S3 bucket names overlap")
+
 def create_seaweedfs_nuv_storage(data):
     """
     Creates openserverless SEAWEEDFS custom resources
     """
     logging.info("*** configuring SEAWEEDFS storage for openserverless")
     seaweedsfsClient = SeaweedfsClient()
-    
+
     res = seaweedsfsClient.make_bucket("openserverless-data",data["default_bucket_quota"])
     if res:
         openwhisk.annotate("s3_bucket_data=openserverless-data")
 
-    res = seaweedsfsClient.add_anonymous_access()
     res = seaweedsfsClient.make_bucket("openserverless-web",data["default_bucket_quota"])
     res = seaweedsfsClient.make_public_bucket("openserverless-web")
+    reconcile_anonymous_web_access(seaweedsfsClient)
     
     if res:
         openwhisk.annotate("s3_bucket_static=openserverless-web")
@@ -152,6 +179,15 @@ def create_ow_storage(state, ucfg: UserConfig, user_metadata: UserMetadata, owne
     seaweedfsClient = SeaweedfsClient()    
     namespace = ucfg.get("namespace")
     secretkey = ucfg.get("object-storage.password")
+
+    if ucfg.get('object-storage.route.enabled') or ucfg.get('object-storage.data.enabled'):
+        web_buckets, private_buckets = _configured_storage_buckets()
+        if ucfg.get('object-storage.route.enabled'):
+            web_buckets.add(ucfg.get('object-storage.route.bucket'))
+        if ucfg.get('object-storage.data.enabled'):
+            private_buckets.add(ucfg.get('object-storage.data.bucket'))
+        if web_buckets & private_buckets:
+            raise ValueError("Public and private S3 bucket names overlap")
 
     # assign default quota set for the user is not available
     if not ucfg.exists('object-storage.quota'):
@@ -177,6 +213,7 @@ def create_ow_storage(state, ucfg: UserConfig, user_metadata: UserMetadata, owne
         logging.info(f"*** adding public bucket {bucket_name} for {namespace}")
         res = seaweedfsClient.make_bucket(bucket_name, ucfg.get('object-storage.quota'))  
         res = seaweedfsClient.make_public_bucket(bucket_name)
+        res = res and seaweedfsClient.add_anonymous_access([bucket_name])
 
         if(res):
             user_metadata.add_metadata("S3_BUCKET_STATIC",bucket_name)
@@ -205,16 +242,22 @@ def create_ow_storage(state, ucfg: UserConfig, user_metadata: UserMetadata, owne
 def delete_ow_storage(ucfg):
     seaweedfsClient = SeaweedfsClient()    
     namespace = ucfg.get("namespace")
+    data_bucket = ucfg.get('object-storage.data.bucket') if ucfg.get('object-storage.data.enabled') else None
+    route_bucket = ucfg.get('object-storage.route.bucket') if ucfg.get('object-storage.route.enabled') else None
 
-    if(ucfg.get('object-storage.data.enabled')):
-        bucket_name = ucfg.get('object-storage.data.bucket')
-        logging.info(f"*** removing private bucket {bucket_name} for {namespace}")
-        seaweedfsClient.force_bucket_remove(bucket_name)
+    # Revoke the public grant before deleting any bucket. A legacy
+    # configuration may use the same name for data and route storage.
+    if route_bucket:
+        logging.info(f"*** removing public bucket {route_bucket} for {namespace}")
+        if not seaweedfsClient.remove_anonymous_access(route_bucket):
+            raise RuntimeError(f"Could not revoke anonymous S3 access to bucket {route_bucket}; deletion stopped")
 
-    if(ucfg.get('object-storage.route.enabled')):
-        bucket_name = ucfg.get("object-storage.route.bucket")
-        logging.info(f"*** removing public bucket {bucket_name} for {namespace}")
-        seaweedfsClient.force_bucket_remove(bucket_name)
+    if data_bucket:
+        logging.info(f"*** removing private bucket {data_bucket} for {namespace}")
+        seaweedfsClient.force_bucket_remove(data_bucket)
+
+    if route_bucket and route_bucket != data_bucket:
+        seaweedfsClient.force_bucket_remove(route_bucket)
 
     return seaweedfsClient.delete_user(namespace)
 
