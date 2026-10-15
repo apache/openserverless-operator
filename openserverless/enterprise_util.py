@@ -185,7 +185,7 @@ def get_am_config_data():
         "slack_api_url": cfg.get("monitoring.alert-manager.slack.slack_api_url","SLACK_API_URL",""),
         "slack_default": cfg.get("monitoring.alert-manager.slack.default") or False,
         "gmail": cfg.get("monitoring.alert-manager.gmail.enabled") or False,
-        "gmail_default": cfg.get("monitoring.alert-manager.gmail.false") or False,
+        "gmail_default": cfg.get("monitoring.alert-manager.gmail.default") or False,
         "email_recipients": cfg.get("monitoring.alert-manager.gmail.to"),
         "email_from": cfg.get("monitoring.alert-manager.gmail.from"),
         "gmail_username": cfg.get("monitoring.alert-manager.gmail.username","GMAIL_USERNAME",""),

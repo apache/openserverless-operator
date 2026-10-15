@@ -50,7 +50,10 @@ ADD --chown=openserverless:openserverless deploy/postgres-backup /home/openserve
 ADD --chown=openserverless:openserverless run.sh dbinit.sh cron.sh pyproject.toml poetry.lock whisk-system.sh /home/openserverless/
 
 # prepares the required folders to deploy the whisk-system actions
-RUN mkdir /home/openserverless/deploy/whisk-system
+USER root
+RUN mkdir -p /home/openserverless/deploy/whisk-system && \
+    chown openserverless:openserverless /home/openserverless/deploy/whisk-system
+USER openserverless
 ADD --chown=openserverless:openserverless actions /home/openserverless/actions
 
 # enterprise specific
@@ -71,6 +74,9 @@ ADD --chown=openserverless:openserverless quota.sh /home/openserverless/
 #------------------------------------------------------------------------------
 # Python dependencies
 FROM python:3.12-slim-bookworm AS deps
+
+RUN groupadd --gid 1001 openserverless && \
+    useradd -m openserverless -s /bin/bash --uid 1001 --gid 1001 --groups root
 
 # --- Install Poetry ---
 ARG POETRY_VERSION=2.3.2
