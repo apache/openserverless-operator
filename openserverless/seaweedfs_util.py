@@ -136,13 +136,19 @@ class SeaweedfsClient:
             f'-buckets={buckets} -actions={actions} -apply'
         )
         return util.check(self._exec_weed_command(command),"add_user",True)
-    
-    def add_anonymous_access(self):
-        """
-        adds a new seaweedfs user using the filer api
-        """
-        command = 's3.configure -user=anonymous -actions=Read -apply'
-        return util.check(self._exec_weed_command(command),"add_user",True)  
+
+    def add_anonymous_access(self, buckets):
+        """Grant anonymous reads only to explicitly public web buckets."""
+        if not buckets or any(not util.validate_bucket_name(bucket) for bucket in buckets):
+            raise ValueError("Invalid public bucket list")
+        command = f's3.configure -user=anonymous -actions=Read -buckets={",".join(sorted(set(buckets)))} -apply'
+        return util.check(self._exec_weed_command(command), "add_anonymous_web_access", True)
+
+    def remove_anonymous_access(self, bucket):
+        if not util.validate_bucket_name(bucket):
+            raise ValueError("Invalid public bucket name")
+        command = f's3.configure -user=anonymous -actions=Read -buckets={bucket} -delete -apply'
+        return util.check(self._exec_weed_command(command), "remove_anonymous_web_access", True)
 
     def make_public_bucket(self, bucket_name):
         """
@@ -160,4 +166,4 @@ class SeaweedfsClient:
         """
         removes a user from seaweedfs
         """
-        return util.check(self._exec_weed_command(f"s3.user.delete -name {username}"),"delete_user",True)
+        return util.check(self._exec_weed_command(f"s3.configure -user={username} -delete -apply"),"delete_user",True)
