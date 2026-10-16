@@ -15,27 +15,41 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-#!kubectl -n openserverless delete all --all
-#!kubectl -n openserverless delete pvc --all
-#
-#import openserverless.config as cfg
-#import openserverless.ferretdb as mdb
-#import openserverless.kube as kube
-#import openserverless.postgres_operator as postgres
-#import openserverless.testutil as tu
-#
-## test
-#assert(cfg.configure(tu.load_sample_config()))
-#cfg.detect_storage()
-#assert(postgres.create())
-#assert(mdb.create())
-#
-#while not kube.wait("pod/openserverless-mongodb-0", "condition=ready"): pass
-#
-#assert(kube.get("service/openserverless-mongodb-svc"))
-#assert(kube.kubectl("get", f"cm/config", jsonpath="{.metadata.annotations.mongodb_url}"))
-#assert(mdb.delete())
-#assert(postgres.delete())
-#
-#!kubectl -n openserverless delete all --all
-#!kubectl -n openserverless delete pvc --all
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all
+
+import openserverless.config as cfg
+import openserverless.ferretdb as mdb
+import openserverless.kube as kube
+import openserverless.postgres_operator as postgres
+import openserverless.testutil as tu
+from openserverless.user_config import UserConfig
+from openserverless.user_metadata import UserMetadata
+
+# test
+assert(cfg.configure(tu.load_sample_config()))
+cfg.detect_storage()
+assert(postgres.create())
+assert(mdb.create())
+
+while not kube.wait("pod/openserverless-mongodb-0", "condition=ready"): pass
+
+assert(kube.get("service/openserverless-mongodb-svc"))
+assert(kube.kubectl("get", f"cm/config", jsonpath="{.metadata.annotations.mongodb_url}"))
+
+# user provisioning: ferretdb backs the mongodb.* user configuration on postgres
+spec = tu.load_sample_config("whisk-user")
+assert(spec)
+
+ucfg = UserConfig(spec)
+udata = UserMetadata(ucfg)
+
+assert(mdb.create_db_user(ucfg, udata))
+assert(any(e['key'] == "MONGODB_URL" for e in udata.get_metadata()['metadata']))
+assert(mdb.delete_db_user(ucfg.get('namespace'),ucfg.get('mongodb.database')))
+
+assert(mdb.delete())
+assert(postgres.delete())
+
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all

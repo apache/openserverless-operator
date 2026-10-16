@@ -47,7 +47,7 @@ data:
       type: etcd 
          
     minio:
-      address: openserverless-minio
+      address: seaweedfs
       port: 9000
       accessKeyID: {{milvus_s3_username}}
       secretAccessKey: {{milvus_s3_password}}

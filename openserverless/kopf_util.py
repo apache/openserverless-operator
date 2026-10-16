@@ -65,14 +65,6 @@ def check_component(response: dict, item: dict, cmp_spec, cmp_key):
         else: 
             response[cmp_key]="delete"
 
-def check_minio_ingresses(response: dict, item: dict):
-    """
-    Forces an update of minio-ingresses if needed
-    """
-    if(item['path']=='spec.minio.ingress.s3-enabled' or item['path']=='spec.minio.ingress.console-enabled'):
-        if(item['new']):
-            response["minio-ingresses"]="update"
-
 def check_seaweedfs_ingresses(response: dict, item: dict):
     """
     Forces an update of seaweed-ingresses if needed
@@ -101,7 +93,6 @@ def evaluate_differences(response: dict, differences: list):
         check_component(response, d,"spec.components.zookeeper","zookeeper")
         check_component(response, d,"spec.components.redis","redis")
         check_component(response, d,"spec.components.cron","cron")
-        check_component(response, d,"spec.components.minio","minio")
         check_component(response, d,"spec.components.static","static") 
         check_component(response, d,"spec.components.postgres","postgres")
         check_component(response, d,"spec.components.quota","quota")
@@ -111,7 +102,6 @@ def evaluate_differences(response: dict, differences: list):
         check_component(response, d,"spec.components.seaweedfs","seaweedfs")
         openwhisk(response, d)           
         endpoint(response, d)
-        check_minio_ingresses(response, d)
         check_seaweedfs_ingresses(response, d)
         
 def detect_component_changes(kopf_diff):

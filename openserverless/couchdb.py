@@ -215,7 +215,12 @@ def init_users_metadata(db):
     """
     dbn = "users_metadata"
     res = check(db.wait_db_ready(60), "wait_db_ready", True)
-    res = check(db.create_db(dbn), "create_db: user_metadata", res)
+    if not db.check_db(dbn):
+        res = check(db.create_db(dbn), "create_db: user_metadata", res)
+    # Tenant actions have network access to CouchDB. Only the administrator
+    # used by the operator and admin API may read cross-tenant metadata.
+    admin = cfg.get('couchdb.admin.user', "COUCHDB_ADMIN_USER", "whisk_admin")
+    res = check(db.add_role(dbn, [admin]), "add_role: user_metadata", res)
     return res 
 
 def init_compactions_config(db):

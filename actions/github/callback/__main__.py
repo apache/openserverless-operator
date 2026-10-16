@@ -50,7 +50,7 @@ def main(args):
     """
     Action implementing the callback activated when a user subscribe to the nuv-github-app.
     This implementation will use the code parameter to retrieve access_token and refresh_token representing the user
-    and will create a openserverless user having an openwhisk namespace and minio bucket with 100m quota.
+    and will create a openserverless user having an openwhisk namespace and s3 bucket with 100m quota.
     """
     print(args)
     

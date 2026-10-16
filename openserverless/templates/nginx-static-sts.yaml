@@ -34,7 +34,7 @@ spec:
         app: openserverless-static
     spec:
       initContainers:
-      - name: check-minio
+      - name: check-seaweedfs
         image: busybox:1.36.0
         command: ['sh', '-c', "until nslookup {{storage_hostname}}; do echo waiting for storage; sleep 2; done"]     
       containers:

@@ -22,13 +22,11 @@ import openserverless.config as cfg
 import openserverless.kube as kube
 import openserverless.redis as redis
 import openserverless.couchdb as couchdb
-import openserverless.bucket as bucket
 import openserverless.openwhisk as openwhisk
 import openserverless.cronjob as cron
-import openserverless.ferretdb as mongodb
+import openserverless.ferretdb as ferretdb
 import openserverless.issuer as issuer
 import openserverless.endpoint as endpoint
-import openserverless.minio_deploy as minio
 import openserverless.zookeeper as zookeeper
 import openserverless.kafka as kafka
 import openserverless.invoker as invoker
@@ -91,17 +89,12 @@ def whisk_create(spec, name, **kwargs):
         "endpoint": "?", # Http/s controller endpoint # Http/s controller endpoint
         "issuer": "?", # ClusterIssuer configuration
         "ingress": "?", # Ingress configuration
-        "minio": "?", # Minio configuration
-        "static": "?", # Minio static endpoint provider
+        "static": "?", # S3 static endpoint provider
         "zookeeper": "?", #Zookeeper configuration
         "quota":"?", #Quota configuration
         "etcd":"?", #Etcd configuration
         "milvus":"?" #Milvus configuration
     }
-
-    if cfg.get('components.minio') and cfg.get('components.seaweedfs'):
-        state['controller']= "NotValid"
-        raise kopf.PermanentError("Storage support for MINIO and SEAWEEDFS could not be activated simultaneously.")    
 
     runtime = cfg.get('openserverless.kube')
     logging.info(f"kubernetes engine in use={runtime}")
@@ -177,13 +170,6 @@ def whisk_create(spec, name, **kwargs):
     else:
         state['cron'] = "off" 
 
-    if cfg.get('components.minio'):
-        msg = minio.create(owner)
-        logging.info(msg)
-        state['minio'] = "on"
-    else:
-        state['minio'] = "off"
-
     if cfg.get('components.seaweedfs'):
         msg = seaweedfs.create(owner)
         logging.info(msg)
@@ -206,7 +192,7 @@ def whisk_create(spec, name, **kwargs):
         state['postgres'] = "off"
 
     if cfg.get('components.mongodb'):
-        msg = mongodb.create(owner)
+        msg = ferretdb.create(owner)
         logging.info(msg)
         state['mongodb'] = "on"
     else:
@@ -343,7 +329,7 @@ def whisk_delete(spec, **kwargs):
         logging.info(msg)
         
     if cfg.get("components.mongodb"):
-        msg = mongodb.delete()
+        msg = ferretdb.delete()
         logging.info(msg)         
 
     if cfg.get("components.cron"):
@@ -353,10 +339,6 @@ def whisk_delete(spec, **kwargs):
     if cfg.get('components.static'):
         msg = static.delete()
         logging.info(msg) 
-
-    if cfg.get("components.minio"):
-        msg = minio.delete()
-        logging.info(msg)
 
     if cfg.get("components.seaweedfs"):
         msg = seaweedfs.delete()

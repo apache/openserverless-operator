@@ -22,11 +22,9 @@ import openserverless.kustomize as kus
 import openserverless.config as cfg
 import openserverless.util as util
 import openserverless.operator_util as operator_util
-import openserverless.minio_util as mutil
 import openserverless.etcd as etcd
 
 from openserverless.opaque_secret import OpaqueSecret
-from openserverless.minio_util import MinioClient
 
 def create(owner=None):
     """

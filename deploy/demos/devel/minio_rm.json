@@ -1,7 +1,0 @@
-{
-    "command":"rm",
-    "args":[
-        "openserverless-web",
-        "tidy/content.html"
-    ]
-}

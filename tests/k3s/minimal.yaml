@@ -41,8 +41,8 @@ spec:
     cron: false
     # enable TLS
     tls: true
-    # minio enabled or not
-    minio: false            
+    # seaweedfs enabled or not
+    seaweedfs: false
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abcfO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
@@ -59,14 +59,7 @@ spec:
       user: controller_admin
       password: s0meP@ass2
   mongodb:
-    host: mongodb
     volume-size: 10
-    admin: 
-      user: whisk_admin
-      password: 0therPa55
-    openserverless:
-      user: openserverless
-      password: s0meP@ass3
   kafka:
     host: kafka
     volume-size: 10
@@ -75,11 +68,11 @@ spec:
   tls:
     acme-registered-email: francesco@nuvolaris.io
     acme-server-url: https://acme-v02.api.letsencrypt.org/directory
-  minio:
+  seaweedfs:
     volume-size: 2
     openserverless:
-      root-user: minioadmin
-      root-password: minioadmin 
+      user: openserverless
+      password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
   configs:
     limits:
       actions:

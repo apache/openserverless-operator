@@ -1,0 +1,49 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+import os
+
+import openserverless.config as cfg
+import openserverless.seaweedfs_deploy as seaweedfs
+import openserverless.seaweedfs_util as sus
+import openserverless.testutil as tu
+import openserverless.util as util
+
+tu.enable_debug_logging()
+
+tu.run_proc("kubectl -n openserverless delete all --all")
+tu.run_proc("kubectl -n openserverless delete pvc --all")
+
+# test
+assert(cfg.configure(tu.load_sample_config()))
+assert(cfg.detect_storage()["openserverless.storageclass"])
+
+# for this test the seaweedfsClient should see these env variables
+os.environ['SEAWEEDFS_API_HOST']='localhost'
+os.environ['SEAWEEDFS_API_PORT']='9090'
+assert(seaweedfs.create())
+
+pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'seaweedfs')].metadata.name}")
+assert(pod_name)
+
+seaweedfsClient = sus.SeaweedfsClient()
+assert(seaweedfsClient.make_bucket("ftt-data"))
+assert(seaweedfsClient.make_public_bucket("ftt-web"))
+assert(seaweedfsClient.add_user("ftt","jgfkjsgcasgfjgdsafgsdkfgkaj","jgfkjsgcasgfjgdsafgsdkfgkaj","ftt-web,ftt-data"))
+assert(seaweedfsClient.delete_user("ftt"))
+
+assert(seaweedfs.delete())

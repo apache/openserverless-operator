@@ -37,10 +37,10 @@ def pwd_generator():
 
 def generate_whisk_user_yaml(username,email):
     """
-    Return a dictionary Object representing a whisk-user.yaml to create a user wiht OW namespace and MINIO buckets
+    Return a dictionary Object representing a whisk-user.yaml to create a user wiht OW namespace and S3 buckets
     """
     password = pwd_generator()
-    minio_secret = auth_generator()
+    s3_secret = auth_generator()
     auth = auth_generator()
 
     return {
@@ -56,7 +56,7 @@ def generate_whisk_user_yaml(username,email):
             "namespace": username,
             "auth": auth,
             "object-storage": {
-                "password": minio_secret,
+                "password": s3_secret,
                 "quota": "100",
                 "data":{
                     "enabled": True,

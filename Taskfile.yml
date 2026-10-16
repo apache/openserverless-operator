@@ -189,10 +189,10 @@ tasks:
     cmds:
     - task: t:mongo
 
-  minio:
-    desc: run the minio integration test
+  s3:
+    desc: run the s3 integration test
     cmds:
-    - task: t:minio
+    - task: t:s3
 
   postgres:
     desc: run the postgres integration test
@@ -218,7 +218,7 @@ tasks:
     - task: hello
     - task: redis
     - task: mongo
-    - task: minio
+    - task: s3
     - task: postgres
 
   config:

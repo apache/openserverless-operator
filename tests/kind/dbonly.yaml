@@ -34,8 +34,6 @@ spec:
     mongodb: false
     # start redis
     redis: false
-    # start s3ninja
-    s3bucket: false
   openwhisk:
     namespaces:
       whisk-system: 789c46b1-71f6-4ed5-8c54-816aa4f8c502:abczO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
@@ -54,11 +52,7 @@ spec:
       user: controller_admin
       password: s0meP@ass2
   mongodb:
-    host: mongodb
     volume-size: 10
-    admin: 
-      user: admin
-      password: 0therPa55
   kafka:
     host: kafka
     volume-size: 10

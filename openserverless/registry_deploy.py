@@ -176,11 +176,11 @@ def deploy_registry_route(data, namespace="openserverless"):
 
 def deploy_registry_ingress(data, namespace="openserverless"):
     """
-    Deploys a generic MINIO nginx/traefik ingress
+    Deploys a generic nginx/traefik ingress
     param: apihost
     param: namespace
     param: type (s3, console)
-    param: service_name (normally it is minio)
+    param: service_name (normally it is seaweedfs)
     param: port (9000 or 9090)
     paramL context_path (/)
     """
@@ -285,5 +285,5 @@ def patch_ingresses(status, action, owner=None):
         logging.info(msg)        
         logging.info(f"*** hanlded request to {action} registry ingresses") 
     except Exception as e:
-        logging.error('*** failed to update minio ingresses: %s' % e)    
+        logging.error('*** failed to update registry ingresses: %s' % e)
         operator_util.patch_operator_status(status,'registry-ingresses','error')

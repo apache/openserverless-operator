@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# this module wraps mc minio client using admin credentials 
+# this module wraps the minio S3 client SDK using admin credentials
 # to perform various operations
 import json
 

@@ -37,7 +37,7 @@ os.environ['SEAWEEDFS_API_PORT']='9090'
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["openserverless.storageclass"])
 
-# for this test minioClient should see this env variable
+# for this test the seaweedfs filer should see this env variable
 assert(seaweedfs_deploy.create())
 
 pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'seaweedfs')].metadata.name}")

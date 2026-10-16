@@ -42,11 +42,11 @@ spec:
     cron: true
     # activate tls support
     tls: false
-    # minio enabled or not
-    minio: true    
+    # seaweedfs enabled or not
+    seaweedfs: true
     # zookeeper enabled or not
     zookeeper: true
-    # minio static enabled or not
+    # seaweedfs static enabled or not
     static: true
     # prometheus monitoring enabled or not
     monitoring: true 
@@ -148,21 +148,9 @@ spec:
       prefix: openserverless      
       password: s0meP@ass3
   mongodb:
-    host: mongodb
     volume-size: 10
-    admin: 
-      user: whisk_admin
-      password: 0therPa55
-    openserverless:
-      user: openserverless
-      password: s0meP@ass3
-    exposedExternally: False
-    useOperator: False
-  minio:
+  seaweedfs:
     volume-size: 10
-    admin:
-      user: minioadmin
-      password: minioadmin    
     openserverless:
       user: openserverless
       password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG        
