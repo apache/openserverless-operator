@@ -177,28 +177,32 @@ def exec_redis_command(pod_name,path_to_script):
     os.remove(path_to_script)
     return res
 
-class _AdminClient(redislib.Redis):
-    def __init__(self, password):
-        self._service_context = contextlib.ExitStack()
-        try:
-            host, port = self._service_context.enter_context(service_endpoint('redis', 6379))
-            super().__init__(host=host, port=port, password=password, decode_responses=True,
-                             socket_timeout=10, socket_connect_timeout=5)
-        except BaseException:
-            self._service_context.close()
-            raise
-
-    def close(self):
-        try:
-            super().close()
-        finally:
-            self._service_context.close()
-
-
 def admin_client(password=None):
     stored = util.get_redis_config_data()['redis_password']
     if password is not None and password != stored:
         raise RuntimeError('Redis administrator credentials do not match')
+
+    # doctest imports this file with openserverless/ on sys.path, where the
+    # module name redis shadows the third-party driver. Resolve the class only
+    # when an actual client is requested, preserving import-only tooling.
+    class _AdminClient(redislib.Redis):
+        def __init__(self, secret):
+            self._service_context = contextlib.ExitStack()
+            try:
+                host, port = self._service_context.enter_context(service_endpoint('redis', 6379))
+                super().__init__(host=host, port=port, password=secret, decode_responses=True,
+                                 socket_timeout=10, socket_connect_timeout=5)
+            except BaseException:
+                self._service_context.close()
+                raise
+
+        def close(self):
+            try:
+                if hasattr(self, 'connection_pool'):
+                    super().close()
+            finally:
+                self._service_context.close()
+
     return _AdminClient(stored)
 
 
