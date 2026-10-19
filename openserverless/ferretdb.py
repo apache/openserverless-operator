@@ -160,10 +160,11 @@ def _add_mdb_user_metadata(user_metadata, data):
 
             mdb_url = f"mongodb://{auth}@{mdb_pod_name}.{mdb_service_name}.{mdb_ns}.svc.cluster.local:27017/{database}?connectTimeoutMS=60000&authMechanism=PLAIN"
             user_metadata.add_metadata("MONGODB_URL",mdb_url)
-        return None
+            return True
+        return False
     except Exception as e:
         logging.error(f"failed to build mongodb_url for {data['database']}: {e}")
-        return None
+        return False
 
 def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
     database = ucfg.get('mongodb.database')
@@ -178,16 +179,21 @@ def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
         data["password"]=ucfg.get('mongodb.password')
         data["mode"]="create"
         
-        path_to_pgpass = postgres.render_postgres_script(f"{namespace}_ferretdb","pgpass_tpl.properties",data)
-        path_to_mdb_script = postgres.render_postgres_script(f"{namespace}_ferretdb","postgres_manage_user_tpl.sql",data)
-        pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'openserverless-postgres')].metadata.name}")      
+        if not util.validate_database_name(data["database"]) or not util.validate_database_name(data["username"]):
+            raise ValueError("Invalid FerretDB database or username")
+        # The renderer needs the Kubernetes namespace as a safe file prefix;
+        # the PostgreSQL names retain their existing _ferretdb suffix.
+        path_to_pgpass = postgres.render_postgres_script(namespace,"pgpass_tpl.properties",data)
+        path_to_mdb_script = postgres.render_postgres_script(namespace,"postgres_manage_user_tpl.sql",data)
+        pod_name = util.get_pod_name_by_selector("app=openserverless-postgres","{.items[?(@.metadata.labels.replicationRole == 'primary')].metadata.name}")
 
         if(pod_name):
             res = postgres.exec_psql_command(pod_name,path_to_mdb_script,path_to_pgpass)
 
             if res:
-                _add_mdb_user_metadata(user_metadata, data)
-                return res
+                if _add_mdb_user_metadata(user_metadata, data):
+                    return res
+                logging.error("FerretDB user created but connection metadata is unavailable")
             else:
                 logging.error("failed to execute SQL script on Postgres DB to enable MongoDB (FerretDB) user")
 
@@ -205,9 +211,11 @@ def delete_db_user(namespace, database):
         data["username"]=f"{namespace}_ferretdb"
         data["mode"]="delete"
 
-        path_to_pgpass = postgres.render_postgres_script(f"{namespace}_ferretdb","pgpass_tpl.properties",data)
-        path_to_mdb_script = postgres.render_postgres_script(f"{namespace}_ferretdb","postgres_manage_user_tpl.sql",data)
-        pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'openserverless-postgres')].metadata.name}")
+        if not util.validate_database_name(data["database"]) or not util.validate_database_name(data["username"]):
+            raise ValueError("Invalid FerretDB database or username")
+        path_to_pgpass = postgres.render_postgres_script(namespace,"pgpass_tpl.properties",data)
+        path_to_mdb_script = postgres.render_postgres_script(namespace,"postgres_manage_user_tpl.sql",data)
+        pod_name = util.get_pod_name_by_selector("app=openserverless-postgres","{.items[?(@.metadata.labels.replicationRole == 'primary')].metadata.name}")
 
         if(pod_name):
             res = postgres.exec_psql_command(pod_name,path_to_mdb_script,path_to_pgpass)
@@ -216,4 +224,4 @@ def delete_db_user(namespace, database):
         return None
     except Exception as e:
         logging.error(f"failed to remove Ferretdb database {namespace} authorization id and key: {e}")
-        return None        
+        return None
