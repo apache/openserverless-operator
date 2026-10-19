@@ -64,8 +64,8 @@ jobs:
         run: bash .github/cisetup.sh
       - name: Install
         run: task setup
-      - name: Datastore security regression tests
-        run: poetry run python3 -m unittest discover -s tests -p test_datastore_security.py -v
+      - name: Security regression tests
+        run: poetry run python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: BuildAndLoad
         run: task build-and-load
       - name: AddIngress
