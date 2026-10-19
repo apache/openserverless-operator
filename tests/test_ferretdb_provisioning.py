@@ -39,6 +39,7 @@ class FerretDBProvisioningTests(unittest.TestCase):
         stack.enter_context(patch.object(mongo,'get_ferret_pod_name',return_value='mongo-0'))
         # Keep the actual renderer and validator; mock only filesystem and Kubernetes I/O.
         self.spool=stack.enter_context(patch.object(postgres.ntp,'spool_template',side_effect=lambda template,path,data:path))
+        self.chmod=stack.enter_context(patch.object(postgres.os,'chmod'))
         self.render=stack.enter_context(patch.object(postgres,'render_postgres_script',wraps=postgres.render_postgres_script))
         self.sql=stack.enter_context(patch.object(postgres,'exec_psql_command',return_value='SQL completed'))
 
