@@ -22,6 +22,7 @@ import logging
 import re
 import requests
 import openserverless.util as util
+from openserverless.datastore_connection import service_endpoint
 
 def _post(session, endpoint, path, body, allowed=()):
     for attempt in range(2):
@@ -52,8 +53,8 @@ def _post(session, endpoint, path, body, allowed=()):
 @contextlib.contextmanager
 def _admin():
     data = util.get_etcd_config_data()
-    endpoint = 'http://' + data['name'] + ':2379'
-    with requests.Session() as session:
+    with service_endpoint(data['name'], 2379) as (host, port), requests.Session() as session:
+        endpoint = 'http://' + host + ':' + str(port)
         session.trust_env = False
         session._ops_etcd_credentials = {'name': 'root', 'password': data['root_password']}
         session.headers['Authorization'] = _post(session, endpoint, 'auth/authenticate',
