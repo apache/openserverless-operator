@@ -78,20 +78,28 @@ jobs:
         continue-on-error: false
       - name: Reject new integration failures
         run: |
-          # task itest records failures without returning nonzero. This one
-          # independent failure also exists on original 0.9.0 (run 38893750250).
+          # The legacy runner does not propagate failure. Only the exact original
+          # 0.9.0 test scripts (3ee0a79; reproduced in run 38893750250) may retain
+          # their known warning. An updated test must pass, so both exceptions
+          # automatically disappear once the two independent fixes are merged.
           unexpected_failures=0
           if [ -f _failed.txt ]; then
             while IFS= read -r failed_test; do
               case "$failed_test" in
+                tests/kind/ferretdb_test.ipy)
+                  baseline_blob=90e70ffe1ae1b126e5bd651f32a6a6240b4def07
+                  ;;
                 tests/kind/runtimes_preloader_test.ipy)
-                  echo "::warning::Pre-existing 0.9.0 integration failure: $failed_test"
+                  baseline_blob=afbee5e8f49945f4737c507de36c731e1da6faee
                   ;;
-                *)
-                  echo "::error::Integration regression: $failed_test"
-                  unexpected_failures=1
-                  ;;
+                *) baseline_blob= ;;
               esac
+              if [ -n "$baseline_blob" ] && [ "$(git hash-object -- "$failed_test")" = "$baseline_blob" ]; then
+                echo "::warning::Pre-existing 0.9.0 integration failure in unchanged baseline test: $failed_test"
+              else
+                echo "::error::Integration regression: $failed_test"
+                unexpected_failures=1
+              fi
             done < _failed.txt
           fi
           exit "$unexpected_failures"
