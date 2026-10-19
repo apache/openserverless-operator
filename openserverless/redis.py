@@ -24,8 +24,10 @@ import openserverless.util as util
 import openserverless.openwhisk as openwhisk
 import urllib.parse
 import hashlib
+import contextlib
 import redis as redislib
 from openserverless.redis_acl import tenant_rules
+from openserverless.datastore_connection import service_endpoint
 import os, os.path
 import logging, json
 import kopf
@@ -175,12 +177,29 @@ def exec_redis_command(pod_name,path_to_script):
     os.remove(path_to_script)
     return res
 
+class _AdminClient(redislib.Redis):
+    def __init__(self, password):
+        self._service_context = contextlib.ExitStack()
+        try:
+            host, port = self._service_context.enter_context(service_endpoint('redis', 6379))
+            super().__init__(host=host, port=port, password=password, decode_responses=True,
+                             socket_timeout=10, socket_connect_timeout=5)
+        except BaseException:
+            self._service_context.close()
+            raise
+
+    def close(self):
+        try:
+            super().close()
+        finally:
+            self._service_context.close()
+
+
 def admin_client(password=None):
     stored = util.get_redis_config_data()['redis_password']
     if password is not None and password != stored:
         raise RuntimeError('Redis administrator credentials do not match')
-    return redislib.Redis(host='redis', port=6379, password=stored,
-                          decode_responses=True, socket_timeout=10, socket_connect_timeout=5)
+    return _AdminClient(stored)
 
 
 def _tenant_identity(namespace, prefix=None):

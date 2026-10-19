@@ -62,6 +62,18 @@ class TenantPolicyTest(unittest.TestCase):
 
 
 class TenantLifecycleTest(unittest.TestCase):
+    def test_administrator_client_keeps_the_private_endpoint_for_its_lifetime(self):
+        endpoint = MagicMock()
+        endpoint.__enter__.return_value = ('127.0.0.1', 41238)
+        with patch.object(redis.util, 'get_redis_config_data', return_value={'redis_password': 'synthetic'}), \
+                patch.object(redis, 'service_endpoint', return_value=endpoint):
+            client = redis.admin_client()
+            self.assertEqual(client.connection_pool.connection_kwargs['host'], '127.0.0.1')
+            self.assertEqual(client.connection_pool.connection_kwargs['port'], 41238)
+            endpoint.__exit__.assert_not_called()
+            client.close()
+            endpoint.__exit__.assert_called_once()
+
     def client(self):
         client=MagicMock();client.__enter__.return_value=client
         client.acl_getuser.return_value=None;client.config_get.return_value={'aclfile':''}

@@ -76,3 +76,22 @@ jobs:
       - name: Integration Test
         run: task itest
         continue-on-error: false
+      - name: Reject new integration failures
+        run: |
+          # The legacy runner writes failures without returning nonzero.
+          # These two tests also fail on unmodified 0.9.0 (run 38893750250).
+          unexpected_failures=0
+          if [ -f _failed.txt ]; then
+            while IFS= read -r failed_test; do
+              case "$failed_test" in
+                tests/kind/ferretdb_test.ipy|tests/kind/runtimes_preloader_test.ipy)
+                  echo "::warning::Pre-existing 0.9.0 integration failure: $failed_test"
+                  ;;
+                *)
+                  echo "::error::Integration regression: $failed_test"
+                  unexpected_failures=1
+                  ;;
+              esac
+            done < _failed.txt
+          fi
+          exit "$unexpected_failures"
