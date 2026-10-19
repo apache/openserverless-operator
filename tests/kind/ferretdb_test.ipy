@@ -48,7 +48,7 @@ udata = UserMetadata(ucfg)
 assert(mdb.create_db_user(ucfg, udata))
 assert(any(e['key'] == "MONGODB_URL" for e in udata.get_metadata()['metadata']))
 
-# Prove provisioning created the intended database and owner, rather than merely
+# Prove provisioning created the intended database and login grants, rather than merely
 # returning psql output. Keep credentials inside the database pod environment.
 primary = util.get_pod_name_by_selector("app=openserverless-postgres", "{.items[?(@.metadata.labels.replicationRole == 'primary')].metadata.name}")
 assert(primary)
@@ -60,7 +60,7 @@ def scalar(query):
 
 database = (ucfg.get('mongodb.database') + '_ferretdb').replace("'", "''")
 username = (ucfg.get('namespace') + '_ferretdb').replace("'", "''")
-assert(scalar(f"SELECT count(*) FROM pg_database d JOIN pg_roles r ON d.datdba=r.oid WHERE d.datname='{database}' AND r.rolname='{username}' AND r.rolcanlogin") == '1')
+assert(scalar(f"SELECT count(*) FROM pg_database d, pg_roles r WHERE d.datname='{database}' AND r.rolname='{username}' AND r.rolcanlogin AND has_database_privilege(r.oid,d.oid,'CONNECT') AND has_database_privilege(r.oid,d.oid,'CREATE')") == '1')
 assert(mdb.delete_db_user(ucfg.get('namespace'),ucfg.get('mongodb.database')))
 assert(scalar(f"SELECT ((EXISTS(SELECT 1 FROM pg_database WHERE datname='{database}')) OR (EXISTS(SELECT 1 FROM pg_roles WHERE rolname='{username}')))::int") == '0')
 
