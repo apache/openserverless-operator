@@ -179,6 +179,8 @@ def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata):
         data["password"]=ucfg.get('mongodb.password')
         data["mode"]="create"
         
+        if not util.validate_namespace(namespace):
+            raise ValueError("Invalid FerretDB namespace")
         if not util.validate_database_name(data["database"]) or not util.validate_database_name(data["username"]):
             raise ValueError("Invalid FerretDB database or username")
         # The renderer needs the Kubernetes namespace as a safe file prefix;
@@ -211,6 +213,8 @@ def delete_db_user(namespace, database):
         data["username"]=f"{namespace}_ferretdb"
         data["mode"]="delete"
 
+        if not util.validate_namespace(namespace):
+            raise ValueError("Invalid FerretDB namespace")
         if not util.validate_database_name(data["database"]) or not util.validate_database_name(data["username"]):
             raise ValueError("Invalid FerretDB database or username")
         path_to_pgpass = postgres.render_postgres_script(namespace,"pgpass_tpl.properties",data)

@@ -79,7 +79,12 @@ class FerretDBProvisioningTests(unittest.TestCase):
         self.assertFalse(util.validate_namespace('fixtureuser_ferretdb'))
         self.values['namespace']='fixture_user'
         self.assertFalse(mongo.create_db_user(self.user,self.metadata))
+        self.render.assert_not_called()
         self.sql.assert_not_called()
+
+    def test_invalid_delete_namespace_is_rejected_before_rendering_or_sql(self):
+        self.assertFalse(mongo.delete_db_user('fixture_user','fixturedb'))
+        self.render.assert_not_called();self.sql.assert_not_called()
 
     def test_failed_sql_does_not_publish_connection_metadata(self):
         self.sql.return_value=''
