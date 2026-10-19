@@ -152,7 +152,7 @@ spec:
       - name: etcd-jwt-token
         secret:
           defaultMode: 256
-          secretName: openserverless-etcd-jwt-token              
+          secretName: openserverless-etcd-jwt-token-v2
   volumeClaimTemplates:
     - metadata:
         name: openserverless-etc-data
