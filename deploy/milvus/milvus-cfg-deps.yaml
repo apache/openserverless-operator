@@ -19,7 +19,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nuvolaris-milvus-minio
+  name: openserverless-milvus-minio
 data:
   initialize: |-
     #!/bin/sh
@@ -118,16 +118,16 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: bookie
 data:
   # common config
-  zkServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zkServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
   zkLedgersRootPath: "/ledgers"
   # enable bookkeeper http server
   httpServerEnabled: "true"
@@ -164,22 +164,22 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: broker
 data:
   # Metadata settings
-  zookeeperServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
-  configurationStoreServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zookeeperServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
+  configurationStoreServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
 
   # Broker settings
-  clusterName: nuvolaris-milvus-pulsarv3
+  clusterName: openserverless-milvus-pulsarv3
   exposeTopicLevelMetricsInPrometheus: "true"
   numHttpServerThreads: "8"
   zooKeeperSessionTimeoutMillis: "30000"
@@ -214,23 +214,23 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-proxy"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-proxy"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: proxy
 data:
-  clusterName: nuvolaris-milvus-pulsarv3
+  clusterName: openserverless-milvus-pulsarv3
   statusFilePath: "/pulsar/status"
   # prometheus needs to access /metrics endpoint
   webServicePort: "8080"
   servicePort: "6650"
-  brokerServiceURL: pulsar://nuvolaris-milvus-pulsarv3-broker:6650
-  brokerWebServiceURL: http://nuvolaris-milvus-pulsarv3-broker:8080
+  brokerServiceURL: pulsar://openserverless-milvus-pulsarv3-broker:6650
+  brokerWebServiceURL: http://openserverless-milvus-pulsarv3-broker:8080
 
   # Authentication Settings
   PULSAR_GC: |
@@ -242,12 +242,12 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-zookeeper"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-zookeeper"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: zookeeper
 data:
   dataDir: /pulsar/data/zookeeper
@@ -261,18 +261,18 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-recovery"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-recovery"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: recovery
 data:
   # common config
-  zkServers: "nuvolaris-milvus-pulsarv3-zookeeper:2181"
+  zkServers: "openserverless-milvus-pulsarv3-zookeeper:2181"
   zkLedgersRootPath: "/ledgers"
   # enable bookkeeper http server
   httpServerEnabled: "true"

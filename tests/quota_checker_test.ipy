@@ -15,13 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all
 
-import nuvolaris.config as cfg
-import nuvolaris.testutil as tu
-import nuvolaris.kube as kube
-import nuvolaris.quota_checker_job as job
+import openserverless.config as cfg
+import openserverless.testutil as tu
+import openserverless.kube as kube
+import openserverless.quota_checker_job as job
 
 # init
 assert(cfg.configure(tu.load_sample_config()))

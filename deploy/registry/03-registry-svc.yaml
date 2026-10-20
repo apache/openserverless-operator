@@ -19,8 +19,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-registry-svc
-  namespace: nuvolaris
+  name: openserverless-registry-svc
+  namespace: openserverless
 spec:
   selector:
     app: registry

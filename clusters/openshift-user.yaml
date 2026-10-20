@@ -19,7 +19,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: nuvolaris-htpass-secret
+  name: openserverless-htpass-secret
   namespace: openshift-config
 type: Opaque
 data:
@@ -32,9 +32,9 @@ metadata:
   name: cluster
 spec:
   identityProviders:
-  - name: nuvolaris_htpass 
+  - name: openserverless_htpass 
     mappingMethod: claim 
     type: HTPasswd
     htpasswd:
       fileData:
-        name: nuvolaris-htpass-secret
+        name: openserverless-htpass-secret

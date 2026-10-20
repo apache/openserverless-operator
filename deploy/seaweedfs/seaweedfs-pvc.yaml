@@ -19,7 +19,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: seaweedfs-pvc
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   accessModes:
     - ReadWriteOnce

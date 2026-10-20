@@ -19,14 +19,14 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   annotations:
-    meta.helm.sh/release-name: nuvolaris-prometheus
-    meta.helm.sh/release-namespace: nuvolaris
+    meta.helm.sh/release-name: openserverless-prometheus
+    meta.helm.sh/release-namespace: openserverless
   labels:
     app.kubernetes.io/component: server
-    app.kubernetes.io/instance: nuvolaris-prometheus
+    app.kubernetes.io/instance: openserverless-prometheus
     app.kubernetes.io/name: prometheus
-  name: nuvolaris-prometheus-server
-  namespace: nuvolaris
+  name: openserverless-prometheus-server
+  namespace: openserverless
 data:
   alerting_rules.yml: |
     # Alerting rules
@@ -732,7 +732,7 @@ data:
         labels:
           team: dev
           severity: critical
-          service: nuvolaris
+          service: openserverless
           scope: infrastructure
 
       - alert: High Memory Usage of Container 
@@ -745,7 +745,7 @@ data:
         labels: 
           team: dev
           severity: critical
-          service: nuvolaris
+          service: openserverless
           scope: infrastructure   
 
       - alert: High CPU Usage of Container 
@@ -758,7 +758,7 @@ data:
         labels: 
           team: dev
           severity: critical
-          service: nuvolaris
+          service: openserverless
           scope: infrastructure                                               
 
       - alert: High Persistent Volume Usage
@@ -771,7 +771,7 @@ data:
         labels:
           team: devops
           severity: critical
-          service: nuvolaris
+          service: openserverless
           scope: infrastructure                                                 
 
     - name: OpenWhisk
@@ -866,7 +866,7 @@ data:
         - kafka:9888        
     - job_name: 'kube-state-metrics'
       static_configs:
-      - targets: ['nuvolaris-prometheus-kube-state-metrics.nuvolaris.svc.cluster.local:8080']        
+      - targets: ['openserverless-prometheus-kube-state-metrics.openserverless.svc.cluster.local:8080']        
     - job_name: 'kubelet'
       kubernetes_sd_configs:
       - role: node
@@ -891,7 +891,7 @@ data:
       - scheme: http
         static_configs:
         - targets:
-          - "nuvolaris-prometheus-alertmanager:9093"                                                      
+          - "openserverless-prometheus-alertmanager:9093"                                                      
   recording_rules.yml: |
     groups:
     - name: aggregate_container_resources

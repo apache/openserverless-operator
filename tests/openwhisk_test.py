@@ -16,20 +16,20 @@
 # under the License.
 #
 
-import nuvolaris.config as cfg
-import nuvolaris.kube as kube
-import nuvolaris.openwhisk as ow
-import nuvolaris.testutil as tu
+import openserverless.config as cfg
+import openserverless.kube as kube
+import openserverless.openwhisk as ow
+import openserverless.testutil as tu
 
 # apihost
 assert(cfg.configure(tu.load_sample_config(), clean=True))
 assert(ow.apihost([]) == "https://pending")
 
-cfg.put("nuvolaris.apihost", "localhost")
+cfg.put("openserverless.apihost", "localhost")
 assert(ow.apihost([]) == 'https://localhost')
 
-cfg.put("nuvolaris.protocol", "http")
-cfg.put("nuvolaris.apiport", "3232")
+cfg.put("openserverless.protocol", "http")
+cfg.put("openserverless.apiport", "3232")
 assert( ow.apihost([]) == 'http://localhost:3232')
 
 a = [ { "hostname": "elb.amazonaws.com"} ]
@@ -43,8 +43,8 @@ assert( ow.apihost(a) == "https://20.86.250.184")
 import doctest
 doctest.testfile("tests/openwhisk_test.txt", module_relative=False)
 
-!kubectl apply -f deploy/nuvolaris-permissions/nuvolaris-common.yaml
-!kubectl apply -f deploy/nuvolaris-permissions/whisk-crd.yaml
+!kubectl apply -f deploy/openserverless-permissions/openserverless-common.yaml
+!kubectl apply -f deploy/openserverless-permissions/whisk-crd.yaml
 !kubectl apply -f tests/whisk-dev.yaml
 
 wsk = kube.get("wsk/controller")

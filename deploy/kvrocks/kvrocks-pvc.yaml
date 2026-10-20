@@ -19,7 +19,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: kvrocks-pvc
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   accessModes:
     - ReadWriteOnce 

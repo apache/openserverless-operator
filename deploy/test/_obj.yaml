@@ -17,9 +17,9 @@
 #
 # A demo custom resource for the Kopf example operators.
 ---
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Sample
 metadata:
   name: obj
-  namespace: nuvolaris
+  namespace: openserverless
 spec:

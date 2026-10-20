@@ -18,21 +18,21 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nuvolaris-mongodb
+  name: openserverless-mongodb
   labels:
     app: mongodb
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
-  serviceName: nuvolaris-mongodb-svc
+  serviceName: openserverless-mongodb-svc
   replicas: 1
   selector:
     matchLabels:
-      app: nuvolaris-mongodb
+      app: openserverless-mongodb
   template:
     metadata:
       labels:
-        app: nuvolaris-mongodb
-        name: nuvolaris-mongodb
+        app: openserverless-mongodb
+        name: openserverless-mongodb
     spec:
       containers:
       - image: mongo:5.0.11

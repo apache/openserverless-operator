@@ -19,13 +19,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-mongodb-svc
-  namespace: nuvolaris
+  name: openserverless-mongodb-svc
+  namespace: openserverless
 spec:
   clusterIP: None
   ports:   
     - port: 27017
       targetPort: 27017
   selector:
-    app: nuvolaris-mongodb
-    statefulset.kubernetes.io/pod-name: nuvolaris-mongodb-0
+    app: openserverless-mongodb
+    statefulset.kubernetes.io/pod-name: openserverless-mongodb-0

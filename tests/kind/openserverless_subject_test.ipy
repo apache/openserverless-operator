@@ -1,0 +1,69 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+import openserverless.couchdb as cdb
+import openserverless.couchdb_util as cdbu
+import openserverless.testutil as tu
+import openserverless.config as cfg
+import openserverless.kube as kube
+import openserverless.testutil as tu
+import time
+from kopf.testing import KopfRunner
+
+tu.run_proc("kubectl -n openserverless delete all --all")
+tu.run_proc("kubectl -n openserverless delete pvc --all")
+
+
+assert(cfg.configure(tu.load_sample_config()))
+assert(cfg.detect_labels()["openserverless.kube"] == "kind")
+assert(cfg.detect_storage()["openserverless.storageclass"] == "standard")
+assert(cfg.put("couchdb.host", "localhost"))
+
+tu.run_proc("kubectl apply -f tests/kind/whisk.yaml")
+wsk = kube.get("wsk/controller")
+cdb.create(wsk)
+
+import openserverless.couchdb_util
+db = openserverless.couchdb_util.CouchDB()
+
+assert(db.wait_db_ready(60))
+assert(db.configure_single_node())
+assert(db.configure_no_reduce_limit())
+
+assert(cdb.init_system(db))
+assert(cdb.init_subjects(db))
+assert(cdb.init_activations(db))
+assert(cdb.init_actions(db))
+assert(cdb.add_initial_subjects(db))
+
+with KopfRunner(['run', '-A', '--verbose', 'openserverless/user_handlers.py']) as runner:
+    # do something while the operator is running.
+    tu.run_proc("kubectl apply -f tests/whisk-user.yaml")
+    time.sleep(1)  # give it some time to react and to sleep and to retry
+    wsku = kube.get("wsku/franztt")    
+    assert(wsku['spec'])
+
+    tu.run_proc("kubectl delete -f tests/whisk-user.yaml")
+    time.sleep(1)  # give it some time to react
+
+assert runner.exit_code == 0
+assert runner.exception is None
+
+tu.run_proc("kubectl -n openserverless delete all --all")
+tu.run_proc("kubectl -n openserverless delete pvc --all")
+

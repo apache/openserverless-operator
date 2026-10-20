@@ -67,14 +67,14 @@ class KubeApiClient:
             with open(SERVICE_CERT_FILENAME, "w") as crt:
                 crt.write(self.crt)
 
-    def create_whisk_user(self, whisk_user_dict, namespace="nuvolaris"):
+    def create_whisk_user(self, whisk_user_dict, namespace="openserverless"):
         """"
         Creates a whisk user using a POST operation
         param: whisk_user_dict a dictionary representing the whisksusers resource to create
-        param: namespace default to nuvolaris
+        param: namespace default to openserverless
         return: True if the operation is successfully, False otherwise
         """
-        url = f"{self.host}/apis/nuvolaris.org/v1/namespaces/{namespace}/whisksusers"
+        url = f"{self.host}/apis/openserverless.org/v1/namespaces/{namespace}/whisksusers"
         headers = {'Authorization': self.token}
 
         try:
@@ -92,14 +92,14 @@ class KubeApiClient:
             print(ex)
             return False
 
-    def delete_whisk_user(self, username, namespace="nuvolaris"):
+    def delete_whisk_user(self, username, namespace="openserverless"):
         """"
         Delete a whisk user using a DELETE operation
         param: username of the whisksusers resource to delete
-        param: namespace default to nuvolaris
+        param: namespace default to openserverless
         return: True if the operation is successfully, False otherwise
         """
-        url = f"{self.host}/apis/nuvolaris.org/v1/namespaces/{namespace}/whisksusers/{username}"
+        url = f"{self.host}/apis/openserverless.org/v1/namespaces/{namespace}/whisksusers/{username}"
         headers = {'Authorization': self.token}
 
         try:
@@ -117,14 +117,14 @@ class KubeApiClient:
             print(ex)
             return False    
 
-    def get_whisk_user(self, username, namespace="nuvolaris"):
+    def get_whisk_user(self, username, namespace="openserverless"):
         """"
         Get a whisk user using a GET operation
         param: username of the whisksusers resource to delete
-        param: namespace default to nuvolaris
+        param: namespace default to openserverless
         return: a dictionary representing the existing user, None otherwise
         """
-        url = f"{self.host}/apis/nuvolaris.org/v1/namespaces/{namespace}/whisksusers/{username}"
+        url = f"{self.host}/apis/openserverless.org/v1/namespaces/{namespace}/whisksusers/{username}"
         headers = {'Authorization': self.token}
 
         try:

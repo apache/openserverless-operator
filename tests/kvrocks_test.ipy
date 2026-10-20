@@ -17,9 +17,9 @@
 # under the License.
 #
 
-import nuvolaris.config as cfg
-import nuvolaris.kube as kube
-import nuvolaris.kvrocks as kvrocks
+import openserverless.config as cfg
+import openserverless.kube as kube
+import openserverless.kvrocks as kvrocks
 
 cfg.clean()
 cfg.detect_labels()

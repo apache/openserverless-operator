@@ -19,7 +19,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nuvolaris-milvus-minio
+  name: openserverless-milvus-minio
 data:
   initialize: |-
     #!/bin/sh

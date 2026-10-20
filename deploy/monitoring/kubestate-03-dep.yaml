@@ -20,15 +20,15 @@ kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/component: metrics
-    app.kubernetes.io/instance: nuvolaris-prometheus
+    app.kubernetes.io/instance: openserverless-prometheus
     app.kubernetes.io/name: kube-state-metrics
-  name: nuvolaris-prometheus-kube-state-metrics
-  namespace: nuvolaris
+  name: openserverless-prometheus-kube-state-metrics
+  namespace: openserverless
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/instance: nuvolaris-prometheus
+      app.kubernetes.io/instance: openserverless-prometheus
       app.kubernetes.io/name: kube-state-metrics
   strategy:
     rollingUpdate:
@@ -39,11 +39,11 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/component: metrics
-        app.kubernetes.io/instance: nuvolaris-prometheus
+        app.kubernetes.io/instance: openserverless-prometheus
         app.kubernetes.io/name: kube-state-metrics
     spec:
-      serviceAccount: nuvolaris-prometheus-kube-state-metrics
-      serviceAccountName: nuvolaris-prometheus-kube-state-metrics
+      serviceAccount: openserverless-prometheus-kube-state-metrics
+      serviceAccountName: openserverless-prometheus-kube-state-metrics
       affinity:
         # prefer to not run on an invoker node (only prefer because of single node clusters)
         nodeAffinity:
@@ -51,18 +51,18 @@ spec:
           - weight: 100
             preference:
               matchExpressions:
-              - key: nuvolaris-role
+              - key: openserverless-role
                 operator: NotIn
                 values:
                 - invoker
           - weight: 80
             preference:
               matchExpressions:
-              - key: nuvolaris-role
+              - key: openserverless-role
                 operator: In
                 values:
                 - core
-        # Fault tolerance: prevent multiple instances of nuvolaris-couchdb from running on the same node
+        # Fault tolerance: prevent multiple instances of openserverless-couchdb from running on the same node
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
@@ -70,10 +70,10 @@ spec:
               - key: name
                 operator: In
                 values:
-                - nuvolaris-prometheus-kube-state-metrics
+                - openserverless-prometheus-kube-state-metrics
             topologyKey: "kubernetes.io/hostname"
       tolerations:
-        - key: "nuvolaris-role"
+        - key: "openserverless-role"
           operator: "Equal"
           value: core
           effect: "NoSchedule"      

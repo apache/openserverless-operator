@@ -17,14 +17,14 @@
 # under the License.
 #
 
-import nuvolaris.config as cfg
-import nuvolaris.etcd as etcd
-import nuvolaris.kube as kube
+import openserverless.config as cfg
+import openserverless.etcd as etcd
+import openserverless.kube as kube
 
 cfg.clean()
 cfg.detect_labels()
 cfg.detect_storage()
 
 assert(etcd.create())
-assert(kube.get("po/nuvolaris-etcd-0"))
+assert(kube.get("po/openserverless-etcd-0"))
 assert(etcd.delete())

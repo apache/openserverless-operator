@@ -16,10 +16,10 @@
 # under the License.
 #
 
->>> import nuvolaris.config as cfg
->>> import nuvolaris.testutil as tu
->>> import nuvolaris.openwhisk as ow
->>> import nuvolaris.kube as kube
+>>> import openserverless.config as cfg
+>>> import openserverless.testutil as tu
+>>> import openserverless.openwhisk as ow
+>>> import openserverless.kube as kube
 >>> cfg.configure(tu.load_sample_config(), clean=True)
 True
 >>> mck = kube.mocker 

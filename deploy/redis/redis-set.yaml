@@ -19,7 +19,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: redis
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   replicas: 1
   selector:
@@ -32,7 +32,7 @@ spec:
         name: redis
         app: redis
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"
+        whisks.openserverless.org/annotate-version: "true"
     spec:
       restartPolicy: Always
       containers:

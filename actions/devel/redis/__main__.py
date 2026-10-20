@@ -53,7 +53,7 @@ def main(args):
     Action implementing a generic command wrapper for the nuv devel plugin. The action must be called with a POST request receiving a JSON
     payload similar to this one
     {
-        "command":"SET nuvolaris:key1 donald_duck"
+        "command":"SET openserverless:key1 donald_duck"
     }
 
     the invoker must provide a x-impersonate-auth header containing the Openwhisk BASIC authentication of the wsku/user the action should impersonate 

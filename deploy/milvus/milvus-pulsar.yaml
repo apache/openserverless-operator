@@ -19,17 +19,17 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-recovery"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-recovery"
+  namespace: openserverless
   labels:
     app: pulsarv3
     chart: pulsarv3-3.3.0
-    release: nuvolaris-milvus
+    release: openserverless-milvus
     heritage: Helm
-    cluster: nuvolaris-milvus-pulsarv3
+    cluster: openserverless-milvus-pulsarv3
     component: recovery
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-recovery"
+  serviceName: "openserverless-milvus-pulsarv3-recovery"
   replicas: 1
   updateStrategy:
     type: RollingUpdate
@@ -38,14 +38,14 @@ spec:
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: recovery
   template:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: recovery
       annotations:
         prometheus.io/scrape: "true"
@@ -53,7 +53,7 @@ spec:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: nuvolaris-operator
+      serviceAccountName: openserverless-operator
       initContainers:
       # This initContainer will wait for bookkeeper initnewcluster to complete
       # before deploying the bookies
@@ -72,11 +72,11 @@ spec:
           done;
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-recovery"
+            name: "openserverless-milvus-pulsarv3-recovery"
         volumeMounts:
         
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-recovery"
+      - name: "openserverless-milvus-pulsarv3-recovery"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         resources:
@@ -93,27 +93,27 @@ spec:
           containerPort: 8000
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-recovery"
+            name: "openserverless-milvus-pulsarv3-recovery"
         volumeMounts:        
       volumes:
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-bookie"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-bookie"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: bookie
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-bookie"
+  serviceName: "openserverless-milvus-pulsarv3-bookie"
   replicas: 1
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: bookie
   updateStrategy:
     type: RollingUpdate
@@ -122,8 +122,8 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: bookie
       annotations:
         prometheus.io/scrape: "true"
@@ -131,17 +131,17 @@ spec:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: nuvolaris-operator
+      serviceAccountName: openserverless-operator
       securityContext:
         fsGroup: 0
         fsGroupChangePolicy: OnRootMismatch
       volumes:
-        - name: "nuvolaris-milvus-pulsarv3-bookie-journal"
+        - name: "openserverless-milvus-pulsarv3-bookie-journal"
           persistentVolumeClaim:
-            claimName: "nuvolaris-milvus-bookie-journal"
-        - name: "nuvolaris-milvus-pulsarv3-bookie-ledgers"
+            claimName: "openserverless-milvus-bookie-journal"
+        - name: "openserverless-milvus-pulsarv3-bookie-ledgers"
           persistentVolumeClaim:
-            claimName: "nuvolaris-milvus-bookie-ledgers"        
+            claimName: "openserverless-milvus-bookie-ledgers"        
       initContainers:
       # This initContainer will wait for bookkeeper initnewcluster to complete
       # before deploying the bookies
@@ -162,9 +162,9 @@ spec:
           done;
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"                    
+            name: "openserverless-milvus-pulsarv3-bookie"                    
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-bookie"
+      - name: "openserverless-milvus-pulsarv3-bookie"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -199,30 +199,30 @@ spec:
           containerPort: 8000
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-bookie"
+            name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:
-        - name: "nuvolaris-milvus-pulsarv3-bookie-journal"
+        - name: "openserverless-milvus-pulsarv3-bookie-journal"
           mountPath: /pulsar/data/bookkeeper/journal
-        - name: "nuvolaris-milvus-pulsarv3-bookie-ledgers"
+        - name: "openserverless-milvus-pulsarv3-bookie-ledgers"
           mountPath: /pulsar/data/bookkeeper/ledgers        
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-broker"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-broker"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: broker
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-broker"
+  serviceName: "openserverless-milvus-pulsarv3-broker"
   replicas: 1
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: broker
   updateStrategy:
     type: RollingUpdate
@@ -231,14 +231,14 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: broker
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
-      serviceAccountName: nuvolaris-operator
+      serviceAccountName: openserverless-operator
       affinity:
       terminationGracePeriodSeconds: 30
       initContainers:
@@ -256,8 +256,8 @@ spec:
           - >-
             
             export BOOKIE_MEM="-Xmx128M";
-            until bin/bookkeeper org.apache.zookeeper.ZooKeeperMain -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /admin/clusters/nuvolaris-milvus-pulsarv3; do
-              echo "pulsar cluster nuvolaris-milvus-pulsarv3 isn't initialized yet ... check in 3 seconds ..." && sleep 3;
+            until bin/bookkeeper org.apache.zookeeper.ZooKeeperMain -server openserverless-milvus-pulsarv3-zookeeper:2181 get /admin/clusters/openserverless-milvus-pulsarv3; do
+              echo "pulsar cluster openserverless-milvus-pulsarv3 isn't initialized yet ... check in 3 seconds ..." && sleep 3;
             done;
         volumeMounts:
         
@@ -284,20 +284,20 @@ spec:
               sleep 3;
             done;
             echo "bookkeeper cluster is already initialized";
-            bookieServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-bookie | grep Name | wc -l)";
+            bookieServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-bookie | grep Name | wc -l)";
             until [ ${bookieServiceNumber} -ge $BOOK_KEEPER_REPLICAS ]; do
-              echo "bookkeeper cluster nuvolaris-milvus-pulsarv3 isn't ready yet ... check in 10 seconds ...";
+              echo "bookkeeper cluster openserverless-milvus-pulsarv3 isn't ready yet ... check in 10 seconds ...";
               sleep 10;
-              bookieServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-bookie | grep Name | wc -l)";
+              bookieServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-bookie | grep Name | wc -l)";
             done;
             echo "bookkeeper cluster is ready";
         envFrom:
           - configMapRef:
-              name: "nuvolaris-milvus-pulsarv3-bookie"
+              name: "openserverless-milvus-pulsarv3-bookie"
         volumeMounts:
           
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-broker"
+      - name: "openserverless-milvus-pulsarv3-broker"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -327,11 +327,11 @@ spec:
           bin/gen-yml-from-env.py conf/functions_worker.yml;
           echo "OK" > status;
           
-          bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080;
+          bin/pulsar zookeeper-shell -server openserverless-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8080;
           while [ $? -eq 0 ]; do
-            echo "broker ${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local znode still exists ... check in 10 seconds ...";
+            echo "broker ${HOSTNAME}.openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local znode still exists ... check in 10 seconds ...";
             sleep 10;
-            bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.nuvolaris-milvus-pulsarv3-broker.nuvolaris.svc.cluster.local:8080;
+            bin/pulsar zookeeper-shell -server openserverless-milvus-pulsarv3-zookeeper:2181 get /loadbalance/brokers/${HOSTNAME}.openserverless-milvus-pulsarv3-broker.openserverless.svc.cluster.local:8080;
           done;
           cat conf/pulsar_env.sh;
           OPTS="${OPTS} -Dlog4j2.formatMsgNoLookups=true" exec bin/pulsar broker;
@@ -343,7 +343,7 @@ spec:
           containerPort: 6650
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-broker"
+            name: "openserverless-milvus-pulsarv3-broker"
         volumeMounts:          
         env:
       volumes:      
@@ -351,20 +351,20 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-proxy"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-proxy"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: proxy
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-proxy"
+  serviceName: "openserverless-milvus-pulsarv3-proxy"
   replicas: 1
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: proxy
   updateStrategy:
     type: RollingUpdate
@@ -373,8 +373,8 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: proxy
       annotations:
         prometheus.io/scrape: "true"
@@ -382,7 +382,7 @@ spec:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: nuvolaris-operator
+      serviceAccountName: openserverless-operator
       initContainers:
       # This init container will wait for zookeeper to be ready before
       # deploying the bookies
@@ -397,7 +397,7 @@ spec:
         args:
           - >-
             export PULSAR_MEM="-Xmx128M";
-            until bin/pulsar zookeeper-shell -server nuvolaris-milvus-pulsarv3-zookeeper get /admin/clusters/nuvolaris-milvus-pulsarv3; do
+            until bin/pulsar zookeeper-shell -server openserverless-milvus-pulsarv3-zookeeper get /admin/clusters/openserverless-milvus-pulsarv3; do
               sleep 3;
             done;
       # This init container will wait for at least one broker to be ready before
@@ -416,14 +416,14 @@ spec:
         args:
           - >-
             set -e;
-            brokerServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-broker | grep Name | wc -l)";
+            brokerServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-broker | grep Name | wc -l)";
             until [ ${brokerServiceNumber} -ge $BROKER_REPLICAS ]; do
-              echo "pulsar cluster nuvolaris-milvus-pulsarv3 isn't initialized yet ... check in 10 seconds ...";
+              echo "pulsar cluster openserverless-milvus-pulsarv3 isn't initialized yet ... check in 10 seconds ...";
               sleep 10;
-              brokerServiceNumber="$(nslookup -timeout=10 nuvolaris-milvus-pulsarv3-broker | grep Name | wc -l)";
+              brokerServiceNumber="$(nslookup -timeout=10 openserverless-milvus-pulsarv3-broker | grep Name | wc -l)";
             done;          
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-proxy"
+      - name: "openserverless-milvus-pulsarv3-proxy"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -460,4 +460,4 @@ spec:
           containerPort: 6650
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-proxy"              
+            name: "openserverless-milvus-pulsarv3-proxy"              

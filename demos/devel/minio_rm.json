@@ -1,7 +1,7 @@
 {
     "command":"rm",
     "args":[
-        "nuvolaris-web",
+        "openserverless-web",
         "tidy/content.html"
     ]
 }

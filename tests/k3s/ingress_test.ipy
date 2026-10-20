@@ -15,15 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-!kubectl config set-context --current --namespace nuvolaris
+!kubectl config set-context --current --namespace openserverless
 import requests as req
 
-import nuvolaris.kube as kube
-import nuvolaris.kustomize as kus
-import nuvolaris.testutil as tu
+import openserverless.kube as kube
+import openserverless.kustomize as kus
+import openserverless.testutil as tu
 
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all
 
 host = %system kubectl config view -o json | jq -r '.clusters[0].cluster.server' | sed -e 's|^.*//\(.*\):.*$|\1|'
 host = host[0]

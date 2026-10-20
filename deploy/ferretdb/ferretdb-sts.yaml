@@ -18,23 +18,23 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nuvolaris-mongodb
+  name: openserverless-mongodb
   labels:
     app: mongodb
-  namespace: nuvolaris 
+  namespace: openserverless 
 spec:
-  serviceName: nuvolaris-mongodb-svc
+  serviceName: openserverless-mongodb-svc
   replicas: 1
   selector:
     matchLabels:
-      app: nuvolaris-mongodb
+      app: openserverless-mongodb
   template:
     metadata:
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"     
+        whisks.openserverless.org/annotate-version: "true"     
       labels:
-        app: nuvolaris-mongodb
-        name: nuvolaris-mongodb
+        app: openserverless-mongodb
+        name: openserverless-mongodb
     spec:
       securityContext:
         fsGroup: 1001
@@ -44,4 +44,4 @@ spec:
         name: ferretdb
         env:
         - name: FERRETDB_POSTGRESQL_URL
-          value: postgresql://nuvolaris:s0meP%40ass3@nuvolaris-postgres.nuvolaris.svc.cluster.local:5432/nuvolaris
+          value: postgresql://openserverless:s0meP%40ass3@openserverless-postgres.openserverless.svc.cluster.local:5432/openserverless

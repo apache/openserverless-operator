@@ -19,8 +19,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nuvolaris-milvus
-  namespace: nuvolaris
+  name: openserverless-milvus
+  namespace: openserverless
 data:
   default.yaml: |+
     # Copyright (C) 2019-2021 Zilliz. All rights reserved.
@@ -41,13 +41,13 @@ data:
         userName: root 
         password: 0therPa55
       endpoints:
-      - nuvolaris-etcd-0.nuvolaris-etcd-headless.nuvolaris.svc.cluster.local:2379    
+      - openserverless-etcd-0.openserverless-etcd-headless.openserverless.svc.cluster.local:2379    
 
     metastore:
       type: etcd 
          
     minio:
-      address: nuvolaris-minio
+      address: openserverless-minio
       port: 9000
       accessKeyID: miniomilvus
       secretAccessKey: s0meP@ass3
@@ -63,7 +63,7 @@ data:
     messageQueue: pulsar
     
     pulsar:
-      address: nuvolaris-milvus-pulsarv3-proxy
+      address: openserverless-milvus-pulsarv3-proxy
       port: 6650
       maxMessageSize: 104857600    
     

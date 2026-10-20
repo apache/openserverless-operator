@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import nuvolaris.bcrypt_util as bu
+import openserverless.bcrypt_util as bu
 
 password = "MySecurePassword123!"
 hashed = bu.hash_password(password)

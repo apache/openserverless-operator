@@ -21,7 +21,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: invoker
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     name: invoker
     app: invoker
@@ -65,7 +65,7 @@ spec:
           - name: "WHISK_API_HOST_PORT"
             value: "3233"
           - name: "WHISK_API_HOST_NAME"
-            value: "controller.nuvolaris.svc.cluster.local"
+            value: "controller.openserverless.svc.cluster.local"
 
           # Needed by invoker to configure the container factory & container pool
           - name: "CONFIG_whisk_docker_containerFactory_useRunc"
@@ -175,11 +175,11 @@ spec:
           - name: "CONFIG_whisk_couchdb_provider"
             value: "CouchDB"
           - name: "CONFIG_whisk_couchdb_databases_WhiskActivation"
-            value: "nuvolaris_activations"
+            value: "openserverless_activations"
           - name: "CONFIG_whisk_couchdb_databases_WhiskEntity"
-            value: "nuvolaris_whisks"
+            value: "openserverless_whisks"
           - name: "CONFIG_whisk_couchdb_databases_WhiskAuth"
-            value: "nuvolaris_subjects"
+            value: "openserverless_subjects"
 
 
           - name: "CONFIG_whisk_couchdb_invoker_username"
@@ -255,7 +255,7 @@ spec:
 
           # apparently this is needed for the invoker
           - name: "CONFIG_whisk_helm_release"
-            value: "helm_nuvolaris"
+            value: "helm_openserverless"
 
           # kubernetes
           - name: "CONFIG_whisk_kubernetes_timeouts_run"
@@ -271,7 +271,7 @@ spec:
             value: false
 
           - name: "CONFIG_whisk_kubernetes_actionNamespace"
-            value: "nuvolaris"                         
+            value: "openserverless"                         
         ports:
         - name: invoker
           containerPort: 8080

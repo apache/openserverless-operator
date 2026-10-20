@@ -19,7 +19,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name:  test-pvc
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
   #storageClassName: "" # Empty string must be explicitly set otherwise default StorageClass will be set
   volumeName: test-pvc

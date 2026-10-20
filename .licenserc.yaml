@@ -31,6 +31,7 @@ header:
     - '**/LICENSE'
     - '**/DISCLAIMER'
     - '**/NOTICE'
+    - '**/WARN'
     - '**/package-lock.json'
     - '**/.*-version'
     - '**/*.json'

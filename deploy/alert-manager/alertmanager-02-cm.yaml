@@ -19,13 +19,13 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   annotations:
-    meta.helm.sh/release-name: nuvolaris-prometheus
-    meta.helm.sh/release-namespace: nuvolaris  
+    meta.helm.sh/release-name: openserverless-prometheus
+    meta.helm.sh/release-namespace: openserverless  
   labels:
-    app.kubernetes.io/instance: nuvolaris-prometheus    
+    app.kubernetes.io/instance: openserverless-prometheus    
     app.kubernetes.io/name: alertmanager
-  name: nuvolaris-prometheus-alertmanager
-  namespace: nuvolaris
+  name: openserverless-prometheus-alertmanager
+  namespace: openserverless
 data:
   alertmanager.yml: |
     {}

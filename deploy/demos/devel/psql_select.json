@@ -1,3 +1,3 @@
 {
-    "command":"select message from nuvolaris_table"
+    "command":"select message from openserverless_table"
 }

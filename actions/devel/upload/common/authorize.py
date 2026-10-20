@@ -18,8 +18,8 @@
 from base64 import b64decode, b64encode
 from urllib.parse import quote, unquote
 
-import nuvolaris.config as cfg
-import nuvolaris.couchdb_util as cu
+import openserverless.config as cfg
+import openserverless.couchdb_util as cu
 import json
 import common.util as ut
 
@@ -113,13 +113,13 @@ class Authorize():
             if(response['docs']):
                     docs = list(response['docs'])
                     if(len(docs) > 0):
-                        print(f"Nuvolaris namespace for user {uuid} found. Returning Result.")
+                        print(f"OpenServerless namespace for user {uuid} found. Returning Result.")
                         return docs[0]
             
-            print(f"Nuvolaris metadata for user {uuid} not found!")
+            print(f"OpenServerless metadata for user {uuid} not found!")
             return None
         except Exception as e:
-            print(f"failed to query Nuvolaris metadata for user {uuid}. Reason: {e}")
+            print(f"failed to query OpenServerless metadata for user {uuid}. Reason: {e}")
             return None        
 
     def fetch_user_data(self, username: str):
@@ -135,13 +135,13 @@ class Authorize():
             if(response['docs']):
                     docs = list(response['docs'])
                     if(len(docs) > 0):
-                        print(f"Nuvolaris metadata for user {username} found. Returning Result.")
+                        print(f"OpenServerless metadata for user {username} found. Returning Result.")
                         return docs[0]
             
-            print(f"Nuvolaris metadata for user {username} not found!")
+            print(f"OpenServerless metadata for user {username} not found!")
             return None
         except Exception as e:
-            print(f"failed to query Nuvolaris metadata for user {username}. Reason: {e}")
+            print(f"failed to query OpenServerless metadata for user {username}. Reason: {e}")
             return None
 
     def login(self, authorization: str):

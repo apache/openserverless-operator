@@ -16,7 +16,7 @@
 # under the License.
 #
 
-import nuvolaris.config as cfg
+import openserverless.config as cfg
 
 cfg.clean()
 assert(len(cfg.getall("")) == 0)
@@ -35,11 +35,11 @@ assert(len(cfg.keys("a.c")) == 2)
 
 assert(cfg.configure({"a":1}))
 assert(cfg.get("a") == 1 )
-labels = [{"nuvolaris.io/hello": "world", "something": "else" }, {}, {"nothing":"here"}]
-cfg.put("nuvolaris.kube","auto")
+labels = [{"openserverless.io/hello": "world", "something": "else" }, {}, {"nothing":"here"}]
+cfg.put("openserverless.kube","auto")
 cfg.detect_labels(labels)
-assert(cfg.get("nuvolaris.hello") == "world")
-assert(cfg.get("nuvolaris.kube") == "generic")
+assert(cfg.get("openserverless.hello") == "world")
+assert(cfg.get("openserverless.kube") == "generic")
 
 assert(len(cfg.getall("")) == 3)
 

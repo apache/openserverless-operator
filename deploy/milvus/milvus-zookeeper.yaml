@@ -19,20 +19,20 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "nuvolaris-milvus-pulsarv3-zookeeper"
-  namespace: nuvolaris
+  name: "openserverless-milvus-pulsarv3-zookeeper"
+  namespace: openserverless
   labels:
     app: pulsarv3
-    release: nuvolaris-milvus
-    cluster: nuvolaris-milvus-pulsarv3
+    release: openserverless-milvus
+    cluster: openserverless-milvus-pulsarv3
     component: zookeeper
 spec:
-  serviceName: "nuvolaris-milvus-pulsarv3-zookeeper"
+  serviceName: "openserverless-milvus-pulsarv3-zookeeper"
   replicas: 1
   selector:
     matchLabels:
       app: pulsarv3
-      release: nuvolaris-milvus
+      release: openserverless-milvus
       component: zookeeper
   updateStrategy:
     type: RollingUpdate
@@ -41,23 +41,23 @@ spec:
     metadata:
       labels:
         app: pulsarv3
-        release: nuvolaris-milvus
-        cluster: nuvolaris-milvus-pulsarv3
+        release: openserverless-milvus
+        cluster: openserverless-milvus-pulsarv3
         component: zookeeper
       annotations:
     spec:
       affinity:
       terminationGracePeriodSeconds: 30
-      serviceAccountName: "nuvolaris-operator"
+      serviceAccountName: "openserverless-operator"
       securityContext:
         fsGroup: 0
         fsGroupChangePolicy: OnRootMismatch
       volumes: 
-          - name: "nuvolaris-milvus-pulsarv3-zookeeper-data"
+          - name: "openserverless-milvus-pulsarv3-zookeeper-data"
             persistentVolumeClaim:
-              claimName: "nuvolaris-milvus-zookeeper"        
+              claimName: "openserverless-milvus-zookeeper"        
       containers:
-      - name: "nuvolaris-milvus-pulsarv3-zookeeper"
+      - name: "openserverless-milvus-pulsarv3-zookeeper"
         image: "apachepulsar/pulsar:3.0.7"
         imagePullPolicy: IfNotPresent
         resources:
@@ -82,12 +82,12 @@ spec:
           containerPort: 3888
         env:
          - name: ZOOKEEPER_SERVERS
-           value: nuvolaris-milvus-pulsarv3-zookeeper-0
+           value: openserverless-milvus-pulsarv3-zookeeper-0
          - name: EXTERNAL_PROVIDED_SERVERS
            value: "false"
         envFrom:
         - configMapRef:
-            name: "nuvolaris-milvus-pulsarv3-zookeeper"
+            name: "openserverless-milvus-pulsarv3-zookeeper"
         readinessProbe:
           exec:
             command:
@@ -113,5 +113,5 @@ spec:
           timeoutSeconds: 30
           failureThreshold: 10
         volumeMounts:
-        - name: "nuvolaris-milvus-pulsarv3-zookeeper-data"
+        - name: "openserverless-milvus-pulsarv3-zookeeper-data"
           mountPath: /pulsar/data

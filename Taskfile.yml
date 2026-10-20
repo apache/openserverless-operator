@@ -22,12 +22,14 @@ vars:
   N: ""
   T: ""
   P: ""
-  BASETAG: 0.1.0-incubating
+  BASETAG: 0.9.0-incubating
   KUBE:
     sh: ./detect.sh
-  NS: "nuvolaris"
+  NS: "openserverless"
   PREFIX: ""
-  TAG:
+  SUFFIX: "-snapshot"
+  TAG:  ""
+
 
 dotenv:
   - .env
@@ -35,9 +37,9 @@ dotenv:
 includes:
   d:
     taskfile: TaskfileDev.yml
-  t: 
+  t:
     taskfile: TaskfileTest.yml
-  b: 
+  b:
     taskfile: TaskfileBuild.yml
   o:
     taskfile: TaskfileOlaris.yml
@@ -50,7 +52,7 @@ includes:
   aks:
     taskfile: clusters/aks.yml
     dir: clusters
-  lks:  
+  lks:
     taskfile: clusters/lks.yml
     dir: clusters
   gke:
@@ -58,7 +60,7 @@ includes:
     dir: clusters
   mik:
     taskfile: clusters/microk8s.yml
-    dir: clusters 
+    dir: clusters
   k3s:
     taskfile: clusters/k3s.yml
     dir: clusters
@@ -68,16 +70,34 @@ includes:
   sys:
     taskfile: actions/system.yml
     dir: actions
-  talos:
-    taskfile: clusters/talos-gcp.yml
-    dir: clusters  
 
 tasks:
 
-  default: 
+  default:
+    desc: alias for "use" (show/select the current kubernetes cluster)
+    cmds:
     - task: use
 
+  tag:
+    silent: true
+    vars:
+      TS:
+        sh: date '+%y %m %d %H %M' | awk '{printf "%s%s%02d%s%02d\n", $1, substr("abcdefghijkl",$2+0,1), $3, substr("abcdefghijklmnopqrstuvwx",$4+1,1), $5}'
+    cmds:
+      - git tag -d $(git tag)
+      - |
+        TAG="{{.BASETAG}}.{{.TS}}{{.SUFFIX}}"
+        git tag $TAG
+        echo New tag $TAG
+
+  ci:
+    - git push --tags
+
+  build:
+  - task: b:build
+
   setup:
+    desc: setup the local development environment (deps, ssh key, env config, poetry)
     deps:
       - update-files-from-openwhisk
       - ssh-key
@@ -87,56 +107,101 @@ tasks:
       - poetry install
     status:
       - test -e $GOBIN/kopf
-      
-  env: env
-  
-  watch: watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,ingress
-  watch-osh: watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,route
-  watch-cert: watch kubectl -n {{.NS}} get ingress,ClusterIssuers,Certificates,CertificateRequests,Orders,Challenges 
-  watch-pod: watch kubectl -n {{.NS}} get po,job --no-headers
 
-  logs: >
-    rm -f nuvolaris-operator.log ;
-    kubectl -n nuvolaris logs pod/nuvolaris-operator -f | tee nuvolaris-operator.log
+  env:
+    desc: print the current environment variables
+    cmds:
+    - env
 
-  cli: 
+  watch:
+    desc: watch nodes, pods, services, pvcs and ingresses in the namespace
+    cmds:
+    - watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,ingress
+
+  watch-osh:
+    desc: watch nodes, pods, services, pvcs and routes (OpenShift) in the namespace
+    cmds:
+    - watch kubectl -n {{.NS}} get nodes,pod,svc,pvc,route
+
+  watch-cert:
+    desc: watch cert-manager resources (ingress, issuers, certificates, orders, challenges)
+    cmds:
+    - watch kubectl -n {{.NS}} get ingress,ClusterIssuers,Certificates,CertificateRequests,Orders,Challenges
+
+  watch-pod:
+    desc: watch pods and jobs in the namespace
+    cmds:
+    - watch kubectl -n {{.NS}} get po,job --no-headers
+
+  logs:
+    desc: tail the operator logs to openserverless-operator.log
+    cmds:
+    - >
+      rm -f openserverless-operator.log ;
+      kubectl -n openserverless logs pod/openserverless-operator -f | tee openserverless-operator.log
+
+  cli:
+    desc: run the interactive development CLI
+    cmds:
     - task: d:cli
 
   run:
+    desc: prepare system actions, apply permissions and run the operator locally
+    cmds:
     - task: sys:prepare
     - task: t:permission
     - task: d:run
-  
+
   irun:
-  - task: instance
-  - task: d:run
+    desc: deploy an instance and run the operator locally
+    cmds:
+    - task: instance
+    - task: d:run
 
   permission:
+    desc: apply the openserverless permissions
+    cmds:
     - task: t:permission
 
   operator:
+    desc: deploy the operator
+    cmds:
     - task: t:operator
 
   instance:
+    desc: deploy an openwhisk instance
+    cmds:
     - task: t:instance
 
   instance-wfx:
+    desc: deploy an openwhisk instance with workflow extension
+    cmds:
     - task: d:instance-wfx
 
   instance-and-log:
+    desc: deploy an instance and follow the operator logs
+    cmds:
     - task: d:instance
-    - kubectl -n nuvolaris logs pod/nuvolaris-operator -f
+    - kubectl -n openserverless logs pod/openserverless-operator -f
 
-  mongo: 
-    - task: t:mongo 
+  mongo:
+    desc: run the mongo integration test
+    cmds:
+    - task: t:mongo
 
-  minio: 
+  minio:
+    desc: run the minio integration test
+    cmds:
     - task: t:minio
 
   postgres:
-    - task: t:postgres      
+    desc: run the postgres integration test
+    cmds:
+    - task: t:postgres
 
   minimal:
+    desc: deploy operator and a minimal instance, then run hello test
+    cmds:
     #- task: permission
     - task: operator
     - task  instance WHISK=minimal
@@ -144,6 +209,8 @@ tasks:
     - task: hello
 
   all:
+    desc: full end-to-end setup and test of all services
+    cmds:
     - task: permission
     - task: operator
     - task: instance
@@ -155,28 +222,43 @@ tasks:
     - task: postgres
 
   config:
+    desc: configure ops wsk properties for the deployed instance
+    cmds:
     - task: t:config
 
-  hello: 
+  hello:
+    desc: run the hello world test action
+    cmds:
     - task: t:hello
 
-  redis: 
+  redis:
+    desc: run the redis integration test
+    cmds:
     - task: t:redis
 
-  workflow: 
-    - kubectl -n nuvolaris apply -f tests/workflow-test.yaml
+  workflow:
+    desc: apply the workflow test manifest
+    cmds:
+    - kubectl -n openserverless apply -f tests/workflow-test.yaml
 
   defin:
+    desc: remove finalizers to force-delete the wsk controller resource
+    cmds:
     - task: d:defin
 
-  # old., to be removed
+  # deprecated
   image-tag:
-    - git tag -d $(git tag) 
-    - git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)
-    - env PAGER= git tag
+    desc: "[deprecated] generate and force a new git tag based on the current time"
+    cmds:
+    - echo "deprecated use, task tag"
+    #- git tag -d $(git tag)
+    #- git tag -f {{.P}}{{.BASETAG}}.$(date +%y%m%d%H%M)-SNAPSHOT
+    #- env PAGER= git tag
+
 
   # configure env
   configure-env:
+    desc: check that .env exists (copy from .env.dist if missing)
     cmds:
       - |
         if ! test -e .env
@@ -184,70 +266,78 @@ tasks:
         fi
 
   # update configuration files from openwhisk source
-  update-files-from-openwhisk: 
+  update-files-from-openwhisk:
+    desc: update configuration files copied from the openwhisk source repo
     ignore_error: true
     cmds:
-      - | 
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/ansible/files/*.json nuvolaris/files
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/bin/wskadmin tools/cli/wsk/wskadmin.py
-        cp -v ../nuvolaris/nuvolaris-controller/openwhisk/tools/admin/*.py tools/cli/wsk
+      - |
+        cp -v ../openserverless/openserverless-controller/openwhisk/ansible/files/*.json openserverless/files
+        cp -v ../openserverless/openserverless-controller/openwhisk/bin/wskadmin tools/cli/wsk/wskadmin.py
+        cp -v ../openserverless/openserverless-controller/openwhisk/tools/admin/*.py tools/cli/wsk
     sources:
-      - ../nuvolaris/nuvolaris-controller/openwhisk/ansible/files/*.json
-      - ../nuvolaris/nuvolaris-controller/openwhisk/bin/wskadmin
-      - ../nuvolaris/nuvolaris-controller/openwhisk/tools/admin/*.py
+      - ../openserverless/openserverless-controller/openwhisk/ansible/files/*.json
+      - ../openserverless/openserverless-controller/openwhisk/bin/wskadmin
+      - ../openserverless/openserverless-controller/openwhisk/tools/admin/*.py
     generates:
-      - nuvolaris/files/*.json
-      - nuvolaris/tools/cli/wsk/*.py
+      - openserverless/files/*.json
+      - openserverless/tools/cli/wsk/*.py
 
   # generate ssh keys
   ssh-key:
+    desc: generate an ssh key pair for cluster access if missing
     cmds:
       - test -f clusters/id_rsa || ssh-keygen -b 2048 -t rsa -f clusters/id_rsa -q -N ""
       - ssh-keygen  -y -f clusters/id_rsa >clusters/id_rsa.pub
 
   clean:
+    desc: delete all deployed resources in the openserverless namespace
     cmds:
-      - cmd: kubectl -n nuvolaris delete wsku --all
+      - cmd: kubectl -n openserverless delete wsku --all
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete kubegres --timeout=60s
+      - cmd: kubectl -n openserverless delete kubegres --timeout=60s
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete milvus --timeout=60s
-        ignore_error: true        
-      - cmd: kubectl -n nuvolaris delete wsk/controller --grace-period=0 --timeout=5s
+      - cmd: kubectl -n openserverless delete milvus --timeout=60s
+        ignore_error: true
+      - cmd: kubectl -n openserverless delete wsk/controller --grace-period=0 --timeout=5s
         ignore_error: true
       - cmd: task defin
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete all --all --grace-period=0
+      - cmd: kubectl -n openserverless delete all --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete pvc --all --grace-period=0
+      - cmd: kubectl -n openserverless delete pvc --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete ing --all --grace-period=0
+      - cmd: kubectl -n openserverless delete ing --all --grace-period=0
         ignore_error: true
-      - cmd: kubectl -n nuvolaris delete cm/config --grace-period=0
+      - cmd: kubectl -n openserverless delete cm/config --grace-period=0
         ignore_error: true
       - cmd: kubectl delete clusterissuers/letsencrypt-issuer
-        ignore_error: true              
+        ignore_error: true
 
 
   utest:
+    desc: run python doctests for openserverless modules (T=filter)
     cmds:
       - |
-        for test in nuvolaris/{{.T}}*.py
+        for test in openserverless/{{.T}}*.py
         do  echo "*** [{{.KUBE}}] $test"
             poetry run python3 -m doctest $test {{.CLI_ARGS}}
         done
     silent: true
 
-  iclean: rm -f deploy/*/kustomization.yaml deploy/*/__* deploy/*/*_generated.yaml
+  iclean:
+    desc: remove generated kustomization and generated deploy files
+    cmds:
+    - rm -f deploy/*/kustomization.yaml deploy/*/__* deploy/*/*_generated.yaml
 
   itest:
+    desc: run ipython integration tests against the current kube (T=filter)
     cmds:
       - task: iclean
       - |
-        kubectl apply -f deploy/nuvolaris-permissions
+        kubectl apply -f deploy/openserverless-permissions
         rm -f _failed.txt
         for test in tests/{{.T}}*.ipy tests/{{.KUBE}}/{{.T}}*.ipy
-        do  
+        do
             if test -e "$test"
             then  echo "*** [{{.KUBE}}] $test"
                   rm -f deploy/*/kustomization.yaml deploy/*/__*
@@ -265,6 +355,7 @@ tasks:
     silent: true
 
   dtest:
+    desc: deploy permissions, operator and instance, then run the actions tests
     cmds:
       - task: permission
       - task: operator
@@ -272,24 +363,31 @@ tasks:
       - task: actions
 
   actions:
+    desc: run config, hello, redis and echo action tests
+    cmds:
     - task: t:config
     - task: t:hello
     - task: t:redis
     - task: t:echo
 
   test:
+    desc: run the full test suite (clean, unit, integration, deploy tests)
+    cmds:
     - task: clean
     - task: utest
     - task: itest
     - task: dtest
 
-  debug: 
+  debug:
+    desc: set up an ipython debug profile and run the ui integration test
+    cmds:
     - poetry run ipython profile create
     - cp test_profile.ipy ~/.ipython/profile_default/startup/
     - task: uitest
 
-  all-kubes: 
-    cmds: 
+  all-kubes:
+    desc: run a task against every configured kube (usage - task all-kubes -- <target>)
+    cmds:
       - |-
         if test -z "{{.CLI_ARGS}}"
         then echo 'use "task all-kubes -- <target> runs the target against all the available kubes'
@@ -301,18 +399,20 @@ tasks:
         fi
     silent: true
 
-  kube-test: 
+  kube-test:
+    desc: run dtest quietly, discarding all output
     cmds:
       - task dtest 2>/dev/null >/dev/null
 
-  use: 
+  use:
+    desc: "list available kubeconfigs, or switch to the one matching N"
     cmds:
     - |-
         if test -z "{{.N}}"
         then  echo "*** current: {{.KUBE}}"
               ls clusters/*.kubeconfig | sort | awk '{ print NR, $0 }'
               echo "*** select with 'task #'"
-        else  CFG="$(ls -1 clusters/*.kubeconfig | tail +{{.N}} | head -1)" 
+        else  CFG="$(ls -1 clusters/*.kubeconfig | tail +{{.N}} | head -1)"
               cp $CFG ~/.kube/config
               echo "cluster: $(./detect.sh)"
               kubectl get nodes
@@ -320,25 +420,24 @@ tasks:
     silent: true
 
   build-and-load:
+    desc: build the operator image and load it into the local kind cluster
+    cmds:
     - task: b:build-and-load
 
   build-and-push:
+    desc: build the operator image and push it to the registry
+    cmds:
     - task: b:build-and-push
 
   buildx-and-push:
+    desc: build the operator image (multi-arch) and push it to the registry
+    cmds:
     - task: b:buildx-and-push
 
   docker-login:
-    - task: b:docker-login
-
-  # openserverless-operator section
-  tag: 
-    silent: true
-    desc: generate a new tag based on the current time 
+    desc: log in to the docker registry
     cmds:
-    - git tag -d $(git tag) || true
-    - git tag -f {{.BASETAG}}.$(date +%y%m%d%H%M)
-    - env PAGER= git tag 
+    - task: b:docker-login
 
   install-registry:
     desc: install a local registry
@@ -346,67 +445,55 @@ tasks:
     - sudo cp registries.yaml /etc/rancher/k3s/registries.yaml
     - sudo systemctl restart k3s
     - helm repo add twuni https://helm.twun.io
-    - > 
-      helm install docker-registry twuni/docker-registry 
-      --namespace kube-system  
+    - >
+      helm install docker-registry twuni/docker-registry
+      --namespace kube-system
       --set image.tag=2.8.3
       --set service.type=NodePort
       --set service.nodePort=30050
     status:
     - kubectl -n kube-system get po -l app=docker-registry | grep docker-registry
 
-  tag-commit-push:
-    desc: tag, commit and push to your default upstream repo (see README.md)
-    cmds:
-    - task: tag
-    - git commit -m "{{.TAG}}" -a || true
-    - git push || true
-
-  kaniko-build:
-    desc: build in current kubernetes with Kaniko
-    env:
-      TAG: 
-        sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
-    cmds:
-    - test -n "$GITHUB_USER" || true "did you configure your .env?"
-    - envsubst  <kaniko-build.yaml >_kaniko-build.yaml
-    - kubectl -n default delete job/kaniko-build || true
-    - kubectl -n default apply -f _kaniko-build.yaml
-    - kubectl wait po --for=condition=ready -l app=kaniko-build -n default 
-
-  build-logs:
-    desc: show logs of the latest build
-    cmds:
-    - kubectl -n default logs -l app=kaniko-build -f
-
-  build:
-    desc: build the operator image
-    cmds: 
-    - task: install-registry
-    - task: tag-commit-push
-    - task: kaniko-build
-    - task: build-logs
-
   deploy:
     desc: deploy the current operator image
     env:
-      TAG: 
+      TAG:
         sh: git describe --tags --abbrev=0 2>/dev/null || echo latest
     cmds:
     - envsubst  <operator-deploy.yaml >_operator-deploy.yaml
     - kubectl apply -f _operator-deploy.yaml
-        
+
 
   shell:
-    - kubectl -n nuvolaris exec --stdin --tty {{.POD}} -- /bin/bash
-      
-  1: task use N=1
-  2: task use N=2
-  3: task use N=3
-  4: task use N=4
-  5: task use N=5
-  6: task use N=6
-  7: task use N=7
-  8: task use N=8
-  9: task use N=9
+    desc: open an interactive shell in the given pod (POD=name)
+    cmds:
+    - kubectl -n openserverless exec --stdin --tty {{.POD}} -- /bin/bash
+
+  1:
+    cmds:
+    - task use N=1
+  2:
+    cmds:
+    - task use N=2
+  3:
+    cmds:
+    - task use N=3
+  4:
+    cmds:
+    - task use N=4
+  5:
+    cmds:
+    - task use N=5
+  6:
+    cmds:
+    - task use N=6
+  7:
+    cmds:
+    - task use N=7
+  8:
+    cmds:
+    - task use N=8
+  9:
+    cmds:
+    - task use N=9
 

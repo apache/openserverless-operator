@@ -18,10 +18,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuvolaris-prometheus-alertmanager
-  namespace: nuvolaris
+  name: openserverless-prometheus-alertmanager
+  namespace: openserverless
   labels:
-    app.kubernetes.io/instance: nuvolaris-prometheus    
+    app.kubernetes.io/instance: openserverless-prometheus    
     app.kubernetes.io/name: alertmanager
 spec:
   sessionAffinity: None
@@ -33,5 +33,5 @@ spec:
     protocol: TCP
     targetPort: http
   selector:
-    app.kubernetes.io/instance: nuvolaris-prometheus
+    app.kubernetes.io/instance: openserverless-prometheus
     app.kubernetes.io/name: alertmanager

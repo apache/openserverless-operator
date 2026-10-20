@@ -18,7 +18,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
   labels:
     name: controller
     app: controller
@@ -35,7 +35,7 @@ spec:
         name: controller
         app: controller
     spec:
-      serviceAccountName: nuvolaris-openwhisk-core
+      serviceAccountName: openserverless-openwhisk-core
       restartPolicy: Always
       containers:
       - name: controller
@@ -168,11 +168,11 @@ spec:
         - name: "CONFIG_whisk_couchdb_provider"
           value: "CouchDB"
         - name: "CONFIG_whisk_couchdb_databases_WhiskActivation"
-          value: "nuvolaris_activations"
+          value: "openserverless_activations"
         - name: "CONFIG_whisk_couchdb_databases_WhiskEntity"
-          value: "nuvolaris_whisks"
+          value: "openserverless_whisks"
         - name: "CONFIG_whisk_couchdb_databases_WhiskAuth"
-          value: "nuvolaris_subjects"
+          value: "openserverless_subjects"
 
         - name: "CONFIG_whisk_couchdb_controller_username"
           value: "controller_admin"
@@ -219,7 +219,7 @@ spec:
           value: "false"  
 
         - name: "CONFIG_whisk_kubernetes_actionNamespace"
-          value: "nuvolaris" 
+          value: "openserverless" 
 
         - name: "CONFIG_whisk_helm_release"
           value: "release"  
@@ -235,6 +235,6 @@ spec:
           value: "3233"                                                                                             
 
         - name: "WHISK_API_HOST_NAME"
-          value: "controller.nuvolaris.svc.cluster.local" 
+          value: "controller.openserverless.svc.cluster.local" 
 
         

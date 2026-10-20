@@ -15,17 +15,17 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-!kubectl -n nuvolaris delete all --all
-!kubectl -n nuvolaris delete pvc --all
+!kubectl -n openserverless delete all --all
+!kubectl -n openserverless delete pvc --all
 
-import nuvolaris.config as cfg
-import nuvolaris.monitoring as monitoring
-import nuvolaris.testutil as tu
+import openserverless.config as cfg
+import openserverless.monitoring as monitoring
+import openserverless.testutil as tu
 
 # test
 assert(cfg.configure(tu.load_sample_config("whisk-full")))
 cfg.detect_storage()
 
-assert(cfg.get("nuvolaris.storageclass"))
+assert(cfg.get("openserverless.storageclass"))
 assert(monitoring.create())
 assert(monitoring.delete())
