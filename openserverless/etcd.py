@@ -21,6 +21,8 @@ import openserverless.kube as kube
 import openserverless.config as cfg
 import openserverless.template as ntp
 import openserverless.util as util
+from openserverless import datastore_security
+from openserverless.etcd_admin import create_etcd_user, delete_db_user
 import os.path
 import logging
 import kopf
@@ -44,15 +46,20 @@ def create(owner=None):
 
     kust = kus.patchTemplates("etcd",tplp , data)
     kust += kus.patchGenericEntry("Secret","openserverless-etcd-secret","/data/rootPassword",util.b64_encode(data['root_password']))   
-    spec = kus.kustom_list("etcd", kust, templates=spec_templates, data=data)
+    datastore_security.ensure_jwt_key(owner)
+    spec = kus.restricted_kustom_list("etcd", kust, templates=spec_templates, data=data,
+        templates_filter=["etcd-secret.yaml", "etcd-sts.yaml", "etcd-svc.yaml"])
+    spec["items"].append(datastore_security.policy("etcd"))
 
     if owner:
         kopf.append_owner_reference(spec['items'], owner)
     else:
         cfg.put("state.etcd.spec", spec)
-    res = kube.apply(spec)
+    res = datastore_security.apply(spec)
 
+    kube.kubectl("rollout", "status", "statefulset/openserverless-etcd", "--timeout=300s")
     wait_for_etcd_ready()
+    kube.kubectl("delete", "secret", "openserverless-etcd-jwt-token", "--ignore-not-found")
 
     logging.info(f"create etcd: {res}")
     return res
@@ -60,78 +67,6 @@ def create(owner=None):
 def wait_for_etcd_ready():
     # dynamically detect etcd pod and wait for readiness
     util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'openserverless-etcd')].metadata.name}")
-
-def render_etcd_script(namespace,template,data):
-    """
-    uses the given template to render a sh script to execute via bash shell.
-    """  
-    out = f"/tmp/__{namespace}_{template}"
-    file = ntp.spool_template(template, out, data)
-    return os.path.abspath(file)
-
-def exec_etcd_script(pod_name,path_to_etcd_script):
-    logging.info(f"passing script {path_to_etcd_script} to pod {pod_name}")
-    res = kube.kubectl("cp",path_to_etcd_script,f"{pod_name}:{path_to_etcd_script}")
-    res = kube.kubectl("exec","-i",pod_name,"--","/bin/bash","-c",f"chmod +x {path_to_etcd_script}")
-    res = kube.kubectl("exec","-i",pod_name,"--","/bin/bash","-c",path_to_etcd_script)
-    os.remove(path_to_etcd_script)    
-    return res
-    
-
-def create_etcd_user(username:str, password:str, prefix:str):
-    """
-    Creates a new ETCD username with the given password and assign redwrite permission on the given prefix
-    return: True if operation succeed, False otherwise.
-    """
-    logging.info(f"authorizing new ETCD user {username} on prefix {prefix}")
-
-    try:
-        data = {}
-        data["username"]=username
-        data["password"]=password
-        data["prefix"]=prefix
-        data["mode"]="create"       
-
-        path_to_etcd_script = render_etcd_script(username,"etcd_manage_user_tpl.sh",data)        
-        pod_name = util.get_pod_name_by_selector("name=openserverless-etcd","{.items[0].metadata.name}")
-
-        if(pod_name):
-            res = exec_etcd_script(pod_name,path_to_etcd_script)  
-            if res:
-                return True
-            else:
-                logging.error(f"failed to add ETCD username {username}") 
-                return False
-
-        return False
-    except Exception as e:
-        logging.error(f"failed to add ETCD username {username}: {e}")
-        return False
-
-def delete_db_user(username):
-    """
-    Reomves the specified user from the ETCD instance.
-    """
-    logging.info(f"removing ETCD user {username}")
-    try:
-        data = {}
-        data["username"]=username
-        data["mode"]="delete"
-
-        path_to_etcd_script = render_etcd_script(username,"etcd_manager_user_tpl.sh",data)        
-        pod_name = util.get_pod_name_by_selector("name=openserverless-etcd","{.items[0].metadata.name}")
-
-        if(pod_name):
-            res = exec_etcd_script(pod_name,path_to_etcd_script)  
-            if res:
-                return res
-            else:
-                logging.error(f"failed to remove ETCD username {username}") 
-
-        return None
-    except Exception as e:
-        logging.error(f"failed to remove ETCD username {username} authorization id and key: {e}")
-        return None        
 
 def delete_by_owner():
     spec = kus.build("etcd")

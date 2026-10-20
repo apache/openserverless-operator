@@ -17,11 +17,12 @@
 #
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: openserverless-milvus
   namespace: openserverless
-data:
+type: Opaque
+stringData:
   default.yaml: |+
     # Copyright (C) 2019-2021 Zilliz. All rights reserved.
     #
@@ -38,8 +39,8 @@ data:
       rootPath: milvus
       auth:
         enabled: true
-        userName: root 
-        password: {{milvus_etcd_root_password}}
+        userName: {{milvus_etcd_username | tojson}}
+        password: {{milvus_etcd_password | tojson}}
       endpoints:
       {% for idx in etcd_range -%}
       - {{etcd_container}}-{{idx}}.openserverless-etcd-headless.openserverless.svc.cluster.local:2379
@@ -51,8 +52,8 @@ data:
     minio:
       address: {{bucket_server_hostname}}
       port: {{bucket_server_port}}
-      accessKeyID: {{milvus_s3_username}}
-      secretAccessKey: {{milvus_s3_password}}
+      accessKeyID: {{milvus_s3_username | tojson}}
+      secretAccessKey: {{milvus_s3_password | tojson}}
       useSSL: false
       bucketName: vectors
       rootPath: files
@@ -129,4 +130,4 @@ data:
     common:
       security:
         authorizationEnabled: true
-        defaultRootPassword: {{milvus_root_password}}
+        defaultRootPassword: {{milvus_root_password | tojson}}

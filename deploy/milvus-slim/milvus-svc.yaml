@@ -26,17 +26,15 @@ metadata:
     app.kubernetes.io/instance: openserverless-milvus
     component: "standalone"
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - name: milvus
       port: 19530
-      nodePort: 32530
       protocol: TCP
       targetPort: milvus
     - name: metrics
       protocol: TCP
       port: 9091
-      nodePort: 32531
       targetPort: metrics
   selector:
     app.kubernetes.io/name: milvus

@@ -17,11 +17,12 @@
 #
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: openserverless-milvus
   namespace: openserverless
-data:
+type: Opaque
+stringData:
   default.yaml: |+
     # Copyright (C) 2019-2021 Zilliz. All rights reserved.
     #
@@ -38,7 +39,7 @@ data:
       rootPath: milvus
       auth:
         enabled: true
-        userName: root 
+        userName: etcdmilvus
         password: 0therPa55
       endpoints:
       - openserverless-etcd-0.openserverless-etcd-headless.openserverless.svc.cluster.local:2379    

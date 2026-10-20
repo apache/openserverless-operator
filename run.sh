@@ -29,7 +29,7 @@ fi
 KOPF="${VIRTUAL_ENV:-/home/openserverless/.venv}/bin/kopf"
 if kubectl -n openserverless get cm/config
 then if test -x "$KOPF"
-     then exec "$KOPF" run -n openserverless -m openserverless openserverless/main.py openserverless/user_handlers.py openserverless/workflows.py "$@"
+     then exec "$KOPF" run -n openserverless -m openserverless.main -m openserverless.user_handlers -m openserverless.workflows "$@"
      else echo "kopf not found at $KOPF - run 'task setup' first."
      fi
 else echo "You need to 'kubectl apply -f deploy/permissions' before starting the operator."
