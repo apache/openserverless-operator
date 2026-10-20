@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+from openserverless import etcd, datastore_security
 import time
 
 import kopf, logging
@@ -95,12 +96,14 @@ def create(owner=None):
         kust = patchEntries(data)
         mspec = kus.kustom_list(dir, kust, templates=[], data=data)
 
+        mspec["items"].append(datastore_security.policy("milvus"))
         if owner:
             kopf.append_owner_reference(mspec['items'], owner)
         else:
             cfg.put("state.milvus.spec", mspec)
 
-        kube.apply(mspec)
+        datastore_security.apply(mspec)
+        datastore_security.finish_milvus_reconcile()
         util.wait_for_pod_ready(
             r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/instance == 'openserverless-milvus')].metadata.name}")
 
@@ -133,9 +136,9 @@ def create_milvus_accounts(data: dict):
     """"
     Creates technical accounts for ETCD and SEAWEEDFS
     """
-    # currently we use the ETCD root password, so we skip the ETCD user creation.
-    # res = util.check(etcd.create_etcd_user(data['milvus_etcd_username'],data['milvus_etcd_password'],data['milvus_etcd_prefix']),"create_etcd_milvus_user",True)
-
+    if not etcd.create_etcd_user(data['milvus_etcd_username'], data['milvus_etcd_password'],
+                                 data['milvus_etcd_prefix'], readonly_keys=('health',)):
+        return False
     return create_seaweedfs_milvus_account(data)
 
 def delete_seaweedfs_milvus_account(data: dict):
@@ -156,7 +159,8 @@ def delete_milvus_accounts(data: dict):
     """"
     Deletes technical accounts for ETCD and SEAWEEDFS
     """
-    # currently we use the ETCD root password, so we skip the ETCD user deletion.
+    if not etcd.delete_db_user(data["milvus_etcd_username"]):
+        return False
     
     logging.info("removing milvus technical accounts.")
     return delete_seaweedfs_milvus_account(data)
@@ -168,6 +172,25 @@ def create_default_milvus_database(data):
     """
     logging.info("*** configuring MILVUS database for openserverless")
     adminClient = MilvusAdminClient()
+    # Security reconciliation must preserve an already provisioned system user.
+    # Authenticate with its configured credential; never reset it on an error.
+    from openserverless.milvus_simple_client import MilvusSimpleClient
+    import requests
+    try:
+        client = MilvusSimpleClient(uri=adminClient.milvus_url, token=adminClient.milvus_admin_token)
+        users = client.list_users()
+        if "openserverless" in users:
+            response = requests.post(adminClient.milvus_url + '/v2/vectordb/collections/list',
+                headers={'Authorization': 'Bearer openserverless:' + data['openserverless_password']},
+                json={'dbName': 'openserverless'}, timeout=10)
+            result = response.json()
+            if not response.ok or result.get('code') != 0 or 'data' not in result:
+                return False
+            _annotate_nuv_milvus_metadata(data)
+            return True
+    except (requests.RequestException, ValueError, TypeError):
+        logging.error('Could not verify the existing Milvus system account')
+        return False
     res = adminClient.setup_user("openserverless", data["openserverless_password"], "openserverless")
 
     if (res):
