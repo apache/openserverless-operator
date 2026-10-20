@@ -23,6 +23,11 @@ import openserverless.template as ntp
 import openserverless.util as util
 import openserverless.openwhisk as openwhisk
 import urllib.parse
+import hashlib
+import contextlib
+import redis as redislib
+from openserverless.redis_acl import tenant_rules
+from openserverless.datastore_connection import service_endpoint
 import os, os.path
 import logging, json
 import kopf
@@ -43,8 +48,8 @@ def _add_redis_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
         if(redis_service):
             redis_service_name = redis_service['metadata']['name']
             redis_service_port = redis_service['spec']['ports'][0]['port']            
-            username = urllib.parse.quote(ucfg.get('namespace'))
-            password = urllib.parse.quote(ucfg.get('redis.password'))
+            username = urllib.parse.quote(ucfg.get('namespace'), safe='')
+            password = urllib.parse.quote(ucfg.get('redis.password'), safe='')
             auth = f"{username}:{password}"
             redis_url = f"redis://{auth}@{redis_service_name}:{redis_service_port}"
             redis_alt_url = f"redis://{password}@{redis_service_name}:{redis_service_port}"
@@ -98,6 +103,7 @@ def create_openserverless_db_user(data):
     logging.info(f"authorizing redis for namespace openserverless")
     try:        
         data['mode']="create"
+        data['redis_system_account']=True
         path_to_script = render_redis_script(data['namespace'],"redis_manage_user_tpl.txt",data)
         pod_name = util.get_pod_name("{.items[?(@.metadata.labels.name == 'redis')].metadata.name}")
 
@@ -171,62 +177,111 @@ def exec_redis_command(pod_name,path_to_script):
     os.remove(path_to_script)
     return res
 
+def admin_client(password=None):
+    stored = util.get_redis_config_data()['redis_password']
+    if password is not None and password != stored:
+        raise RuntimeError('Redis administrator credentials do not match')
+
+    # doctest imports this file with openserverless/ on sys.path, where the
+    # module name redis shadows the third-party driver. Resolve the class only
+    # when an actual client is requested, preserving import-only tooling.
+    class _AdminClient(redislib.Redis):
+        def __init__(self, secret):
+            self._service_context = contextlib.ExitStack()
+            try:
+                host, port = self._service_context.enter_context(service_endpoint('redis', 6379))
+                super().__init__(host=host, port=port, password=secret, decode_responses=True,
+                                 socket_timeout=10, socket_connect_timeout=5)
+            except BaseException:
+                self._service_context.close()
+                raise
+
+        def close(self):
+            try:
+                if hasattr(self, 'connection_pool'):
+                    super().close()
+            finally:
+                self._service_context.close()
+
+    return _AdminClient(stored)
+
+
+def _tenant_identity(namespace, prefix=None):
+    if (not util.validate_namespace(namespace)
+            or namespace in ('default', 'openserverless')):
+        raise ValueError('Invalid Redis tenant name')
+    if prefix is not None:
+        if not isinstance(prefix, str) or not prefix:
+            raise ValueError('Invalid Redis tenant prefix')
+        prefix = prefix if prefix.endswith(':') else prefix + ':'
+        tenant_rules(prefix)
+    return prefix
+
+
+def _save_acl_if_configured(client):
+    # Preserve the 0.9.0 storage contract: persist when an ACL file is configured.
+    # With no ACL file, startup reconciliation recreates identities as before.
+    if client.config_get('aclfile').get('aclfile'):
+        client.acl_save()
+
+
+def provision_user(namespace, password, prefix, readonly=False):
+    prefix = _tenant_identity(namespace, prefix)
+    if not isinstance(password, str) or not password:
+        raise ValueError('Redis tenant password is required')
+    hashed = hashlib.sha256(password.encode()).hexdigest()
+    with admin_client() as client, client.lock('__ops_acl_lock__', timeout=120, blocking_timeout=15):
+        previous = client.acl_getuser(namespace)
+        # 0.9.0 reconciliation adds the configured password without revoking
+        # existing valid credentials. Change only authorization in this backport.
+        hashes = list(dict.fromkeys((previous or {}).get('passwords', []) + [hashed]))
+        client.execute_command('ACL', 'SETUSER', namespace, 'reset', 'on',
+                               *['#' + value for value in hashes], *tenant_rules(prefix, readonly))
+        try:
+            _save_acl_if_configured(client)
+        except redislib.RedisError:
+            client.acl_deluser(namespace)
+            raise RuntimeError('Could not persist Redis tenant ACL') from None
+    return True
+
+
+def set_user_readonly(namespace, prefix, readonly):
+    prefix = _tenant_identity(namespace, prefix)
+    with admin_client() as client, client.lock('__ops_acl_lock__', timeout=120, blocking_timeout=15):
+        if client.acl_getuser(namespace) is None:
+            raise RuntimeError('Redis tenant does not exist')
+        # Keep credentials; replace every command, key, channel and selector grant.
+        client.execute_command('ACL', 'SETUSER', namespace, *tenant_rules(prefix, readonly))
+        _save_acl_if_configured(client)
+    return True
+
+
 def create_db_user(ucfg: UserConfig, user_metadata: UserMetadata, read_only_mode = False):
     logging.info(f"authorizing new redis namespace {ucfg.get('namespace')}")    
     try:
         wait_for_redis_ready()
-        data = util.get_redis_config_data()
+        prefix = _tenant_identity(ucfg.get('namespace'), ucfg.get('redis.prefix') or ucfg.get('namespace'))
+        provision_user(ucfg.get('namespace'), ucfg.get('redis.password'), prefix, read_only_mode)
+        user_metadata.add_metadata('REDIS_PREFIX', prefix)
+        _add_redis_user_metadata(ucfg, user_metadata)
+        return True
 
-        # if prefix not provided defaults to user namespace
-        prefix = ucfg.get('redis.prefix') or ucfg.get('namespace') 
-        if(not prefix.endswith(":")):
-            prefix = f"{prefix}:"
-        data['prefix']=prefix
-        data['namespace']=ucfg.get('namespace')
-        data['password']=ucfg.get('redis.password')
-        data['mode']="create"
-
-        if read_only_mode:
-            logging.warn(f"activating {prefix} in read-only mode")
-            data['mode']="create_readonly"
-
-        path_to_script = render_redis_script(ucfg.get('namespace'),"redis_manage_user_tpl.txt",data)
-        pod_name = util.get_pod_name("{.items[?(@.metadata.labels.name == 'redis')].metadata.name}")
-
-        if(pod_name):
-            res = exec_redis_command(pod_name,path_to_script)
-
-            if res:
-                user_metadata.add_metadata("REDIS_PREFIX",prefix)
-                _add_redis_user_metadata(ucfg, user_metadata)
-                return res
-            else:
-                logging.error(f"failed to add redis namespace {ucfg.get('namespace')}")
-
-        return None
     except Exception as e:
         logging.error(f"failed to add redis namespace {ucfg.get('namespace')}: {e}")
         return None
 
 def delete_db_user(namespace):
-    logging.info(f"removing redis namespace {namespace}")
-
-    try:        
-        data = util.get_redis_config_data()
-        data["namespace"]=namespace
-        data["mode"]="delete"
-
-        path_to_script = render_redis_script(namespace,"redis_manage_user_tpl.txt",data)
-        pod_name = util.get_pod_name("{.items[?(@.metadata.labels.name == 'redis')].metadata.name}")
-
-        if(pod_name):
-            res = exec_redis_command(pod_name,path_to_script)
-            return res
-
+    _tenant_identity(namespace)
+    try:
+        with admin_client() as client, client.lock('__ops_acl_lock__', timeout=120, blocking_timeout=15):
+            client.acl_deluser(namespace)
+            _save_acl_if_configured(client)
+        # Preserve the existing contract: deleting credentials retains the data.
+        return True
+    except Exception:
+        logging.error('Failed to remove Redis tenant credentials')
         return None
-    except Exception as e:
-        logging.error(f"failed to remove redis namespace {namespace}: {e}")
-        return None
+
 
 def patch(status, action, owner=None):
     """
