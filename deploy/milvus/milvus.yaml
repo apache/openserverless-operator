@@ -101,8 +101,9 @@ spec:
       - emptyDir: {}
         name: tools
       - name: milvus-config
-        configMap:
-          name: openserverless-milvus
+        secret:
+          secretName: openserverless-milvus
+          defaultMode: 0440
       - name: milvus-data-disk
         persistentVolumeClaim:
           claimName: openserverless-milvus
