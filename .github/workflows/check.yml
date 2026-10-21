@@ -69,7 +69,14 @@ jobs:
       - name: BuildAndLoad
         run: task build-and-load
       - name: AddIngress
-        run: task kind:ingress
+        run: |
+          task kind:ingress
+          # Kind ingress uses hostPort 80/443. Release its unused NodePorts so
+          # dynamic allocation cannot occupy fixed test ports such as 30984.
+          kubectl -n ingress-nginx patch service ingress-nginx-controller --type=strategic \
+            -p '{"spec":{"type":"ClusterIP","allocateLoadBalancerNodePorts":null,"ports":[{"port":80,"nodePort":null},{"port":443,"nodePort":null}]}}'
+          test -z "$(kubectl -n ingress-nginx get service ingress-nginx-controller -o jsonpath='{.spec.ports[*].nodePort}')"
+          kubectl get services --all-namespaces
       - name: Unit Test
         run: task utest
         continue-on-error: false
