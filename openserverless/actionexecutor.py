@@ -22,6 +22,9 @@ import croniter as cn
 import requests as req
 from datetime import datetime
 
+# Bound tenant-controlled input before passing it to the cron parser.
+MAX_CRON_EXPRESSION_LENGTH = 4096
+
 def check(f, what, res):
     if f:
         logging.info(f"OK: {what}")
@@ -244,8 +247,11 @@ def get_autoexec(actionAnnotations):
 # no_execution if the action should not be triggered or the cron expression is not a valid one
 #
 def should_trigger(actionNamespace, actionName, actionCronExpression, currentDate, executionInterval):
-    if not cn.croniter.is_valid(actionCronExpression):
-        logging.warn(f"action {actionNamespace}/{actionName} cron expression {actionCronExpression} is not valid. Skipping execution")
+    if (not isinstance(actionCronExpression, str)
+            or not 0 < len(actionCronExpression) <= MAX_CRON_EXPRESSION_LENGTH
+            or not cn.croniter.is_valid(actionCronExpression)):
+        logging.warning("action %s/%s has an invalid cron expression. Skipping execution",
+                        actionNamespace, actionName)
         return "no_execution"
 
     if not action_should_trigger(currentDate, executionInterval, actionCronExpression):
@@ -389,7 +395,10 @@ def start():
         if(len(actions) > 0):
             subjects = get_subjects(db, config['couchdb.controller.user'],config['couchdb.controller.password'])
             for action in actions:
-                handle_action(baseurl, currentDate, interval, action, subjects)
+                try:
+                    handle_action(baseurl, currentDate, interval, action, subjects)
+                except Exception:
+                    logging.exception("Failed to process scheduled action; continuing with remaining actions")
         else:
             logging.info('No cron aware action extracted. Exiting....')
     else:
