@@ -32,6 +32,8 @@ spec:
       name: zookeeper
   template:
     metadata:
+      annotations:
+        openserverless.org/messaging-isolation: "v1"
       labels:
         name: zookeeper
         app: zookeeper
