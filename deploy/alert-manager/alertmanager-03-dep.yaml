@@ -41,6 +41,7 @@ spec:
         app.kubernetes.io/name: alertmanager
         name: alertmanager
       annotations:
+        openserverless.org/monitoring-boundary: "1"
         whisks.openserverless.org/annotate-version: "true"                  
     spec:
       serviceAccount: openserverless-prometheus-alertmanager
