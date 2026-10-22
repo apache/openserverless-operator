@@ -21,12 +21,57 @@
 
 import kopf
 import json, time
+import yaml
 import openserverless.kube as kube
 import openserverless.kustomize as kus
 import openserverless.config as cfg
 import openserverless.enterprise_util as ent_util
 import openserverless.util as util
 import logging
+
+def reconcile(owner):
+    """Install the monitoring boundary on existing installations as well."""
+    if not cfg.get('components.monitoring'):
+        return
+    if not owner or not owner.get('metadata', {}).get('uid'):
+        raise RuntimeError('Cannot reconcile monitoring without the Whisk owner')
+    return create(owner)
+
+
+def _apply(spec, component):
+    expected = ({'openserverless-alertmanager-isolation'} if component == 'alert-manager'
+                else {'openserverless-prometheus-isolation',
+                      'openserverless-kube-state-metrics-isolation'})
+    policies = [item for item in spec['items'] if item['kind'] == 'NetworkPolicy']
+    if not expected.issubset({p['metadata']['name'] for p in policies}):
+        raise RuntimeError('Missing monitoring isolation policy')
+    # Apply the boundary first and fail closed if the cluster rejects it.
+    kube.apply({'apiVersion': 'v1', 'kind': 'List', 'items': policies})
+    result = kube.apply(spec)
+    names = (['openserverless-prometheus-alertmanager'] if component == 'alert-manager'
+             else ['openserverless-prometheus-kube-state-metrics',
+                   'openserverless-prometheus-server'])
+    # Roll legacy pods once to close connections established before isolation.
+    for name in names:
+        kube.kubectl('rollout', 'status', 'deployment/' + name, '--timeout=300s')
+    return result
+
+
+def _delete(spec):
+    """Keep isolation until every monitored pod has actually terminated."""
+    policies = [item for item in spec['items'] if item['kind'] == 'NetworkPolicy']
+    resources = [item for item in spec['items'] if item['kind'] != 'NetworkPolicy']
+    result = kube.delete({'apiVersion': 'v1', 'kind': 'List', 'items': resources})
+    for policy in policies:
+        labels = policy['spec']['podSelector']['matchLabels']
+        selector = ','.join(k + '=' + v for k, v in labels.items())
+        pods = kube.kubectl('get', 'pods', '-l', selector, '-o', 'name').split()
+        if pods:
+            kube.kubectl('wait', '--for=delete', *pods, '--timeout=300s')
+    if policies:
+        result += kube.delete({'apiVersion': 'v1', 'kind': 'List', 'items': policies})
+    return result
+
 
 def create(owner=None):
     """
@@ -52,7 +97,7 @@ def create(owner=None):
         else:
             cfg.put("state.alertmanager.spec", am_spec)
 
-        res = kube.apply(am_spec)
+        res = _apply(am_spec, 'alert-manager')
         # dynamically detect alert manager pod and wait for readiness
         util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'alertmanager')].metadata.name}")
     
@@ -69,7 +114,7 @@ def create(owner=None):
         prometheus_data["run_as_user"]=65534
         p_tplp.append("security-global-attach.yaml")
 
-    if(data['affinity'] or data['tolerations']):
+    if(prometheus_data['affinity'] or prometheus_data['tolerations']):
        p_tplp.append("affinity-tolerance-dep-core-attach.yaml")         
 
     if len(p_tplp) > 0 :
@@ -83,7 +128,7 @@ def create(owner=None):
     else:
         cfg.put("state.prometheus.spec", spec)
 
-    res = kube.apply(spec)
+    res = _apply(spec, 'monitoring')
 
     # dynamically detect prometheus pod and wait for readiness
     util.wait_for_pod_ready(r"{.items[?(@.metadata.labels.app\.kubernetes\.io\/name == 'prometheus')].metadata.name}")
@@ -95,12 +140,12 @@ def delete_by_owner():
     alert_manager = cfg.get("monitoring.alert-manager.enabled") or False
 
     spec = kus.build("monitoring")
-    res = kube.delete(spec)
+    res = _delete({'items': list(yaml.safe_load_all(spec))})
     logging.info(f"delete prometheus: {res}")
 
     if alert_manager:
          spec = kus.build("alert-manager")
-         res = kube.delete(spec)
+         res = _delete({'items': list(yaml.safe_load_all(spec))})
          logging.info(f"delete alert-manager: {res}")
 
     return res
@@ -110,11 +155,11 @@ def delete_by_spec():
     alert_manager_spec = cfg.get("state.alertmanager.spec")
     res = False
     if prometheus_spec:
-        res = kube.delete(prometheus_spec)
+        res = _delete(prometheus_spec)
         logging.info(f"delete prometheus: {res}")
             
     if alert_manager_spec:
-        res = kube.delete(alert_manager_spec)
+        res = _delete(alert_manager_spec)
         logging.info(f"delete alert manager: {res}")
 
     return res
@@ -142,4 +187,4 @@ def patch(status, action, owner=None):
         logging.info(f"*** handled request to {action} monitoring") 
     except Exception as e:
         logging.error('*** failed to update monitoring: %s' % e)
-        status['whisk_create']['monitoring']='error'           
+        status['whisk_create']['monitoring']='error'
