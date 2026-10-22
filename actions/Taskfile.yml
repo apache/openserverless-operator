@@ -35,13 +35,13 @@ vars:
   CDB_PASSWORD:
     sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.couchdb.admin.password}'
 
-  NUV_MINIO_AUTH:
-    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.minio.openserverless.password}'
+  NUV_S3_AUTH:
+    sh: kubectl -n openserverless get wsk/controller -o jsonpath='{.spec.seaweedfs.openserverless.password}'
 
   CDB_HOST: couchdb
 
-  MINIO_HOST: minio.openserverless.svc.cluster.local
-  MINIO_PORT: 9000
+  S3_HOST: seaweedfs.openserverless.svc.cluster.local
+  S3_PORT: 9000
 
   #GIHTUB_SA_TOKEN:
   #  sh: kubectl -n openserverless get secrets/openserverless-github-secret -o jsonpath='{.data.token}'
@@ -94,7 +94,7 @@ tasks:
   content:prepare:
     - |-
       mkdir -p content/common
-      cp ./common/minio_util.py content/common
+      cp ./common/s3_util.py content/common
     - |-
       cd content
       rm  -f ../{{.DEPLOY}}/content.zip
@@ -104,8 +104,8 @@ tasks:
     - task: content:prepare
     - >
       {{.WSKSYS}} package update nuv
-      -p minio_host {{.MINIO_HOST}}
-      -p minio_port {{.MINIO_PORT}}
+      -p s3_host {{.S3_HOST}}
+      -p s3_port {{.S3_PORT}}
     - >
       {{.WSKSYS}} action update nuv/content
       {{.DEPLOY}}/content.zip --kind python:sys --web true
@@ -160,29 +160,29 @@ tasks:
     - >
       {{.WSKSYS}} action get nuv/psql --url
 
-  devel:minio:prepare:
+  devel:s3:prepare:
     - |-
-      mkdir -p devel/minio/openserverless
-      mkdir -p devel/minio/common
-      cp ./common/*.py  devel/minio/common
-      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/minio/openserverless
+      mkdir -p devel/s3/openserverless
+      mkdir -p devel/s3/common
+      cp ./common/*.py  devel/s3/common
+      cp ../openserverless/config.py ../openserverless/couchdb_util.py devel/s3/openserverless
     - |-
-      cd devel/minio
-      rm  -f ../../{{.DEPLOY}}/minio.zip
-      zip -r ../../{{.DEPLOY}}/minio.zip *
+      cd devel/s3
+      rm  -f ../../{{.DEPLOY}}/s3.zip
+      zip -r ../../{{.DEPLOY}}/s3.zip *
 
-  devel:minio:deploy:
-    - task: devel:minio:prepare
+  devel:s3:deploy:
+    - task: devel:s3:prepare
     - >
       {{.WSKSYS}} package update nuv
       -p couchdb_user "{{.CDB_USER}}"
       -p couchdb_password "{{.CDB_PASSWORD}}"
       -p couchdb_host "{{.CDB_HOST}}"
     - >
-      {{.WSKSYS}} action update nuv/minio
-      {{.DEPLOY}}/minio.zip --kind python:sys --web raw
+      {{.WSKSYS}} action update nuv/s3
+      {{.DEPLOY}}/s3.zip --kind python:sys --web raw
     - >
-      {{.WSKSYS}} action get nuv/minio --url
+      {{.WSKSYS}} action get nuv/s3 --url
 
   devel:upload:prepare:
     - |-
@@ -270,23 +270,23 @@ tasks:
 
   content:webtest:
     - >
-      curl -X PUT -T ../openserverless/templates/index.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/index2.html
+      curl -X PUT -T ../openserverless/templates/index.html -H "s3auth: {{.NUV_S3_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/index2.html
 
   content:webtest2:
     - >
-      curl -X PUT -T ../openserverless/templates/content.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/tidy/content.html
+      curl -X PUT -T ../openserverless/templates/content.html -H "s3auth: {{.NUV_S3_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/tidy/content.html
 
   content:yaml:
     - >
-      curl -X PUT -T ../openserverless/templates/couchdb-init.yaml -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml
+      curl -X PUT -T ../openserverless/templates/couchdb-init.yaml -H "s3auth: {{.NUV_S3_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml
 
   content-delete:yaml:
     - >
-      curl -X DELETE -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml
+      curl -X DELETE -H "s3auth: {{.NUV_S3_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/yaml/couchdb-init.yaml
 
   content:chess:
     - >
-      curl -X PUT -T ../openserverless/templates/content.html -H "minioauth: {{.NUV_MINIO_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/chess/index.html
+      curl -X PUT -T ../openserverless/templates/content.html -H "s3auth: {{.NUV_S3_AUTH}}" {{.APIHOST}}/api/v1/web/whisk-system/nuv/content/openserverless/chess/index.html
 
   devel:redis:set:
     - >
@@ -312,25 +312,25 @@ tasks:
     - >
       curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/psql -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/psql_create3.json
 
-  devel:minio:ls:
+  devel:s3:ls:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_buckets.json
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/s3 -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/s3_buckets.json
 
-  devel:minio:lsb:
+  devel:s3:lsb:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_ls.json
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/s3 -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/s3_ls.json
 
-  devel:minio:rm:
+  devel:s3:rm:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_rm.json
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/s3 -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/s3_rm.json
 
-  devel:minio:mv:
+  devel:s3:mv:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_mv.json
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/s3 -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/s3_mv.json
 
-  devel:minio:cp:
+  devel:s3:cp:
       - >
-        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/minio -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/minio_cp.json
+        curl {{.APIHOST}}/api/v1/web/whisk-system/nuv/s3 -H "x-impersonate-auth: Y2JkNjgwNzUtZGFjMi00NzVlLThjMDctZDYyYTMwYzdlNjgzOjEyM3pPM3haQ0xyTU42djJCS0sxZFhZRnBYbFBrY2NPRnFtMTJDZEFzTWdSVTRWck5aOWx5R1ZDR3VNREdJd1A="  -H "Content-Type: application/json" -d@../demos/devel/s3_cp.json
 
   devel:upload:webtest:
     - >
@@ -374,7 +374,7 @@ tasks:
 
   deploy:devel:
     - task: devel:redis:deploy
-    - task: devel:minio:deploy
+    - task: devel:s3:deploy
     - task: devel:psql:deploy
     - task: devel:upload:deploy
     - task: devel:ferretdb:deploy

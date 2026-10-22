@@ -36,7 +36,7 @@ zip -r ${HOME}/deploy/whisk-system/secrets.zip *
 
 cd ${HOME}/actions/content
 mkdir -p ${HOME}/actions/content/common
-cp ${HOME}/actions/common/minio_util.py ${HOME}/actions/content/common
+cp ${HOME}/actions/common/s3_util.py ${HOME}/actions/content/common
 rm  -f ${HOME}/deploy/whisk-system/content.zip
 zip -r ${HOME}/deploy/whisk-system/content.zip *
 
@@ -56,13 +56,13 @@ cd ${HOME}/actions/devel/psql
 rm  -f ${HOME}/deploy/whisk-system/psql.zip
 zip -r ${HOME}/deploy/whisk-system/psql.zip *
 
-mkdir -p ${HOME}/actions/devel/minio/openserverless
-mkdir -p ${HOME}/actions/devel/minio/common
-cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/minio/openserverless
-cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/minio/common
-cd ${HOME}/actions/devel/minio
-rm  -f ${HOME}/deploy/whisk-system/minio.zip
-zip -r ${HOME}/deploy/whisk-system/minio.zip *
+mkdir -p ${HOME}/actions/devel/s3/openserverless
+mkdir -p ${HOME}/actions/devel/s3/common
+cp ${HOME}/openserverless/config.py ${HOME}/openserverless/couchdb_util.py ${HOME}/actions/devel/s3/openserverless
+cp ${HOME}/actions/common/*.py ${HOME}/actions/devel/s3/common
+cd ${HOME}/actions/devel/s3
+rm  -f ${HOME}/deploy/whisk-system/s3.zip
+zip -r ${HOME}/deploy/whisk-system/s3.zip *
 
 mkdir -p ${HOME}/actions/devel/ferretdb/openserverless
 mkdir -p ${HOME}/actions/devel/ferretdb/common

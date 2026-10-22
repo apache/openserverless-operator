@@ -33,6 +33,8 @@ spec:
       name: kafka
   template:
     metadata:
+      annotations:
+        openserverless.org/messaging-isolation: "v1"
       labels:
         name: kafka
         app: kafka

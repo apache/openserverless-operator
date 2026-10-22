@@ -21,6 +21,7 @@ import openserverless.kustomize as kus
 import openserverless.config as cfg
 import openserverless.enterprise_util as cfg_util
 import openserverless.util as util
+import openserverless.messaging_security as security
 
 def get_zookeeper_pod_name():
     pod_name = kube.kubectl("get", "pods", jsonpath="{.items[?(@.metadata.labels.app == 'zookeeper')].metadata.name}")
@@ -56,7 +57,7 @@ def create(owner=None):
         cfg.put("state.zookeeper.spec", spec)
 
 
-    res = kube.apply(spec)
+    res = security.apply(spec, 'zookeeper')
 
     # dynamically detect zookeeper pod and wait for readiness
     util.wait_for_pod_ready("{.items[?(@.metadata.labels.app == 'zookeeper')].metadata.name}")    
@@ -70,7 +71,7 @@ def delete():
     spec = cfg.get("state.zookeeper.spec")
     res = False
     if spec:
-        res = kube.delete(spec)
+        res = security.delete(spec, 'zookeeper')
         logging.info(f"delete zookeeper: {res}")
     return res
 

@@ -1,33 +1,29 @@
+{#-
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements.  See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership.  The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied.  See the License for the
+ specific language governing permissions and limitations
+ under the License.
+-#}
 AUTH {{redis_password}}
-{% if mode == 'create'%}
+{% if mode == 'create' and redis_system_account|default(false) and namespace == 'openserverless' %}
 ACL SETUSER {{namespace}}
 ACL SETUSER {{namespace}} ON >{{password}}
 ACL SETUSER {{namespace}} +@all ~{{prefix}}*
-{% endif %}
-
-{% if mode == 'delete'%}
+{% elif mode == 'delete' %}
 ACL DELUSER {{namespace}}
-{% endif %}
-
-{% if mode == 'readonly'%}
-ACL SETUSER {{namespace}} -@all ~{{prefix}}*
-ACL SETUSER {{namespace}} +@read ~{{prefix}}*
-ACL SETUSER {{namespace}} +info ~{{prefix}}*
-ACL SETUSER {{namespace}} +del ~{{prefix}}*
-{% endif %}
-
-{% if mode == 'create_readonly'%}
-ACL SETUSER {{namespace}}
-ACL SETUSER {{namespace}} ON >{{password}}
-ACL SETUSER {{namespace}} -@all ~{{prefix}}*
-ACL SETUSER {{namespace}} +@read ~{{prefix}}*
-ACL SETUSER {{namespace}} +info ~{{prefix}}*
-ACL SETUSER {{namespace}} +del ~{{prefix}}*
-{% endif %}
-
-{% if mode == 'readandwrite'%}
-ACL SETUSER {{namespace}} -@read ~{{prefix}}*
-ACL SETUSER {{namespace}} -info ~{{prefix}}*
-ACL SETUSER {{namespace}} -del ~{{prefix}}*
-ACL SETUSER {{namespace}} +@all ~{{prefix}}*
+{% elif mode in ['create', 'create_readonly', 'readonly', 'readandwrite'] %}
+{# Tenant administration must use the shared Python ACL policy. Old callers fail closed. #}
+ACL SETUSER {{namespace}} -@all resetkeys resetchannels clearselectors
 {% endif %}

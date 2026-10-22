@@ -249,7 +249,7 @@ def delete(owner=None):
 
 def patch(status, action, owner=None):
     """
-    Called by the operator patcher to create/delete minio static component
+    Called by the operator patcher to create/delete the S3 static component
     """
     try:
         logging.info(f"*** handling request to {action} static")  

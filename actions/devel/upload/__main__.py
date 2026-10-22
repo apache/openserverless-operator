@@ -21,7 +21,7 @@ import random
 import string
 import mimetypes
 
-import common.minio_util as mutil
+import common.s3_util as mutil
 import common.util as ut
 
 from common.authorize import Authorize
@@ -90,7 +90,7 @@ def main(args):
     """
     Action implementing a generic upload wrapper for the nuv devel plugin. The invoker must provide a x-impersonate-auth header containing the Openwhisk BASIC authentication of the wsku/user the action should impersonate 
     when calling this action. The upload action it is supposed to receive a path param similar to /<bucket>/<path>
-    and will store the given path under the given MINIO <bucket>. The bucket must exists and the impersonated user must have write permission on it.
+    and will store the given path under the given S3 <bucket>. The bucket must exists and the impersonated user must have write permission on it.
     """
     headers = args['__ow_headers']
     method = args['__ow_method']

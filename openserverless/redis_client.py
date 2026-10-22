@@ -85,46 +85,9 @@ class RedisClient:
             return None
 
     def set_prefix_readonly(self, namespace, prefix):
-        """
-        Submit the redis script to revoke namespace write rights on the given prefix
-        """        
-        self._data['prefix']=prefix
-        self._data['namespace']=namespace
-        self._data['mode']='readonly'
-        logging.info("setting redis/valkey %s with @READ ACL", prefix)
-
-        try:
-            redis.wait_for_redis_ready()
-            path_to_script = redis.render_redis_script(namespace,"redis_manage_user_tpl.txt",self._data)
-            pod_name = util.get_pod_name("{.items[?(@.metadata.labels.name == 'redis')].metadata.name}")
-
-            if(pod_name):
-                res = redis.exec_redis_command(pod_name,path_to_script)              
-                return res
-            return None
-        except Exception as e:
-            logging.error("failed to set redis/valkey %s with @READ ACL: %s", prefix, e)
-            return None 
+        """Apply the shared tenant policy while preserving credentials and Lua reads."""
+        return redis.set_user_readonly(namespace, prefix, True)
 
     def set_prefix_all(self, namespace, prefix):
-        """
-        Submit the redis script to re-enable namespace write rights on the given prefix
-        """
-        
-        self._data['prefix']=prefix
-        self._data['namespace']=namespace
-        self._data['mode']='readandwrite'
-        logging.info("setting redis/valkey %s with +@ALL ACL", prefix)
-
-        try:
-            redis.wait_for_redis_ready()
-            path_to_script = redis.render_redis_script(namespace,"redis_manage_user_tpl.txt",self._data)
-            pod_name = util.get_pod_name("{.items[?(@.metadata.labels.name == 'redis')].metadata.name}")
-
-            if(pod_name):
-                res = redis.exec_redis_command(pod_name,path_to_script)              
-                return res
-            return None
-        except Exception as e:
-            logging.error("failed to set redis/valkey %s with +@ALL ACL: %s", prefix, e)
-            return None
+        """Restore tenant data writes without restoring administrative commands."""
+        return redis.set_user_readonly(namespace, prefix, False)

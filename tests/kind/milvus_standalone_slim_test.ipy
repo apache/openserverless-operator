@@ -18,10 +18,13 @@
 #
 
 import os
+import atexit
+import contextlib
+from unittest.mock import patch
+from openserverless.datastore_connection import service_endpoint
 
 import openserverless.config as cfg
 import openserverless.milvus_standalone as milvus
-import openserverless.minio_deploy as minio
 import openserverless.seaweedfs_deploy as seaweedfs
 import openserverless.etcd as etcd
 import openserverless.testutil as tu
@@ -42,28 +45,34 @@ assert(cfg.detect_storage()["openserverless.storageclass"])
 assert(cfg.get("openserverless.slim") == True)
 assert(cfg.get("components.milvus") == True)
 
-is_minio = cfg.get('components.minio') or False
 is_seaweedfs = cfg.get('components.seaweedfs') or False
-assert(is_minio or is_seaweedfs)
+assert(is_seaweedfs)
 
 
-# for this test minioClient and Milvus should see this env variable
-if is_minio:
-    os.environ['MINIO_API_HOST']='localhost'
-if is_seaweedfs:
-    os.environ['SEAWEEDFS_API_HOST']='localhost'
-    os.environ['SEAWEEDFS_API_PORT']='9090'
+# for this test seaweedfs and Milvus should see this env variable
+os.environ['SEAWEEDFS_API_HOST']='localhost'
+os.environ['SEAWEEDFS_API_PORT']='9090'
 
 os.environ['MILVUS_API_HOST']='localhost'
 
 assert(etcd.create())
 
-if is_minio:
-   assert(minio.create())
-if is_seaweedfs:
-    assert(seaweedfs.create())
+assert(seaweedfs.create())
 
-assert(milvus.create())
+endpoint_stack = contextlib.ExitStack()
+atexit.register(endpoint_stack.close)
+finish_reconcile = milvus.datastore_security.finish_milvus_reconcile
+local_endpoint = None
+
+def finish_and_connect():
+    global local_endpoint
+    finish_reconcile()
+    local_endpoint = endpoint_stack.enter_context(service_endpoint('openserverless-milvus', 19530))
+    os.environ['MILVUS_API_HOST'] = local_endpoint[0]
+    os.environ['MILVUS_API_PORT'] = str(local_endpoint[1])
+
+with patch.object(milvus.datastore_security, 'finish_milvus_reconcile', side_effect=finish_and_connect):
+    assert(milvus.create())
 
 # generate some user config
 ucfg = UserConfig({
@@ -101,7 +110,7 @@ assert port
 
 
 # test client
-client = MilvusClient(uri=f'http://localhost:{port}',token=token, db_name=database)
+client = MilvusClient(uri=f'http://{local_endpoint[0]}:{local_endpoint[1]}',token=token, db_name=database)
 client.create_collection("testcollection", dimension=128)
 collections = client.list_collections() or []
 assert("testcollection" in collections)
@@ -112,10 +121,8 @@ assert(milvus.delete_ow_milvus(ucfg))
 
 assert(milvus.delete())
 assert(etcd.delete())
-if is_minio:
-   assert(minio.delete())    
-if is_seaweedfs:
-    assert(seaweedfs.delete())
+assert(seaweedfs.delete())
+endpoint_stack.close()
 
 # final cleanup
 tu.run_proc("kubectl -n openserverless delete all --all")

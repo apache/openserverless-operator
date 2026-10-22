@@ -22,6 +22,7 @@ import openserverless.config as cfg
 import openserverless.enterprise_util as cfg_util
 import openserverless.enterprise_util as cfg_util
 import openserverless.util as util
+import openserverless.messaging_security as security
 
 def get_kafka_pod_name():
     pod_name = kube.kubectl("get", "pods", jsonpath="{.items[?(@.metadata.labels.app == 'kafka')].metadata.name}")
@@ -62,7 +63,7 @@ def create(owner=None):
         cfg.put("state.kafka.spec", spec)
 
 
-    res = kube.apply(spec)
+    res = security.apply(spec, 'kafka')
 
     # dynamically detect kafka pod and wait for readiness
     util.wait_for_pod_ready("{.items[?(@.metadata.labels.app == 'kafka')].metadata.name}")
@@ -76,6 +77,6 @@ def delete():
     spec = cfg.get("state.kafka.spec")
     res = False
     if spec:
-        res = kube.delete(spec)
+        res = security.delete(spec, 'kafka')
         logging.info(f"delete kafka: {res}")
     return res

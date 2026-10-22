@@ -51,7 +51,7 @@ jobs:
           echo "MY_OPERATOR_IMAGE=$IMAGE" >> .env
           cat .env
       - name: Kind
-        uses: container-tools/kind-action@v2.0.4
+        uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
         with:
               version: v0.22.0
               cluster_name: openserverless
@@ -64,13 +64,49 @@ jobs:
         run: bash .github/cisetup.sh
       - name: Install
         run: task setup
+      - name: Regression tests
+        run: poetry run python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: BuildAndLoad
         run: task build-and-load
       - name: AddIngress
-        run: task kind:ingress
+        run: |
+          task kind:ingress
+          # Kind ingress uses hostPort 80/443. Release its unused NodePorts so
+          # dynamic allocation cannot occupy fixed test ports such as 30984.
+          kubectl -n ingress-nginx patch service ingress-nginx-controller --type=strategic \
+            -p '{"spec":{"type":"ClusterIP","allocateLoadBalancerNodePorts":null,"ports":[{"port":80,"nodePort":null},{"port":443,"nodePort":null}]}}'
+          test -z "$(kubectl -n ingress-nginx get service ingress-nginx-controller -o jsonpath='{.spec.ports[*].nodePort}')"
+          kubectl get services --all-namespaces
       - name: Unit Test
         run: task utest
         continue-on-error: false
       - name: Integration Test
         run: task itest
         continue-on-error: false
+      - name: Reject new integration failures
+        run: |
+          # The legacy runner does not propagate failure. Only the exact original
+          # 0.9.0 test scripts (3ee0a79; reproduced in run 38893750250) may retain
+          # their known warning. An updated test must pass, so both exceptions
+          # automatically disappear once the two independent fixes are merged.
+          unexpected_failures=0
+          if [ -f _failed.txt ]; then
+            while IFS= read -r failed_test; do
+              case "$failed_test" in
+                tests/kind/ferretdb_test.ipy)
+                  baseline_blob=90e70ffe1ae1b126e5bd651f32a6a6240b4def07
+                  ;;
+                tests/kind/runtimes_preloader_test.ipy)
+                  baseline_blob=afbee5e8f49945f4737c507de36c731e1da6faee
+                  ;;
+                *) baseline_blob= ;;
+              esac
+              if [ -n "$baseline_blob" ] && [ "$(git hash-object -- "$failed_test")" = "$baseline_blob" ]; then
+                echo "::warning::Pre-existing 0.9.0 integration failure in unchanged baseline test: $failed_test"
+              else
+                echo "::error::Integration regression: $failed_test"
+                unexpected_failures=1
+              fi
+            done < _failed.txt
+          fi
+          exit "$unexpected_failures"

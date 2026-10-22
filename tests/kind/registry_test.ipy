@@ -33,7 +33,6 @@ tu.run_proc("kubectl -n openserverless delete pvc --all")
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["openserverless.storageclass"])
 
-# for this test minioClient should see this env variable
 assert(registry_deploy.create())
 
 pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'registry')].metadata.name}")

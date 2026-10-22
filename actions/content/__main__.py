@@ -21,7 +21,7 @@ import random
 import string
 import mimetypes
 
-import common.minio_util as mutil
+import common.s3_util as mutil
 
 def build_error(message: str):
     return {
@@ -90,9 +90,9 @@ def _delete(mo_client, upload_data):
 
 def main(args):
     """
-    Simple actions to upload/remove a files into a minio bucket.
+    Simple actions to upload/remove a files into an S3 bucket.
     The action it is supposed to receive a path param similar to /<user>/<path>?<auth>
-    and will store/remove the given path under the <user>-web bucket using minio client
+    and will store/remove the given path under the <user>-web bucket using an S3 client
     """
     print(args)
 
@@ -102,19 +102,19 @@ def main(args):
     if(method.lower() not in ['put','delete'] ):
         return build_error(f"invalid request, HTTP verb {method} is not supported")
     
-    if('minioauth' not in headers):
-        return build_error("invalid request, missing mandatory header: minioauth")
+    if('s3auth' not in headers):
+        return build_error("invalid request, missing mandatory header: s3auth")
     
     upload_data = process_path_param(args['__ow_path'])
 
     if 'user' not in upload_data and 'filename' not in upload_data:
         return build_error("invalid request, username and/or filename path error")
     
-    minio_host = args['minio_host']
-    minio_port = args['minio_port']       
-    auth = headers['minioauth']
+    s3_host = args['s3_host']
+    s3_port = args['s3_port']
+    auth = headers['s3auth']
 
-    mo_client = mutil.build_mo_client(minio_host, minio_port,upload_data['user'], auth)
+    mo_client = mutil.build_mo_client(s3_host, s3_port,upload_data['user'], auth)
 
     if method.lower() in 'put':
         if(len(args['__ow_body']) == 0):

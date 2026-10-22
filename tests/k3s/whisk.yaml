@@ -41,11 +41,11 @@ spec:
     cron: false 
     # enable TLS
     tls: false
-    # minio enabled or not
-    minio: true 
+    # seaweedfs enabled or not
+    seaweedfs: true
     # zookeeper enabled or not
     zookeeper: false
-    # minio static enabled or not
+    # seaweedfs static enabled or not
     static: true  
     # monitoring enabled or not
     monitoring: false
@@ -130,26 +130,14 @@ spec:
       prefix: nuv      
       password: s0meP@ass3
   mongodb:
-    host: mongodb
     volume-size: 10
-    admin: 
-      user: whisk_admin
-      password: 0therPa55
-    openserverless:
-      user: openserverless
-      password: s0meP@ass3
-    exposedExternally: False
-    useOperator: False
-  minio:
+  seaweedfs:
     ingress:
       s3-enabled: true
       s3-hostname: auto
       console-enabled: false
       console-hostname: auto      
     volume-size: 10
-    admin:
-      user: minioadmin
-      password: minioadmin    
     openserverless:
       user: openserverless
       password: zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG 

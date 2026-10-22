@@ -259,4 +259,4 @@ def detect():
 def dump_config():
     import openserverless.config as cfg
     for k in cfg.getall():
-        logging.debug(f"{k} = {cfg.get(k)}") 
+        logging.debug("configuration key present: %s", k)
