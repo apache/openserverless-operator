@@ -29,6 +29,7 @@ import openserverless.issuer as issuer
 import openserverless.endpoint as endpoint
 import openserverless.zookeeper as zookeeper
 import openserverless.kafka as kafka
+import openserverless.messaging_security as messaging_security
 import openserverless.invoker as invoker
 import openserverless.patcher as patcher
 import openserverless.storage_static as static
@@ -399,11 +400,14 @@ def whisk_update(spec, status, namespace, diff, name, **kwargs):
     operator_util.config_from_spec(spec,handler_type="on_update")
     owner = kube.get(f"wsk/{name}")
 
+    messaging_security.reconcile(owner)
     patcher.patch(diff, status, owner, name)
 
 @kopf.on.resume('openserverless.org', 'v1', 'whisks')
 def whisk_resume(spec, status, name, **kwargs):   
     operator_util.config_from_spec(spec, handler_type="on_resume")
+    if cfg.get('components.zookeeper') or cfg.get('components.kafka'):
+        messaging_security.reconcile(kube.get(f"wsk/{name}"))
     operator_util.whisk_post_resume(name)
 
 def runtimes_filter(name, type, **kwargs):
