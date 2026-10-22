@@ -235,12 +235,6 @@ Copyright (C) 2011-2015 the spray project <http://spray.io>
 
 ---------------
 
-openserverless-operator bundles the files gradlew and gradlew.bat from Gradle
-v5.5, which were released under an Apache 2.0 license.
-For details see ./gradlew and ./gradlew.bat.
-
----------------
-
 The openserverless-operator container image bundles the following Python
 runtime dependencies, resolved from pyproject.toml and poetry.lock, which
 were released under an Apache 2.0 license.
