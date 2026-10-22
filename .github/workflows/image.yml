@@ -23,7 +23,7 @@ on:
     tags:
     - '*.*.*.*'
     branches-ignore:
-    - '*'
+    - '**'
   workflow_dispatch:
 
 jobs:
