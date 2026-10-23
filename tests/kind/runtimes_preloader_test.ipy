@@ -21,6 +21,7 @@ import openserverless.runtimes_util as rutil
 import openserverless.testutil as tu
 import openserverless.kube as kube
 import json
+from collections import Counter
 
 def cleanup():
     try:
@@ -46,11 +47,22 @@ for container in data['containers']:
     assert('name' in container), "Expected 'name' in container"
     assert('image' in container), "Expected 'image' in container"
 
-count_apache = sum(1 for container in data['containers'] if container['image'].startswith('apache/'))
-count_non_apache = len(data['containers']) - count_apache
-
-assert(count_apache > 0), "Expected at least one Apache runtime in the preloader data"
-assert(count_non_apache == 0), "Expected no non-Apache runtimes in the preloader data"
+# The configured catalog may include Apache, OpenWhisk or private images.
+# Check the full selected catalog instead of assuming a registry organization.
+expected=[]
+for family,versions in json.loads(runtimes_as_json)['runtimes'].items():
+    for runtime in versions:
+        is_default=runtime.get('default',False)
+        kind=runtime.get('kind','')
+        if not (is_default or kind.endswith(':sys')):
+            continue
+        image=runtime['image']
+        if not image.get('tag'):
+            continue
+        name=family if is_default else kind.replace(':','-').replace('.','-')
+        expected.append((name,f"{image['prefix']}/{image['name']}:{image['tag']}"))
+actual=[(container['name'],container['image']) for container in data['containers']]
+assert Counter(actual)==Counter(expected), "Preloader containers must match default and system runtimes from the configured catalog"
 
 
 cleanup()
