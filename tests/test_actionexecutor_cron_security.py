@@ -75,9 +75,10 @@ class CronTenantIsolationTest(unittest.TestCase):
             ],
         }
 
-        def find_doc(database, selector, username, password):
+        def find_doc(database, selector, username, password, **kwargs):
             self.assertEqual((username, password), ("controller", "secret"))
             self.assertIn("selector", json.loads(selector))
+            self.assertTrue(kwargs["raise_on_error"])
             return batches[database].pop(0)
 
         db.find_doc.side_effect = find_doc
@@ -89,7 +90,7 @@ class CronTenantIsolationTest(unittest.TestCase):
             patch.object(executor.req, "put", return_value=Mock(status_code=200, text="")) as unschedule,
             self.assertLogs(level="WARNING") as logs,
         ):
-            executor.start()
+            self.assertEqual(executor.start(), 1)
 
         self.assertTrue(any("Failed to process scheduled action" in line for line in logs.output))
         self.assertEqual(invoke.call_count, 2)

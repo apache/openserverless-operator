@@ -22,14 +22,26 @@ metadata:
   namespace: openserverless
 spec:
   schedule: "{{schedule}}"
+  concurrencyPolicy: Allow
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 120
+      backoffLimit: 0
       template:
         spec:
           containers:
           - name: cron-init
             image: "{{image}}"
             imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                cpu: 250m
+                memory: 256Mi
             command:
             - /bin/sh
             - -c
@@ -38,4 +50,4 @@ spec:
             - name: "SCHEDULER_CONFIG"
               value: >
                 {{config}}             
-          restartPolicy: OnFailure                                  
+          restartPolicy: Never
