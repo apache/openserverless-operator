@@ -123,7 +123,12 @@ def update_system_cm_for_pdb(data):
     except Exception as e:
         logging.error(f"failed to build postgres data for openserverless database: {e}")
 
-def get_base_postgres_url(data):    
+def get_base_postgres_url(data):
+    """Locate FerretDB's backend without lending it a default SQL identity.
+
+    Mongo clients supply their own credentials with PLAIN authentication.
+    Keep the database unset so authenticated tenants retain their own backend.
+    """
     try:        
         pdb_service = util.get_service_by_selector("app=openserverless-postgres","{.items[?(@.metadata.labels.replicationRole == 'primary')]}")
 
@@ -132,11 +137,7 @@ def get_base_postgres_url(data):
             pdb_ns = pdb_service['metadata']['namespace']
             pdb_host = f"{pdb_service_name}.{pdb_ns}.svc.cluster.local"            
             pdb_port = pdb_service['spec']['ports'][0]['port']
-            username = "openserverless"
-            database = "openserverless"
-            password = urllib.parse.quote(data['postgres_openserverless_password'])
-            auth = f"{username}:{password}"            
-            return f"postgresql://{auth}@{pdb_service_name}.{pdb_ns}.svc.cluster.local:{pdb_port}"
+            return f"postgresql://{pdb_host}:{pdb_port}"
            
     except Exception as e:
         logging.error(f"failed to build base postgres URL: {e}")        
