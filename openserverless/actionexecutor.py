@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import os, logging, json
+import os, logging, json, time, math
 import openserverless.couchdb_util as cu
 import openserverless.kube as kube
 import croniter as cn
@@ -24,6 +24,23 @@ from datetime import datetime
 
 # Bound tenant-controlled input before passing it to the cron parser.
 MAX_CRON_EXPRESSION_LENGTH = 4096
+
+# Leave time for process shutdown before the Job's 120 second deadline.
+HTTP_TIMEOUT = (3.0, 10.0)
+RUN_BUDGET_SECONDS = 100.0
+MAX_QUERY_PAGES = 1000
+MAX_QUERY_DOCUMENTS = 25000
+MAX_RESPONSE_BYTES = 4 * 1024 * 1024
+MAX_QUERY_BYTES = 16 * 1024 * 1024
+
+
+def request_timeout(deadline=None):
+    if deadline is None:
+        return HTTP_TIMEOUT
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise RuntimeError('Scheduler time budget exceeded')
+    return tuple(min(value, remaining) for value in HTTP_TIMEOUT)
 
 def check(f, what, res):
     if f:
@@ -94,42 +111,49 @@ def action_should_trigger(currentDate, executionInterval, actionCronExpression):
 #
 # query the dbn database using the specified selecto
 #
-def find_docs(db, dbn, selector, username, password):
+def find_docs(db, dbn, selector, username, password, deadline=None):
     documents = []
     query = json.loads(selector)
     logging.info(f"Querying couchdb {dbn} for documents")
 
-    #CouchDB returns no more than 25 records. We iterate to get all the cron enabled actions.
-    while(True):
-        logging.info(f"select query param {json.dumps(query)}")
-        res = db.find_doc(dbn, json.dumps(query), username, password)
-
-        if(res == None):
-            break
-
-        if(res['docs']):
-            docs = list(res['docs'])
-            if(len(docs) > 0):
-                documents.extend(docs)
-                if(res['bookmark']):
-                    query['bookmark']=res['bookmark']                
-            else:
-                logging.info('docs item is an emtpy list. No more documents found')
-                break 
-        else:
-            logging.info('docs items not present. no more documents found')
-            break 
-       
-    return list(documents)
+    if deadline is None:
+        deadline = time.monotonic() + RUN_BUDGET_SECONDS
+    seen_bookmarks = set()
+    total_bytes = 0
+    for _ in range(MAX_QUERY_PAGES):
+        res = db.find_doc(dbn, json.dumps(query), username, password,
+                          timeout=request_timeout(deadline), raise_on_error=True,
+                          max_response_bytes=MAX_RESPONSE_BYTES, deadline=deadline)
+        request_timeout(deadline)
+        if not isinstance(res, dict) or not isinstance(res.get('docs'), list):
+            raise RuntimeError('Invalid CouchDB pagination response')
+        total_bytes += len(json.dumps(res).encode('utf-8'))
+        if total_bytes > MAX_QUERY_BYTES:
+            raise RuntimeError('CouchDB query byte limit exceeded')
+        docs = res['docs']
+        if not docs:
+            return documents
+        if not all(isinstance(doc, dict) for doc in docs):
+            raise RuntimeError('Invalid CouchDB document')
+        bookmark = res.get('bookmark')
+        if (not isinstance(bookmark, str) or not bookmark
+                or bookmark == query.get('bookmark') or bookmark in seen_bookmarks):
+            raise RuntimeError('CouchDB pagination did not advance')
+        if len(documents) + len(docs) > MAX_QUERY_DOCUMENTS:
+            raise RuntimeError('CouchDB query document limit exceeded')
+        seen_bookmarks.add(bookmark)
+        documents.extend(docs)
+        query['bookmark'] = bookmark
+    raise RuntimeError('CouchDB pagination page limit exceeded')
 
 #
 # Get subject from openserverless_subjects db
 #
 #TODO need to find a way to build a dictionary with dynamic key or a hashmap
-def get_subjects(db, username, password):
+def get_subjects(db, username, password, deadline=None):
     subjects = []
     selector = '{"selector":{"subject": {"$exists": true}},"fields":["namespaces"]}'
-    namespaces = find_docs(db, "subjects", selector, username, password)
+    namespaces = find_docs(db, "subjects", selector, username, password, deadline)
 
     for entry in namespaces:
         currentNamespaceList = list(entry['namespaces'])
@@ -142,13 +166,13 @@ def get_subjects(db, username, password):
 # get actions from the openserverless_whisks db
 # having an annotation with key=cron or key=autoexec and value=true
 #
-def get_cron_aware_actions(db, username, password):
+def get_cron_aware_actions(db, username, password, deadline=None):
     selector = '{"selector":{"entityType":"action", "$or":[{"annotations": {"$elemMatch": {"key": "cron"}}},{"annotations": {"$elemMatch": {"$and":[{"key":"autoexec"},{"value":true}]}}}] }, "fields": ["_id", "annotations", "name", "_rev","namespace","parameters","entityType"]}'
-    return find_docs(db, "whisks", selector, username, password)
+    return find_docs(db, "whisks", selector, username, password, deadline)
 #
 # POST a request to invoke the ow action
 #
-def call_ow_action(url, parameters, ow_auth):
+def call_ow_action(url, parameters, ow_auth, deadline=None):
     logging.info(f"POST request to {url}")
     headers = {'Content-Type': 'application/json'}
 
@@ -158,37 +182,44 @@ def call_ow_action(url, parameters, ow_auth):
             logging.info("calling an action with %s parameters",len(parameters))
         
         # OpenWhisk passes automatically the registered parameters, so this cron executor does not need to pass them.
-        response = req.post(url, auth=(ow_auth['username'],ow_auth['password']))
+        response = req.post(url, auth=(ow_auth['username'],ow_auth['password']),
+                            timeout=request_timeout(deadline), stream=True,
+                            allow_redirects=False)
 
         if (response.status_code in [200,202]):
-            logging.info(f"call to {url} succeeded with {response.status_code}. Body {response.text}")
+            logging.info(f"call to {url} succeeded with {response.status_code}")
             return True        
             
-        logging.warn(f"query to {url} failed with {response.status_code}. Body {response.text}")
+        logging.warning(f"call to {url} failed with {response.status_code}")
         return False
     except Exception as inst:
-        logging.warn(f"Failed to invoke action {type(inst)}")
-        logging.warn(inst)
+        logging.warning("Invocation request failed; acceptance may be uncertain; not retrying: %s", inst)
         return False
+    finally:
+        if response is not None:
+            response.close()
 
 #
 # Update the action annotations to disable the cron execution
 # by setting {"autoexec":false}
 #        
-def unschedule_autoexec_action(action_url, ow_auth):   
+def unschedule_autoexec_action(action_url, ow_auth, deadline=None):
     logging.info(f"Purging cron details from action {action_url}")    
     headers = {'Content-Type': 'application/json'}
 
+    response = None
     try:
         updating_data = {}
         updated_annotation = [{"key":"autoexec","value":False}]
         updating_data["annotations"]=updated_annotation
         logging.info(f"updating with {json.dumps(updating_data)}")
         
-        response = req.put(f"{action_url}?overwrite=true", auth=(ow_auth['username'],ow_auth['password']), headers=headers, data=json.dumps(updating_data))
+        response = req.put(f"{action_url}?overwrite=true", auth=(ow_auth['username'],ow_auth['password']), headers=headers, data=json.dumps(updating_data),
+                           timeout=request_timeout(deadline), stream=True,
+                           allow_redirects=False)
 
         if response.status_code != 200:
-            logging.warn(f"PUT call to {action_url}?overwrite=true failed with {response.status_code}. Body {response.text}")
+            logging.warning(f"PUT call to {action_url}?overwrite=true failed with {response.status_code}")
             return False
 
         logging.info(f"PUT call to {action_url}?overwrite=true succeeded with {response.status_code}. Action cron policy removed")
@@ -196,7 +227,10 @@ def unschedule_autoexec_action(action_url, ow_auth):
     except Exception as inst:
         logging.warn(f"Failed to invoke action {type(inst)}")
         logging.warn(inst)
-        return False       
+        return False
+    finally:
+        if response is not None:
+            response.close()
 
 #
 # Extract the cron expression from the given annotations list
@@ -320,7 +354,7 @@ def get_subject(action_namespace):
 # dAction input is a json Object with similar structure.
 # 
 # dAction = '{"_id":"openserverless/hello-cron-action","annotations":[{"key":"cron","value":"*/2 * * * *"},{"key":"provide-api-key","value":false},{"key":"exec","value":"nodejs:14"}],"name":"hello-cron-action","_rev":"1-19f424e1fec1c02a2ecccf6f90978e31","namespace":"openserverless","parameters":[],"entityType":"action"}'
-def handle_action(baseurl, currentDate, executionInterval, dAction, subjects):  
+def handle_action(baseurl, currentDate, executionInterval, dAction, subjects, deadline=None):
     actionName = dAction['name']
     entityType = dAction['entityType']
     actionNamespace = dAction['namespace']
@@ -338,7 +372,7 @@ def handle_action(baseurl, currentDate, executionInterval, dAction, subjects):
         execute = should_trigger(actionNamespace,actionName,actionCronExpression,currentDate,executionInterval)
 
     if "no_execution" == execute:
-        return None
+        return True
 
     namespaceSubject = get_subject(actionNamespace)
     auth = get_auth(subjects, namespaceSubject)
@@ -346,13 +380,14 @@ def handle_action(baseurl, currentDate, executionInterval, dAction, subjects):
         package = get_package_from_namespace(actionNamespace)
         
         base_action_url = build_action_url(baseurl,namespaceSubject, package, actionName)        
-        ret = call_ow_action(f"{base_action_url}?blocking=false&result=false", actionParameters, auth)
+        ret = call_ow_action(f"{base_action_url}?blocking=false&result=false", actionParameters, auth, deadline)
 
         if ret and "execute_once" == execute:
-            unschedule_autoexec_action(base_action_url, auth)
+            return unschedule_autoexec_action(base_action_url, auth, deadline)
+        return ret
     else:
-        logging.warn('No subject {subjectName} credentials found!')
-    return None
+        logging.warning('No subject %s credentials found!', namespaceSubject)
+    return False
 
 #
 # Search and return a {'username':'xxx','passowrd':'xxx'} dictionary
@@ -372,14 +407,26 @@ def get_auth(subjects, subjectName):
 # Implement the logic to query for actions and evaluate how to execute them
 #
 def start():
+    deadline = time.monotonic() + RUN_BUDGET_SECONDS
+    logging.basicConfig(level=logging.INFO)
+    try:
+        return run(deadline)
+    except Exception:
+        logging.exception('Scheduler run failed; no automatic replay')
+        return 1
+
+
+def run(deadline):
     # load scheduler config from the os environment
     cfg = os.environ.get("SCHEDULER_CONFIG")
-    if cfg:        
-        logging.basicConfig(level=logging.INFO)
-        config = json.loads(cfg)        
+    if not cfg:
+        raise ValueError('SCHEDULER_CONFIG is required')
+    config = json.loads(cfg)
 
     currentDate = datetime.now()
     interval = from_cron_to_seconds(currentDate, config['scheduler.schedule'])
+    if not math.isfinite(interval) or interval <= 0:
+        raise ValueError('Scheduler interval must be finite and positive')
     logging.info(f"interval in seconds between 2 execution is {interval} seconds")
 
     db = cu.CouchDB()
@@ -390,16 +437,23 @@ def start():
         ow_host = config['controller.host']
         ow_port = config['controller.port']
         baseurl = f"{ow_protocol}://{ow_host}:{ow_port}/api/v1/namespaces/"                
-        actions = get_cron_aware_actions(db, config['couchdb.controller.user'],config['couchdb.controller.password'])
+        actions = get_cron_aware_actions(db, config['couchdb.controller.user'],config['couchdb.controller.password'], deadline)
 
         if(len(actions) > 0):
-            subjects = get_subjects(db, config['couchdb.controller.user'],config['couchdb.controller.password'])
+            subjects = get_subjects(db, config['couchdb.controller.user'],config['couchdb.controller.password'], deadline)
+            failed = False
             for action in actions:
+                request_timeout(deadline)
                 try:
-                    handle_action(baseurl, currentDate, interval, action, subjects)
+                    if not handle_action(baseurl, currentDate, interval, action, subjects, deadline):
+                        failed = True
                 except Exception:
+                    failed = True
                     logging.exception("Failed to process scheduled action; continuing with remaining actions")
+            return 1 if failed else 0
         else:
             logging.info('No cron aware action extracted. Exiting....')
+            return 0
     else:
         logging.warn("CouchDB it is not available. Exiting....")
+        return 1
