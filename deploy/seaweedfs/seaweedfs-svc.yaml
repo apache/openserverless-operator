@@ -21,22 +21,19 @@ metadata:
   name: seaweedfs
   namespace: openserverless
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - name: s3-api
       port: 9000
       targetPort: 9000
-      nodePort: 32090
       protocol: TCP
     - name: filer
       port: 9090
       targetPort: 9090
-      nodePort: 32091
       protocol: TCP
     - name: master
       port: 9333
       targetPort: 9333
-      nodePort: 32093
       protocol: TCP
   selector:
     app: seaweedfs

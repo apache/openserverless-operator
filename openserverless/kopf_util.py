@@ -69,9 +69,10 @@ def check_seaweedfs_ingresses(response: dict, item: dict):
     """
     Forces an update of seaweed-ingresses if needed
     """
-    if(item['path']=='spec.seaweedfs.ingress.s3-enabled' or item['path']=='spec.seaweedfs.ingress.console-enabled'):
-        if(item['new']):
-            response["seaweedfs-ingresses"]="update"            
+    if item['path'] == 'spec.seaweedfs.ingress.console-enabled':
+        response["seaweedfs-ingresses"] = "update"
+    elif item['path'] == 'spec.seaweedfs.ingress.s3-enabled' and item['new']:
+        response["seaweedfs-ingresses"] = "update"
 
 def check_registry_ingresses(response: dict, item: dict):
     """
@@ -170,4 +171,4 @@ def detect_wsku_changes(kopf_diff):
     response = {}
     evaluate_wsku_differences(response, differences)
 
-    return response    
+    return response

@@ -93,6 +93,21 @@ def policy(component):
                 'app.kubernetes.io/instance': 'openserverless-prometheus'}}},
                       {'podSelector': {'matchLabels': {'name': 'openserverless-operator'}}}],
              'ports': [{'port': 9091, 'protocol': 'TCP'}]}]
+    elif component == 'seaweedfs':
+        selector = {'app': 'seaweedfs'}
+        def trusted_peer(labels):
+            return {'podSelector': {
+                'matchLabels': labels,
+                'matchExpressions': [
+                    {'key': 'user-action-pod', 'operator': 'DoesNotExist'}]}}
+        trusted = [
+            trusted_peer({'name': 'openserverless-operator'}),
+            trusted_peer(selector)]
+        ingress = [
+            {'ports': [{'port': 9000, 'protocol': 'TCP'}]},
+            {'from': trusted,
+             'ports': [{'port': 9090, 'protocol': 'TCP'},
+                       {'port': 9333, 'protocol': 'TCP'}]}]
     else:
         raise ValueError('Unknown datastore component')
     return {'apiVersion': 'networking.k8s.io/v1', 'kind': 'NetworkPolicy',
