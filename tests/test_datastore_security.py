@@ -97,6 +97,14 @@ class SecurityTests(unittest.TestCase):
         self.assertTrue(all(peer['podSelector']['matchLabels'] for peer in metrics[0]['from']))
         self.assertFalse(any('namespaceSelector' in peer for peer in metrics[0]['from']))
 
+    def test_milvus_image_includes_metrics_port_authentication_fix(self):
+        import yaml
+        root = Path(__file__).resolve().parents[1]
+        for profile in ['milvus', 'milvus-slim']:
+            manifest = yaml.safe_load((root/'deploy'/profile/'milvus.yaml').read_text())
+            container = manifest['spec']['template']['spec']['containers'][0]
+            self.assertEqual(container['image'], 'milvusdb/milvus:v2.5.27')
+
     def test_etcd_peer_port_is_restricted_to_members(self):
         rules = security.policy('etcd')['spec']['ingress']
         peer_rule = [rule for rule in rules if any(p['port'] == 2380 for p in rule['ports'])]
