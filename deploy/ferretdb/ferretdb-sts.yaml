@@ -44,4 +44,4 @@ spec:
         name: ferretdb
         env:
         - name: FERRETDB_POSTGRESQL_URL
-          value: postgresql://openserverless:s0meP%40ass3@openserverless-postgres.openserverless.svc.cluster.local:5432/openserverless
+          value: postgresql://openserverless-postgres.openserverless.svc.cluster.local:5432
