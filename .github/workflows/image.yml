@@ -90,15 +90,15 @@ jobs:
       - name: Install
         run: poetry install
       - name: BuildAndLoad
-        run: task build-and-load TAG="$IMG_TAG"
+        run: task build-and-load OPERATOR_TAG="$IMG_TAG"
       - name: AddIngress
         run: task kind:ingress
       - name: Unit Test
         run: task utest
         continue-on-error: false
-      #- name: Integration Test
-      #  run: task itest
-      #  continue-on-error: false
+      - name: Integration Test
+        run: task itest OPERATOR_TAG="$IMG_TAG"
+        continue-on-error: false
 
       - name: Select registry
         env:
@@ -137,4 +137,4 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Image
-        run: task buildx-and-push TAG="$IMG_TAG"
+        run: task buildx-and-push OPERATOR_TAG="$IMG_TAG"
