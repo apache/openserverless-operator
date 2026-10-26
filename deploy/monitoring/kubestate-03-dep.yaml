@@ -37,6 +37,8 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations:
+        openserverless.org/monitoring-boundary: "1"
       labels:
         app.kubernetes.io/component: metrics
         app.kubernetes.io/instance: openserverless-prometheus
@@ -80,7 +82,7 @@ spec:
       containers:
       - args:
         - --port=8080
-        - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,leases,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
+        - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,leases,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
         image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.8.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
