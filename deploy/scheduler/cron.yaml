@@ -24,14 +24,26 @@ metadata:
   namespace: openserverless
 spec:
   schedule: "* * * * *"
+  concurrencyPolicy: Allow
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 120
+      backoffLimit: 0
       template:
         spec:
           containers:
           - name: cron-init
             image: "ghcr.io/nuvolaris/nuvolaris-operator:0.2.1-trinity.22080920"
             imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                cpu: 250m
+                memory: 256Mi
             command:
             - /bin/sh
             - -c
@@ -39,5 +51,5 @@ spec:
             env:
             - name: "SCHEDULER_CONFIG"
               value: "{}"             
-          restartPolicy: OnFailure
+          restartPolicy: Never
 

@@ -149,7 +149,9 @@ class CouchDB:
 #
 # Submit a POST request to the _find endpoint using the specified selector
 #
-  def find_doc(self, database, selector, user=None, password="", no_auth=False):
+  def find_doc(self, database, selector, user=None, password="", no_auth=False,
+               *, timeout=None, raise_on_error=False, max_response_bytes=None,
+               deadline=None):
     url = f"{self.db_base}{database}/_find"
     headers = {'Content-Type': 'application/json'}
     session = req.Session()
@@ -162,9 +164,24 @@ class CouchDB:
       db_auth = self.db_auth
 
     session.auth=db_auth  
-    r = session.post(url, headers=headers, data=selector)
-    if r.status_code == 200:
-      return json.loads(r.text)
-    
-    logging.warn(f"query to {url} failed with {r.status_code}. Body {r.text}")
-    return None    
+    try:
+      with session.post(url, headers=headers, data=selector, timeout=timeout,
+                        stream=max_response_bytes is not None,
+                        allow_redirects=not raise_on_error) as r:
+        if raise_on_error and r.status_code != 200:
+          raise RuntimeError(f'CouchDB query failed with HTTP {r.status_code}')
+        if r.status_code == 200:
+          if max_response_bytes is None:
+            return json.loads(r.text)
+          body = bytearray()
+          for chunk in r.iter_content(chunk_size=4096):
+            if deadline is not None and time.monotonic() >= deadline:
+              raise RuntimeError('Scheduler time budget exceeded')
+            if len(body) + len(chunk) > max_response_bytes:
+              raise RuntimeError('CouchDB response byte limit exceeded')
+            body.extend(chunk)
+          return json.loads(body)
+        logging.warning(f"query to {url} failed with {r.status_code}")
+        return None
+    finally:
+      session.close()
