@@ -15,8 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import os
-
 import openserverless.config as cfg
 import openserverless.kube as kube
 import openserverless.seaweedfs_deploy as seaweedfs_deploy
@@ -29,15 +27,10 @@ logging.basicConfig(level=logging.DEBUG)
 tu.run_proc("kubectl -n openserverless delete all --all")
 tu.run_proc("kubectl -n openserverless delete pvc --all")
 
-# for this test seaweedfsClient should see this env variable
-os.environ['SEAWEEDFS_API_HOST']='localhost'
-os.environ['SEAWEEDFS_API_PORT']='9090'
-
 # test
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["openserverless.storageclass"])
 
-# for this test the seaweedfs filer should see this env variable
 assert(seaweedfs_deploy.create())
 
 pod_name = util.get_pod_name("{.items[?(@.metadata.labels.app == 'seaweedfs')].metadata.name}")

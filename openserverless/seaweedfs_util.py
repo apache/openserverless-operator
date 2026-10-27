@@ -46,8 +46,8 @@ class SeaweedfsUnauthorizedException(SeaweedfsSimpleException):
 
 class SeaweedfsClient:
     
-    def __init__(self):
-        self.filer_url = util.get_seaweedds_filer_host()
+    def __init__(self, filer_url=None):
+        self.filer_url = filer_url or util.get_seaweedds_filer_host()
         self.pod_name = util.get_pod_name_by_selector("app=seaweedfs","{.items[?(@.metadata.labels.app == 'seaweedfs')].metadata.name}")
 
     def _request(self, endpoint: str, json=None, method: str = "POST"):

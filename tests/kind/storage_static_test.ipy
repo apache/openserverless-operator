@@ -16,8 +16,6 @@
 # under the License.
 #
 
-import os
-
 import openserverless.config as cfg
 import openserverless.seaweedfs_deploy as seaweedfs
 import openserverless.storage_static as static
@@ -30,10 +28,6 @@ tu.run_proc("kubectl -n openserverless delete pvc --all")
 # test
 assert(cfg.configure(tu.load_sample_config()))
 assert(cfg.detect_storage()["openserverless.storageclass"])
-
-# for this test the seaweedfs filer should see these env variables
-os.environ['SEAWEEDFS_API_HOST']='localhost'
-os.environ['SEAWEEDFS_API_PORT']='9090'
 
 assert(seaweedfs.create())
 assert(static.create())
