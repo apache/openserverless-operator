@@ -49,9 +49,6 @@ is_seaweedfs = cfg.get('components.seaweedfs') or False
 assert(is_seaweedfs)
 
 
-# for this test seaweedfs and Milvus should see this env variable
-os.environ['SEAWEEDFS_API_HOST']='localhost'
-os.environ['SEAWEEDFS_API_PORT']='9090'
 os.environ['MILVUS_API_HOST']='localhost'
 
 assert(etcd.create())

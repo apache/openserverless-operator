@@ -25,6 +25,7 @@ import openserverless.seaweedfs_ingress as seaweedfs_ingress
 import openserverless.operator_util as operator_util
 import openserverless.datastore_security as datastore_security
 
+from openserverless.datastore_connection import service_endpoint
 from openserverless.user_config import UserConfig
 from openserverless.user_metadata import UserMetadata
 from openserverless.seaweedfs_util import SeaweedfsClient
@@ -90,10 +91,13 @@ def create(owner=None):
     util.wait_for_pod_ready("{.items[?(@.metadata.labels.app == 'seaweedfs')].metadata.name}")
     seaweedfs_ingress.create_seaweedfs_ingresses(data, owner)
 
-    logging.info("*** waiting for seaweedfs filer api to be available")    
-    util.wait_for_http(util.get_seaweedds_filer_host(), up_statuses=[200,401], timeout=30)
-
-    create_seaweedfs_nuv_storage(data)  
+    # The filer API is private. In-cluster this resolves to the Service;
+    # integration runs use an authenticated, loopback-only port-forward.
+    with service_endpoint(data['name'], 9090) as (host, port):
+        filer_url = f"http://{host}:{port}"
+        logging.info("*** waiting for seaweedfs filer api to be available")
+        util.wait_for_http(filer_url, up_statuses=[200,401], timeout=30)
+        create_seaweedfs_nuv_storage(data, filer_url)
 
     logging.info("*** configured seaweedfs standalone")
     return res
@@ -172,12 +176,12 @@ def reconcile_anonymous_web_access(client):
     if web_buckets & private_buckets:
         raise ValueError("Public and private S3 bucket names overlap")
 
-def create_seaweedfs_nuv_storage(data):
+def create_seaweedfs_nuv_storage(data, filer_url=None):
     """
     Creates openserverless SEAWEEDFS custom resources
     """
     logging.info("*** configuring SEAWEEDFS storage for openserverless")
-    seaweedsfsClient = SeaweedfsClient()
+    seaweedsfsClient = SeaweedfsClient(filer_url)
 
     res = seaweedsfsClient.make_bucket("openserverless-data",data["default_bucket_quota"])
     if res:

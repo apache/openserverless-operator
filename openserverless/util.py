@@ -302,6 +302,8 @@ def wait_for_http(url: str, timeout: int = 60, up_statuses: List[Union[int, str]
                 logging.error(f"Protocol error: {e}")
         time.sleep(1)
 
+    raise TimeoutError("Service did not become ready before timeout")
+
 def parse_image(img):
     """
     Parse a string representing a pod image in the form <image>:<tag> and return
