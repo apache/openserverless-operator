@@ -27,6 +27,9 @@ from openserverless import config, datastore_security as security
 
 
 class SecurityTests(unittest.TestCase):
+    def tearDown(self):
+        config.clean()
+
     def test_debug_logs_never_contain_values(self):
         config.clean()
         config.configure({'etcd': {'root': {'password': 'sentinel-password'}},
@@ -104,6 +107,103 @@ class SecurityTests(unittest.TestCase):
             manifest = yaml.safe_load((root/'deploy'/profile/'milvus.yaml').read_text())
             container = manifest['spec']['template']['spec']['containers'][0]
             self.assertEqual(container['image'], 'milvusdb/milvus:v2.5.27')
+
+    def test_seaweedfs_service_has_no_node_ports(self):
+        import yaml
+        root = Path(__file__).resolve().parents[1]
+        service = yaml.safe_load((root/'deploy/seaweedfs/seaweedfs-svc.yaml').read_text())
+        self.assertEqual(service['spec']['type'], 'ClusterIP')
+        self.assertTrue(all('nodePort' not in port for port in service['spec']['ports']))
+
+    def test_seaweedfs_filer_and_master_are_restricted(self):
+        rules = security.policy('seaweedfs')['spec']['ingress']
+        s3 = [rule for rule in rules if any(port['port'] == 9000 for port in rule['ports'])]
+        control = [rule for rule in rules if any(port['port'] == 9090 for port in rule['ports'])]
+        self.assertEqual(s3, [{'ports': [{'port': 9000, 'protocol': 'TCP'}]}])
+        self.assertEqual(len(control), 1)
+        self.assertEqual({port['port'] for port in control[0]['ports']}, {9090, 9333})
+        self.assertEqual(control[0]['from'], [
+            {'podSelector': {
+                'matchLabels': {'name': 'openserverless-operator'},
+                'matchExpressions': [
+                    {'key': 'user-action-pod', 'operator': 'DoesNotExist'}]}},
+            {'podSelector': {
+                'matchLabels': {'app': 'seaweedfs'},
+                'matchExpressions': [
+                    {'key': 'user-action-pod', 'operator': 'DoesNotExist'}]}}])
+
+    def test_seaweedfs_action_cannot_impersonate_trusted_peers(self):
+        control = security.policy('seaweedfs')['spec']['ingress'][1]
+        for peer in control['from']:
+            selector = peer['podSelector']
+            self.assertIn({'key': 'user-action-pod', 'operator': 'DoesNotExist'},
+                          selector['matchExpressions'])
+
+    def test_seaweedfs_create_applies_isolation_policy(self):
+        from openserverless import seaweedfs_deploy
+        spec = {'apiVersion': 'v1', 'kind': 'List', 'items': []}
+        with patch.object(seaweedfs_deploy.util, 'get_seaweedfs_config_data', return_value={
+                'affinity': False, 'tolerations': False}), \
+                patch.object(seaweedfs_deploy.kus, 'patchTemplates'), \
+                patch.object(seaweedfs_deploy.kus, 'kustom_list', return_value=spec), \
+                patch.object(seaweedfs_deploy.cfg, 'put'), \
+                patch.object(seaweedfs_deploy.kube, 'apply') as apply, \
+                patch.object(seaweedfs_deploy.util, 'wait_for_pod_ready'), \
+                patch.object(seaweedfs_deploy.seaweedfs_ingress, 'create_seaweedfs_ingresses'), \
+                patch.object(seaweedfs_deploy.util, 'wait_for_http'), \
+                patch.object(seaweedfs_deploy, 'create_seaweedfs_nuv_storage'):
+            seaweedfs_deploy.create()
+        self.assertIn(security.policy('seaweedfs'), spec['items'])
+        self.assertEqual(apply.call_args_list[0].args[0]['items'],
+                         [security.policy('seaweedfs')])
+
+    def test_existing_cluster_reconcile_secures_before_service_update(self):
+        from openserverless import seaweedfs_deploy
+        owner = {'apiVersion': 'openserverless.org/v1', 'kind': 'Whisk',
+                 'metadata': {'name': 'controller', 'uid': 'synthetic'}}
+        service = {'apiVersion': 'v1', 'kind': 'Service',
+                   'metadata': {'name': 'seaweedfs'},
+                   'spec': {'type': 'ClusterIP', 'ports': []}}
+        events = []
+        config.configure({'components': {'seaweedfs': True}})
+        with patch.object(seaweedfs_deploy.util, 'get_seaweedfs_config_data', return_value={}), \
+                patch.object(seaweedfs_deploy, '_render_seaweedfs_spec', return_value={
+                    'apiVersion': 'v1', 'kind': 'List', 'items': [service]}), \
+                patch.object(seaweedfs_deploy.datastore_security, 'apply',
+                             side_effect=lambda obj: events.append(('policy', obj))), \
+                patch.object(seaweedfs_deploy.kube, 'apply',
+                             side_effect=lambda obj: events.append(('service', obj))), \
+                patch.object(seaweedfs_deploy.seaweedfs_ingress,
+                             'create_seaweedfs_ingresses',
+                             side_effect=lambda data, obj: events.append(('ingress', obj))):
+            seaweedfs_deploy.reconcile(owner)
+        self.assertEqual([event[0] for event in events], ['policy', 'service', 'ingress'])
+        self.assertEqual(events[0][1]['kind'], 'NetworkPolicy')
+        self.assertEqual(events[1][1]['spec']['type'], 'ClusterIP')
+
+    def test_seaweedfs_console_ingress_is_removed_not_created(self):
+        from openserverless import seaweedfs_ingress
+        data = {'seaweedfs_s3_ingress_enabled': False,
+                'seaweedfs_console_ingress_enabled': True}
+        with patch.object(seaweedfs_ingress.cfg, 'get', return_value='k3s'), \
+                patch.object(seaweedfs_ingress.apihost_util, 'get_apihost', return_value='miniops.me'), \
+                patch.object(seaweedfs_ingress.util, 'get_ingress_class', return_value='traefik'), \
+                patch.object(seaweedfs_ingress, 'delete_seaweedfs_ingress') as delete, \
+                patch.object(seaweedfs_ingress, 'create_console_ingress_endpoint') as create, \
+                patch.object(seaweedfs_ingress.openwhisk, 'annotate') as annotate:
+            with self.assertLogs(level=logging.WARNING):
+                seaweedfs_ingress.create_seaweedfs_ingresses(data)
+        delete.assert_called_once_with('k3s', 'openserverless', 'traefik',
+                                       'seaweedfs-filer', None)
+        create.assert_not_called()
+        annotate.assert_called_once_with('s3_console_url-')
+
+    def test_disabling_console_schedules_legacy_ingress_cleanup(self):
+        from openserverless import kopf_util
+        response = {}
+        kopf_util.check_seaweedfs_ingresses(response, {
+            'path': 'spec.seaweedfs.ingress.console-enabled', 'new': False})
+        self.assertEqual(response, {'seaweedfs-ingresses': 'update'})
 
     def test_etcd_peer_port_is_restricted_to_members(self):
         rules = security.policy('etcd')['spec']['ingress']

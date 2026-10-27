@@ -23,6 +23,7 @@ import openserverless.util as util
 import openserverless.openwhisk as openwhisk
 import openserverless.seaweedfs_ingress as seaweedfs_ingress
 import openserverless.operator_util as operator_util
+import openserverless.datastore_security as datastore_security
 
 from openserverless.user_config import UserConfig
 from openserverless.user_metadata import UserMetadata
@@ -30,6 +31,13 @@ from openserverless.seaweedfs_util import SeaweedfsClient
 
 def _get_seaweedfs_service():
     return util.get_service("{.items[?(@.spec.selector.app == 'seaweedfs')]}")
+
+def _render_seaweedfs_spec(data):
+    tplp = ["pvc-attach.yaml"]
+    if data['affinity'] or data['tolerations']:
+        tplp.append("affinity-tolerance-sts-core-attach.yaml")
+    kust = kus.patchTemplates("seaweedfs", tplp, data)
+    return kus.kustom_list("seaweedfs", kust, templates=[], data=data)
 
 def _add_seaweedfs_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
     """
@@ -65,19 +73,17 @@ def create(owner=None):
 
     data = util.get_seaweedfs_config_data()
 
-    tplp = ["pvc-attach.yaml"]
-
-    if(data['affinity'] or data['tolerations']):
-       tplp.append("affinity-tolerance-sts-core-attach.yaml")    
-
-    kust = kus.patchTemplates("seaweedfs", tplp, data)
-    spec = kus.kustom_list("seaweedfs", kust, templates=[], data=data)
+    spec = _render_seaweedfs_spec(data)
+    policy = datastore_security.policy('seaweedfs')
+    spec['items'].append(policy)
 
     if owner:
         kopf.append_owner_reference(spec['items'], owner)
     else:
         cfg.put("state.seaweedfs.spec", spec)
 
+    # Establish the deny-by-default boundary before creating any listener.
+    datastore_security.apply(policy)
     res = kube.apply(spec)
 
     # dynamically detect seaweedfs pod and wait for readiness
@@ -91,6 +97,28 @@ def create(owner=None):
 
     logging.info("*** configured seaweedfs standalone")
     return res
+
+def reconcile(owner=None):
+    """Secure an existing SeaweedFS deployment without recreating tenant data."""
+    if not cfg.get('components.seaweedfs'):
+        return None
+    if not owner or not owner.get('metadata', {}).get('uid'):
+        raise RuntimeError('Whisk owner is required to reconcile SeaweedFS isolation')
+
+    data = util.get_seaweedfs_config_data()
+    rendered = _render_seaweedfs_spec(data)
+    services = [item for item in rendered['items']
+                if item['kind'] == 'Service' and item['metadata']['name'] == 'seaweedfs']
+    if len(services) != 1:
+        raise RuntimeError('Could not render the SeaweedFS service')
+
+    policy = datastore_security.policy('seaweedfs')
+    resources = [policy, services[0]]
+    kopf.append_owner_reference(resources, owner)
+    datastore_security.apply(policy)
+    result = kube.apply(services[0])
+    seaweedfs_ingress.create_seaweedfs_ingresses(data, owner)
+    return result
 
 def _annotate_nuv_metadata(data):
     """
