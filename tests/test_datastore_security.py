@@ -152,8 +152,23 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(apply.call_args_list[0].args[0]['items'],
                          [security.policy('seaweedfs')])
         endpoint.assert_called_once_with('seaweedfs', 9090)
-        wait.assert_called_once_with('http://127.0.0.1:41237', up_statuses=[200, 401], timeout=30)
+        wait.assert_called_once_with('http://127.0.0.1:41237', up_statuses=[200, 401], timeout=3)
         bootstrap.assert_called_once_with(data, 'http://127.0.0.1:41237')
+
+    def test_seaweedfs_bootstrap_reopens_tunnel_after_startup_race(self):
+        from openserverless import seaweedfs_deploy
+        data = {'name': 'seaweedfs'}
+        tunnels = [contextlib.nullcontext(('127.0.0.1', 41237)),
+                   contextlib.nullcontext(('127.0.0.1', 41238))]
+        with patch.object(seaweedfs_deploy, 'service_endpoint', side_effect=tunnels) as endpoint, \
+                patch.object(seaweedfs_deploy.util, 'wait_for_http',
+                             side_effect=[TimeoutError('startup race'), None]) as wait, \
+                patch.object(seaweedfs_deploy, 'create_seaweedfs_nuv_storage') as bootstrap, \
+                patch.object(seaweedfs_deploy.time, 'sleep'):
+            seaweedfs_deploy._bootstrap_private_filer(data)
+        self.assertEqual(endpoint.call_count, 2)
+        self.assertEqual(wait.call_count, 2)
+        bootstrap.assert_called_once_with(data, 'http://127.0.0.1:41238')
 
     def test_wait_for_http_raises_after_deadline(self):
         with self.assertRaisesRegex(TimeoutError, 'did not become ready'):

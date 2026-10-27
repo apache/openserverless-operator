@@ -69,6 +69,37 @@ def _add_seaweedfs_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
         logging.error(f"failed to build SEAWEEDFS metadata for {ucfg.get('namespace')}: {e}")
         return None 
 
+def _bootstrap_private_filer(data, timeout=30):
+    """Wait for the private filer, recreating a tunnel lost during startup."""
+    deadline = time.monotonic() + timeout
+    last_error = None
+
+    while time.monotonic() < deadline:
+        ready = False
+        try:
+            with service_endpoint(data['name'], 9090) as (host, port):
+                filer_url = f"http://{host}:{port}"
+                try:
+                    # A port-forward can exit after its first connection if the
+                    # target socket is not listening yet. Keep each probe short
+                    # so the next attempt can establish a fresh tunnel.
+                    util.wait_for_http(filer_url, up_statuses=[200, 401], timeout=3)
+                except TimeoutError as error:
+                    last_error = error
+                else:
+                    ready = True
+                    create_seaweedfs_nuv_storage(data, filer_url)
+                    return
+        except RuntimeError as error:
+            if ready:
+                raise
+            last_error = error
+
+        if time.monotonic() < deadline:
+            time.sleep(1)
+
+    raise TimeoutError("SeaweedFS filer did not become ready before timeout") from last_error
+
 def create(owner=None):
     logging.info("*** configuring seaweedfs standalone")
 
@@ -93,11 +124,8 @@ def create(owner=None):
 
     # The filer API is private. In-cluster this resolves to the Service;
     # integration runs use an authenticated, loopback-only port-forward.
-    with service_endpoint(data['name'], 9090) as (host, port):
-        filer_url = f"http://{host}:{port}"
-        logging.info("*** waiting for seaweedfs filer api to be available")
-        util.wait_for_http(filer_url, up_statuses=[200,401], timeout=30)
-        create_seaweedfs_nuv_storage(data, filer_url)
+    logging.info("*** waiting for seaweedfs filer api to be available")
+    _bootstrap_private_filer(data)
 
     logging.info("*** configured seaweedfs standalone")
     return res
