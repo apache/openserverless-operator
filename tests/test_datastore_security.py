@@ -101,6 +101,14 @@ class SecurityTests(unittest.TestCase):
         self.assertTrue(all(peer['podSelector']['matchLabels'] for peer in metrics[0]['from']))
         self.assertFalse(any('namespaceSelector' in peer for peer in metrics[0]['from']))
 
+    def test_milvus_image_includes_metrics_port_authentication_fix(self):
+        import yaml
+        root = Path(__file__).resolve().parents[1]
+        for profile in ['milvus', 'milvus-slim']:
+            manifest = yaml.safe_load((root/'deploy'/profile/'milvus.yaml').read_text())
+            container = manifest['spec']['template']['spec']['containers'][0]
+            self.assertEqual(container['image'], 'milvusdb/milvus:v2.5.27')
+
     def test_seaweedfs_service_has_no_node_ports(self):
         import yaml
         root = Path(__file__).resolve().parents[1]
