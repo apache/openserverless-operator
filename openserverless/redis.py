@@ -25,6 +25,8 @@ import openserverless.openwhisk as openwhisk
 import urllib.parse
 import hashlib
 import contextlib
+import subprocess
+import shlex
 import redis as redislib
 from openserverless.redis_acl import tenant_rules
 from openserverless.datastore_connection import service_endpoint
@@ -35,6 +37,41 @@ import openserverless.operator_util as operator_util
 
 from openserverless.user_config import UserConfig
 from openserverless.user_metadata import UserMetadata
+
+ACL_FILE = '/bitnami/redis/data/users.acl'
+
+
+def _prepare_existing_acl_storage(data):
+    """Persist live identities before an existing Redis can load the new config."""
+    if not data['persistence']:
+        return
+    existing = kube.kubectl('get', 'statefulset', 'redis', '--ignore-not-found', '-o', 'name')
+    if not existing.strip():
+        return
+    wait_for_redis_ready()
+    with admin_client() as client, client.lock('__ops_acl_lock__', timeout=120, blocking_timeout=15):
+        path = _save_acl_if_configured(client)
+    # Explicitly configured ACL files retain their existing configuration.
+    if path != ACL_FILE:
+        return
+    cm = kube.get('configmap/redis-cm')
+    if not cm or 'redis-conf' not in cm.get('data', {}):
+        raise RuntimeError('Redis configuration is unavailable')
+    text = cm['data']['redis-conf']
+    directives = []
+    for line in text.splitlines():
+        fields = line.strip().split(None, 1)
+        if fields and fields[0].lower() == 'aclfile':
+            directives.append(shlex.split(line)[1:])
+    directive = 'aclfile ' + ACL_FILE
+    if directives:
+        if any(fields != [ACL_FILE] for fields in directives):
+            raise RuntimeError('Redis ACL file configuration does not match the running server')
+        return
+    patch = {'metadata': {'resourceVersion': cm['metadata']['resourceVersion']},
+             'data': {'redis-conf': text.rstrip() + '\n' + directive + '\n'}}
+    kube.kubectl('patch', 'configmap', 'redis-cm', '--type=merge', '--patch-file=/dev/stdin',
+                 input=json.dumps(patch), timeout=30)
 
 
 def _add_redis_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
@@ -67,6 +104,7 @@ def _add_redis_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
 def create(owner=None):
     logging.info("create redis")
     data = util.get_redis_config_data()
+    _prepare_existing_acl_storage(data)
     
     tplp = ["security-set-attach.yaml","redis-set.yaml"]
 
@@ -97,6 +135,7 @@ def wait_for_redis_ready():
 
 def restore_openserverless_db_user():
     data = util.get_redis_config_data()
+    _prepare_existing_acl_storage(data)
     create_openserverless_db_user(data)
 
 def create_openserverless_db_user(data):
@@ -108,7 +147,10 @@ def create_openserverless_db_user(data):
         pod_name = util.get_pod_name("{.items[?(@.metadata.labels.name == 'redis')].metadata.name}")
 
         if(pod_name):
-            res = exec_redis_command(pod_name,path_to_script)
+            with admin_client() as client, client.lock('__ops_acl_lock__', timeout=120, blocking_timeout=15):
+                res = exec_redis_command(pod_name,path_to_script)
+                if res:
+                    _save_acl_if_configured(client)
 
             if(res):
                 redis_service =  util.get_service("{.items[?(@.spec.selector.name == 'redis')]}")
@@ -218,11 +260,36 @@ def _tenant_identity(namespace, prefix=None):
     return prefix
 
 
+def _write_acl_snapshot(client):
+    """Bootstrap an immutable aclfile setting without logging credential hashes."""
+    pod = util.get_pod_name("{.items[?(@.metadata.labels.name == 'redis')].metadata.name}")
+    if not pod:
+        raise RuntimeError('Redis pod is unavailable for ACL persistence')
+    script = ('umask 077; tmp=$(mktemp /bitnami/redis/data/.users.acl.XXXXXX); '
+              'trap \'rm -f "$tmp"\' EXIT; cat > "$tmp"; test -s "$tmp"; '
+              'mv "$tmp" /bitnami/redis/data/users.acl')
+    # kube.kubectl logs stdin on errors; ACL hashes must not enter that path.
+    try:
+        result = subprocess.run(['kubectl', '-n', 'openserverless', 'exec', '-i', pod,
+                                 '--', '/bin/sh', '-ec', script],
+                                input=('\n'.join(client.acl_list()) + '\n').encode(),
+                                capture_output=True, timeout=30)
+    except (subprocess.SubprocessError, OSError):
+        raise RuntimeError('Could not persist Redis ACL state') from None
+    if result.returncode:
+        raise RuntimeError('Could not persist Redis ACL state')
+
+
 def _save_acl_if_configured(client):
-    # Preserve the 0.9.0 storage contract: persist when an ACL file is configured.
-    # With no ACL file, startup reconciliation recreates identities as before.
-    if client.config_get('aclfile').get('aclfile'):
+    path = client.config_get('aclfile').get('aclfile')
+    if not path and util.get_redis_config_data().get('persistence'):
+        # aclfile is immutable. Until the next Redis restart, save an atomic
+        # snapshot of the live authorized state instead of CONFIG SET.
+        _write_acl_snapshot(client)
+        return ACL_FILE
+    if path:
         client.acl_save()
+    return path
 
 
 def provision_user(namespace, password, prefix, readonly=False):
@@ -239,7 +306,7 @@ def provision_user(namespace, password, prefix, readonly=False):
                                *['#' + value for value in hashes], *tenant_rules(prefix, readonly))
         try:
             _save_acl_if_configured(client)
-        except redislib.RedisError:
+        except (redislib.RedisError, RuntimeError):
             client.acl_deluser(namespace)
             raise RuntimeError('Could not persist Redis tenant ACL') from None
     return True

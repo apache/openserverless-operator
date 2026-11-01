@@ -243,3 +243,29 @@ spec:
 ```
 
 In lean mode it is recommended to set at least `configs.controller.javaOpts=-Xmx2048M`
+
+## Redis ACL persistence
+
+With `redis.persistence-enabled: true`, Redis stores its ACLs in
+`/bitnami/redis/data/users.acl` on the existing Redis data PVC. Account creation,
+reconciliation, quota permission changes and successful revocation save the
+current authorized state. An RDB data snapshot alone does not contain ACL users.
+
+On a fresh installation an init container creates the initial default-user ACL
+with the configured administrator password hash. It never overwrites an existing
+ACL file and refuses an empty existing file. The system and tenant accounts are
+then provisioned and saved through the normal operator lifecycle.
+
+On operator resume, an existing persistent Redis first saves its live ACL state,
+then updates the managed ConfigMap to load that file on the next Redis restart.
+Because `aclfile` is immutable at runtime, account changes made before that
+first restart also update the file atomically through protected stdin. This
+preparation does not restart Redis or replay old ACL exports. Credentials,
+key/channel grants, read-only state and successful revocations are preserved.
+A failed save stops configuration migration rather than enabling a missing file.
+Existing explicitly configured ACL files retain their configured storage path.
+
+When data persistence is disabled, this change does not introduce an ACL volume
+or enable file persistence; ephemeral storage retains its existing semantics.
+This fix concerns identity persistence, not the independent RDB snapshot schedule
+or recovery of data that was never saved.
