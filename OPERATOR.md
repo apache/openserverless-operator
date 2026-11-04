@@ -48,6 +48,21 @@ If you set those variables you can use
 - `task docker-hub-authorize` to upload to the current kubernetes runtime a secret to give the possibility to download 
    the operator enterprise image
 
+## Redis graceful shutdown
+
+The Redis command uses `exec` so the server is process 1 and receives the
+container stop signal. With RDB save points configured, this permits Redis to
+complete its final snapshot during an ordinary pod replacement. The termination
+grace period must still be sufficient for the dataset being saved.
+
+Existing installations must apply the updated Redis StatefulSet command through
+their component deployment procedure; updating only the operator image does not
+rewrite an existing StatefulSet. During the first rollout from the old shell
+command, arrange an authenticated `SHUTDOWN SAVE` for the old Redis process before
+it can be forcibly terminated. Subsequent ordinary replacements use the corrected
+signal path. This does not change RDB/AOF policy or preserve unsaved RDB writes
+after a hard crash or `SIGKILL`. ACL identity persistence is a separate concern.
+
 ## Customization notes
 
 OpenServerless operator is normally deployed using a `whisk.yaml` configuration file which is applied via the installer. 
