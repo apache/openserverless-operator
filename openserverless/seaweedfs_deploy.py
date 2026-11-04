@@ -149,6 +149,10 @@ def reconcile(owner=None):
     kopf.append_owner_reference(resources, owner)
     datastore_security.apply(policy)
     result = kube.apply(services[0])
+    # Existing deployments and restored filer data can still carry global Read.
+    # Normalize IAM before publishing ingress, without bootstrapping buckets.
+    with service_endpoint(data['name'], 9090) as (host, port):
+        reconcile_anonymous_web_access(SeaweedfsClient(f"http://{host}:{port}"))
     seaweedfs_ingress.create_seaweedfs_ingresses(data, owner)
     return result
 
@@ -203,6 +207,9 @@ def reconcile_anonymous_web_access(client):
         raise RuntimeError("Could not grant public access to web buckets")
     if web_buckets & private_buckets:
         raise ValueError("Public and private S3 bucket names overlap")
+    # Native shell commands may return success even when an operation failed.
+    # Read back the persisted policy before accepting reconciliation.
+    client.verify_anonymous_access(safe_web_buckets)
 
 def create_seaweedfs_nuv_storage(data, filer_url=None):
     """

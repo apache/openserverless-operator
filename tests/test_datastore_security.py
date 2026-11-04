@@ -204,18 +204,24 @@ class SecurityTests(unittest.TestCase):
                    'spec': {'type': 'ClusterIP', 'ports': []}}
         events = []
         config.configure({'components': {'seaweedfs': True}})
-        with patch.object(seaweedfs_deploy.util, 'get_seaweedfs_config_data', return_value={}), \
+        with patch.object(seaweedfs_deploy.util, 'get_seaweedfs_config_data', return_value={'name': 'seaweedfs'}), \
                 patch.object(seaweedfs_deploy, '_render_seaweedfs_spec', return_value={
                     'apiVersion': 'v1', 'kind': 'List', 'items': [service]}), \
                 patch.object(seaweedfs_deploy.datastore_security, 'apply',
                              side_effect=lambda obj: events.append(('policy', obj))), \
                 patch.object(seaweedfs_deploy.kube, 'apply',
                              side_effect=lambda obj: events.append(('service', obj))), \
+                patch.object(seaweedfs_deploy, 'service_endpoint', return_value=
+                             contextlib.nullcontext(('127.0.0.1', 41237))), \
+                patch.object(seaweedfs_deploy, 'SeaweedfsClient') as client, \
+                patch.object(seaweedfs_deploy, 'reconcile_anonymous_web_access',
+                             side_effect=lambda obj: events.append(('iam', obj))), \
                 patch.object(seaweedfs_deploy.seaweedfs_ingress,
                              'create_seaweedfs_ingresses',
                              side_effect=lambda data, obj: events.append(('ingress', obj))):
             seaweedfs_deploy.reconcile(owner)
-        self.assertEqual([event[0] for event in events], ['policy', 'service', 'ingress'])
+        self.assertEqual([event[0] for event in events], ['policy', 'service', 'iam', 'ingress'])
+        client.assert_called_once_with('http://127.0.0.1:41237')
         self.assertEqual(events[0][1]['kind'], 'NetworkPolicy')
         self.assertEqual(events[1][1]['spec']['type'], 'ClusterIP')
 

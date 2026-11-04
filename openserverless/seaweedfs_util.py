@@ -150,6 +150,24 @@ class SeaweedfsClient:
         command = f's3.configure -user=anonymous -actions=Read -buckets={bucket} -delete -apply'
         return util.check(self._exec_weed_command(command), "remove_anonymous_web_access", True)
 
+    def verify_anonymous_access(self, buckets):
+        """Fail closed if persisted anonymous IAM differs from the web allowlist."""
+        try:
+            response = requests.get(f"{self.filer_url}/etc/iam/identity.json", timeout=10)
+            response.raise_for_status()
+            identities = response.json()["identities"]
+            if not isinstance(identities, list):
+                raise ValueError()
+            anonymous = [item for item in identities if item["name"] == "anonymous"]
+            expected = {f"Read:{bucket}" for bucket in buckets}
+            if len(anonymous) != 1:
+                raise ValueError()
+            actions = anonymous[0]["actions"]
+            if not isinstance(actions, list) or any(not isinstance(action, str) for action in actions) or set(actions) != expected:
+                raise ValueError()
+        except (requests.RequestException, ValueError, KeyError, TypeError):
+            raise RuntimeError("Could not verify anonymous S3 web-only grants") from None
+
     def make_public_bucket(self, bucket_name):
         """
         assign the specified buckets to the given users
