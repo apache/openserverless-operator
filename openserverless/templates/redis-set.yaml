@@ -40,6 +40,24 @@ spec:
         fsGroup: 1001
         runAsUser: 1001 #default BITNAMI user
       {% endif %}
+      {% if persistence %}
+      initContainers:
+      - name: redis-acl-init
+        image: docker.io/bitnamilegacy/redis:8.2.1
+        command:
+        - /bin/sh
+        - -ec
+        - |
+          umask 077
+          if [ ! -e /bitnami/redis/data/users.acl ]; then
+            set -C
+            printf '%s\n' 'user default on #{{redis_password_sha256}} ~* &* +@all' > /bitnami/redis/data/users.acl
+          fi
+          test -s /bitnami/redis/data/users.acl
+        volumeMounts:
+        - name: redis-pvc
+          mountPath: /bitnami/redis/data
+      {% endif %}
       containers:
       - name: redis
         image: docker.io/bitnamilegacy/redis:8.2.1

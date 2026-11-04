@@ -17,6 +17,7 @@
 #
 # this module wraps utilities functions
 import logging
+import hashlib
 import math
 import random
 import time
@@ -495,6 +496,7 @@ def get_redis_config_data():
         "size": cfg.get("redis.volume-size", "REDIS_VOLUME_SIZE", 10),
         "storageClass": cfg.get("openserverless.storageclass"),
         "redis_password":cfg.get("redis.default.password") or "s0meP@ass3",
+        "redis_password_sha256": hashlib.sha256((cfg.get("redis.default.password") or "s0meP@ass3").encode()).hexdigest(),
         "namespace":"openserverless",
         "password":cfg.get("redis.openserverless.password") or "s0meP@ass3",
         "prefix": prefix,

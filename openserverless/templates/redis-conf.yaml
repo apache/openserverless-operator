@@ -49,6 +49,7 @@ data:
 
                 # the directory where redis will store data.
                 dir /bitnami/redis/data 
+                aclfile /bitnami/redis/data/users.acl
                 {% endif %}      
 
 
