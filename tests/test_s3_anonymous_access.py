@@ -60,6 +60,8 @@ class AnonymousS3AccessTest(unittest.TestCase):
                     {"kind": "Service", "metadata": {"name": "seaweedfs"}}]}), \
                 patch.object(seaweedfs_deploy.datastore_security, "apply"), \
                 patch.object(seaweedfs_deploy.kube, "apply"), \
+                patch.object(seaweedfs_deploy, "_reconcile_seaweedfs_probes"), \
+                patch.object(seaweedfs_deploy.util, "wait_for_http"), \
                 patch.object(seaweedfs_deploy, "service_endpoint", return_value=contextlib.nullcontext(("seaweedfs", 9090))), \
                 patch.object(seaweedfs_deploy, "SeaweedfsClient"), \
                 patch.object(seaweedfs_deploy, "reconcile_anonymous_web_access", side_effect=RuntimeError("IAM unavailable")), \
