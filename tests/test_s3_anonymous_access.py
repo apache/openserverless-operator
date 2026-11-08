@@ -48,9 +48,45 @@ class AnonymousS3AccessTest(unittest.TestCase):
                 client.verify_anonymous_access({"custom-web"})
         get.assert_called_with("http://127.0.0.1:41237/etc/iam/identity.json", timeout=10)
         get.side_effect = requests.ConnectionError("PRIVATE_CANARY")
-        with self.assertRaisesRegex(RuntimeError, "^Could not verify anonymous S3 web-only grants$") as raised:
+        with self.assertRaisesRegex(RuntimeError, r"^Could not verify anonymous S3 web-only grants \[phase=read_policy category=transport_error\]$") as raised:
             client.verify_anonymous_access({"custom-web"})
         self.assertNotIn("PRIVATE_CANARY", str(raised.exception))
+
+    @patch.object(seaweedfs_deploy.SeaweedfsClient, "__init__", return_value=None)
+    @patch("openserverless.seaweedfs_util.requests.get")
+    def test_safe_diagnostic_categories_preserve_fail_closed_policy(self, get, init):
+        import traceback
+        client = seaweedfs_deploy.SeaweedfsClient()
+        client.filer_url = "http://PRIVATE_CANARY"
+        valid = {"identities": [{"name": "anonymous", "actions": ["Read:custom-web"]}]}
+        scenarios = [
+            (requests.Timeout("PRIVATE_CANARY"), None, None, "transport_timeout"),
+            (requests.ConnectionError("PRIVATE_CANARY"), None, None, "transport_error"),
+            (None, requests.HTTPError("PRIVATE_CANARY", response=Mock(status_code=503)), None, "http_error"),
+            (None, None, ValueError("PRIVATE_CANARY"), "json_error"),
+            (None, None, {"identities": [None]}, "schema_error"),
+            (None, None, {"identities": []}, "anonymous_identity"),
+            (None, None, {"identities": valid['identities'] * 2}, "anonymous_identity"),
+            (None, None, {"identities": [{"name": "anonymous", "actions": ["Read"]}]}, "grant_mismatch"),
+        ]
+        for transport, http_error, document, category in scenarios:
+            with self.subTest(category=category):
+                get.side_effect = transport
+                get.return_value.raise_for_status.side_effect = http_error
+                get.return_value.json.side_effect = document if isinstance(document, Exception) else None
+                get.return_value.json.return_value = document
+                with self.assertRaisesRegex(RuntimeError, "category=" + category) as raised:
+                    client.verify_anonymous_access({"custom-web"})
+                rendered = ''.join(traceback.format_exception(raised.exception))
+                self.assertNotIn("PRIVATE_CANARY", rendered)
+                self.assertNotIn('"identities"', rendered)
+                if http_error:
+                    self.assertIn("status=503", str(raised.exception))
+        get.side_effect = None
+        get.return_value.raise_for_status.side_effect = None
+        get.return_value.json.side_effect = None
+        get.return_value.json.return_value = valid
+        client.verify_anonymous_access({"custom-web"})
 
     def test_failed_iam_reconciliation_does_not_publish_ingress_or_bootstrap_storage(self):
         owner = {"metadata": {"uid": "synthetic"}}
