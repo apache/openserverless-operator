@@ -152,21 +152,44 @@ class SeaweedfsClient:
 
     def verify_anonymous_access(self, buckets):
         """Fail closed if persisted anonymous IAM differs from the web allowlist."""
+        def fail(category, phase, status=None):
+            # Only fixed categories and a validated HTTP number may reach logs.
+            detail = f"phase={phase} category={category}"
+            if status is not None:
+                detail += f" status={status}"
+            raise RuntimeError(f"Could not verify anonymous S3 web-only grants [{detail}]") from None
+
         try:
             response = requests.get(f"{self.filer_url}/etc/iam/identity.json", timeout=10)
             response.raise_for_status()
-            identities = response.json()["identities"]
+        except requests.Timeout:
+            fail("transport_timeout", "read_policy")
+        except requests.HTTPError as error:
+            status = getattr(error.response, "status_code", None)
+            fail("http_error", "read_policy", status if type(status) is int and 100 <= status <= 599 else "unknown")
+        except requests.RequestException:
+            fail("transport_error", "read_policy")
+        try:
+            document = response.json()
+        except ValueError:
+            fail("json_error", "decode_policy")
+        try:
+            identities = document["identities"]
             if not isinstance(identities, list):
                 raise ValueError()
             anonymous = [item for item in identities if item["name"] == "anonymous"]
-            expected = {f"Read:{bucket}" for bucket in buckets}
-            if len(anonymous) != 1:
-                raise ValueError()
+        except (ValueError, KeyError, TypeError):
+            fail("schema_error", "validate_policy")
+        if len(anonymous) != 1:
+            fail("anonymous_identity", "validate_policy")
+        try:
             actions = anonymous[0]["actions"]
-            if not isinstance(actions, list) or any(not isinstance(action, str) for action in actions) or set(actions) != expected:
+            if not isinstance(actions, list) or any(not isinstance(action, str) for action in actions):
                 raise ValueError()
-        except (requests.RequestException, ValueError, KeyError, TypeError):
-            raise RuntimeError("Could not verify anonymous S3 web-only grants") from None
+        except (ValueError, KeyError, TypeError):
+            fail("schema_error", "validate_policy")
+        if set(actions) != {f"Read:{bucket}" for bucket in buckets}:
+            fail("grant_mismatch", "validate_policy")
 
     def make_public_bucket(self, bucket_name):
         """
