@@ -34,6 +34,20 @@ spec:
       containers:
         - name: seaweedfs
           image: chrislusf/seaweedfs:3.97
+          startupProbe:
+            httpGet:
+              path: /
+              port: 9090
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9090
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
           ports:
             - containerPort: 9000 # S3
             - containerPort: 9090 # Filer

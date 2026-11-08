@@ -211,6 +211,10 @@ class SecurityTests(unittest.TestCase):
                              side_effect=lambda obj: events.append(('policy', obj))), \
                 patch.object(seaweedfs_deploy.kube, 'apply',
                              side_effect=lambda obj: events.append(('service', obj))), \
+                patch.object(seaweedfs_deploy, '_reconcile_seaweedfs_probes',
+                             side_effect=lambda obj: events.append(('probes', obj))), \
+                patch.object(seaweedfs_deploy.util, 'wait_for_http',
+                             side_effect=lambda *args, **kwargs: events.append(('ready', None))), \
                 patch.object(seaweedfs_deploy, 'service_endpoint', return_value=
                              contextlib.nullcontext(('127.0.0.1', 41237))), \
                 patch.object(seaweedfs_deploy, 'SeaweedfsClient') as client, \
@@ -220,7 +224,7 @@ class SecurityTests(unittest.TestCase):
                              'create_seaweedfs_ingresses',
                              side_effect=lambda data, obj: events.append(('ingress', obj))):
             seaweedfs_deploy.reconcile(owner)
-        self.assertEqual([event[0] for event in events], ['policy', 'service', 'iam', 'ingress'])
+        self.assertEqual([event[0] for event in events], ['policy', 'service', 'probes', 'ready', 'iam', 'ingress'])
         client.assert_called_once_with('http://127.0.0.1:41237')
         self.assertEqual(events[0][1]['kind'], 'NetworkPolicy')
         self.assertEqual(events[1][1]['spec']['type'], 'ClusterIP')

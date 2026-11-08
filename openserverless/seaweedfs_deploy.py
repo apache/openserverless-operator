@@ -16,6 +16,8 @@
 # under the License.
 #
 import kopf, logging, time, os, json
+from contextlib import contextmanager
+from urllib3.exceptions import TimeoutError as HTTPTimeoutError
 import openserverless.kube as kube
 import openserverless.kustomize as kus
 import openserverless.config as cfg
@@ -69,7 +71,8 @@ def _add_seaweedfs_user_metadata(ucfg: UserConfig, user_metadata:UserMetadata):
         logging.error(f"failed to build SEAWEEDFS metadata for {ucfg.get('namespace')}: {e}")
         return None 
 
-def _bootstrap_private_filer(data, timeout=30):
+@contextmanager
+def _ready_private_filer(data, timeout=30):
     """Wait for the private filer, recreating a tunnel lost during startup."""
     deadline = time.monotonic() + timeout
     last_error = None
@@ -84,11 +87,11 @@ def _bootstrap_private_filer(data, timeout=30):
                     # target socket is not listening yet. Keep each probe short
                     # so the next attempt can establish a fresh tunnel.
                     util.wait_for_http(filer_url, up_statuses=[200, 401], timeout=3)
-                except TimeoutError as error:
+                except (TimeoutError, HTTPTimeoutError) as error:
                     last_error = error
                 else:
                     ready = True
-                    create_seaweedfs_nuv_storage(data, filer_url)
+                    yield filer_url
                     return
         except RuntimeError as error:
             if ready:
@@ -99,6 +102,33 @@ def _bootstrap_private_filer(data, timeout=30):
             time.sleep(1)
 
     raise TimeoutError("SeaweedFS filer did not become ready before timeout") from last_error
+
+def _bootstrap_private_filer(data, timeout=30):
+    with _ready_private_filer(data, timeout) as filer_url:
+        create_seaweedfs_nuv_storage(data, filer_url)
+
+def _reconcile_seaweedfs_probes(rendered):
+    """Fill missing probes without replacing live image, storage or custom probes."""
+    desired = [item for item in rendered['items']
+               if item['kind'] == 'StatefulSet' and item['metadata']['name'] == 'seaweedfs']
+    if len(desired) != 1:
+        raise RuntimeError('Could not render the SeaweedFS StatefulSet')
+    defaults = next(container for container in desired[0]['spec']['template']['spec']['containers']
+                    if container['name'] == 'seaweedfs')
+    live = json.loads(kube.kubectl('get', 'statefulset/seaweedfs', '-o', 'json'))
+    containers = [container for container in live['spec']['template']['spec']['containers']
+                  if container['name'] == 'seaweedfs']
+    if len(containers) != 1:
+        raise RuntimeError('Could not identify the SeaweedFS container')
+    missing = {key: defaults[key] for key in ('startupProbe', 'readinessProbe')
+               if not containers[0].get(key)}
+    if missing:
+        if live['spec'].get('updateStrategy', {}).get('type', 'RollingUpdate') != 'RollingUpdate':
+            raise RuntimeError('SeaweedFS missing probes requires a RollingUpdate or an operator-managed rollout')
+        kube.patch('statefulset/seaweedfs', {'spec': {'template': {'spec': {
+            'containers': [{'name': 'seaweedfs', **missing}]}}}}, tpe='strategic')
+    # Wait for the updated pod, rather than probing a still-running old revision.
+    kube.kubectl('rollout', 'status', 'statefulset/seaweedfs', '--timeout=240s', timeout=250)
 
 def create(owner=None):
     logging.info("*** configuring seaweedfs standalone")
@@ -149,10 +179,12 @@ def reconcile(owner=None):
     kopf.append_owner_reference(resources, owner)
     datastore_security.apply(policy)
     result = kube.apply(services[0])
+    _reconcile_seaweedfs_probes(rendered)
     # Existing deployments and restored filer data can still carry global Read.
     # Normalize IAM before publishing ingress, without bootstrapping buckets.
-    with service_endpoint(data['name'], 9090) as (host, port):
-        reconcile_anonymous_web_access(SeaweedfsClient(f"http://{host}:{port}"))
+    logging.info("*** waiting for seaweedfs filer api before IAM reconciliation")
+    with _ready_private_filer(data) as filer_url:
+        reconcile_anonymous_web_access(SeaweedfsClient(filer_url))
     seaweedfs_ingress.create_seaweedfs_ingresses(data, owner)
     return result
 
