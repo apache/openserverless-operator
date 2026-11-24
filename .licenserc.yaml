@@ -29,9 +29,11 @@ header:
     - '**/__pypackages__/**'
     - '**/*.json'
     - '**/*.txt'
+    - 'poetry.lock' 
 
 
 dependency:
   files:
     - go.mod
     - package.json
+    
